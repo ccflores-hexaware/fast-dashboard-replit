@@ -6,7 +6,7 @@ import { DataCard } from '@/components/DataCard';
 import { Pagination } from '@/components/Pagination';
 import { mockAssets, mockTPI, mockBTO, mockCMDB, mockFAST } from '@/lib/mockData';
 import { Button } from '@/components/ui/button';
-import { Download, Plus, Save, X, Pencil, Search, Check, ChevronsUpDown, Calendar as CalendarIcon, Copy, Flag } from 'lucide-react';
+import { Download, Plus, Save, X, Pencil, Search, Check, ChevronsUpDown, Calendar as CalendarIcon, Copy, AlertTriangle } from 'lucide-react';
 import { Calendar } from "@/components/ui/calendar";
 import { FilterMenu } from '@/components/FilterMenu';
 import { cn } from "@/lib/utils";
@@ -360,16 +360,17 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     });
   };
 
-  const handleMarkAsFakeAsset = () => {
+  const handleToggleFakeAsset = () => {
     if (!selectedItem) return;
     
     const currentList = dataMap[type] as any[];
     const timestamp = format(new Date(), 'MMM d, yyyy HH:mm');
+    const newFakeStatus = !selectedItem.isFakeAsset;
     
-    // Update the asset with fake asset flag
+    // Toggle the fake asset flag
     const updatedItem = {
       ...selectedItem,
-      isFakeAsset: true,
+      isFakeAsset: newFakeStatus,
       lastModifiedBy: user.name,
       lastModifiedDate: timestamp,
     };
@@ -391,8 +392,10 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     }
     
     toast({
-      title: "Asset Marked as Fake",
-      description: `${selectedItem.id} has been marked as a Fake Asset.`,
+      title: newFakeStatus ? "Asset Marked as Fake" : "Fake Asset Status Removed",
+      description: newFakeStatus 
+        ? `${selectedItem.id} has been marked as a Fake Asset.`
+        : `${selectedItem.id} is no longer marked as a Fake Asset.`,
     });
   };
 
@@ -1229,12 +1232,11 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                          <Copy className="w-4 h-4 mr-2" /> Duplicate
                        </Button>
                        <Button 
-                         variant="destructive" 
-                         onClick={handleMarkAsFakeAsset} 
+                         variant={selectedItem?.isFakeAsset ? "outline" : "destructive"}
+                         onClick={handleToggleFakeAsset} 
                          className="w-full"
-                         disabled={selectedItem?.isFakeAsset}
                        >
-                         <Flag className="w-4 h-4 mr-2" /> {selectedItem?.isFakeAsset ? 'Marked as Fake' : 'Mark as Fake Asset'}
+                         <AlertTriangle className="w-4 h-4 mr-2" /> {selectedItem?.isFakeAsset ? 'Unmark Fake Asset' : 'Mark as Fake Asset'}
                        </Button>
                      </div>
                    )}
@@ -1253,12 +1255,11 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                          <Copy className="w-4 h-4 mr-2" /> Duplicate
                        </Button>
                        <Button 
-                         variant="destructive" 
-                         onClick={handleMarkAsFakeAsset} 
+                         variant={selectedItem?.isFakeAsset ? "outline" : "destructive"}
+                         onClick={handleToggleFakeAsset} 
                          className="w-full"
-                         disabled={selectedItem?.isFakeAsset}
                        >
-                         <Flag className="w-4 h-4 mr-2" /> {selectedItem?.isFakeAsset ? 'Marked as Fake' : 'Mark as Fake Asset'}
+                         <AlertTriangle className="w-4 h-4 mr-2" /> {selectedItem?.isFakeAsset ? 'Unmark Fake Asset' : 'Mark as Fake Asset'}
                        </Button>
                      </div>
                    )}
