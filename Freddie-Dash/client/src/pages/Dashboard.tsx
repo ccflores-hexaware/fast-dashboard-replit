@@ -296,22 +296,45 @@ export default function DashboardPage({ type }: DashboardPageProps) {
           }
       }
 
-      // Move updated item to the top
-      const otherItems = currentList.filter(item => item.id !== selectedItem.id);
-      const updatedList = [{ ...dataToSave }, ...otherItems];
+      // For FAST: Create new version (increment version number, keep old version for history)
+      if (type === 'fast') {
+        const currentVersion = selectedItem.version || 1;
+        const newVersion = currentVersion + 1;
+        dataToSave.version = newVersion;
+        
+        // Add new version to the top, keep all existing items (including old version)
+        const updatedList = [{ ...dataToSave }, ...currentList];
+        
+        setDataMap(prev => ({
+          ...prev,
+          [type]: updatedList
+        }));
+        
+        setSelectedItem(dataToSave);
+        setIsEditing(false);
+        
+        toast({
+          title: "Changes saved",
+          description: `${dataToSave.id} has been updated to version ${newVersion}.`,
+        });
+      } else {
+        // For other types: Replace existing item
+        const otherItems = currentList.filter(item => item.id !== selectedItem.id);
+        const updatedList = [{ ...dataToSave }, ...otherItems];
 
-      setDataMap(prev => ({
-        ...prev,
-        [type]: updatedList
-      }));
+        setDataMap(prev => ({
+          ...prev,
+          [type]: updatedList
+        }));
 
-      setSelectedItem(dataToSave);
-      setIsEditing(false);
-      
-      toast({
-        title: "Changes saved",
-        description: `${dataToSave.id} has been successfully updated.`,
-      });
+        setSelectedItem(dataToSave);
+        setIsEditing(false);
+        
+        toast({
+          title: "Changes saved",
+          description: `${dataToSave.id} has been successfully updated.`,
+        });
+      }
     }
   };
 
