@@ -82,6 +82,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
   const [isDuplicateConfirmOpen, setIsDuplicateConfirmOpen] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [assetIdError, setAssetIdError] = useState<string | null>(null);
+  const [assetIdAvailable, setAssetIdAvailable] = useState<boolean>(false);
 
   // State to hold data so it can be edited
   const [dataMap, setDataMap] = useState({
@@ -113,14 +114,19 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     // Only check when creating new item (selectedItem is null) and user is editing
     if (!isEditing || selectedItem) {
       setAssetIdError(null);
+      setAssetIdAvailable(false);
       return;
     }
 
     const currentId = editFormData.id;
     if (!currentId || currentId.trim() === '') {
       setAssetIdError(null);
+      setAssetIdAvailable(false);
       return;
     }
+
+    // Reset states while checking
+    setAssetIdAvailable(false);
 
     const debounceTimer = setTimeout(() => {
       const currentList = dataMap[type] as any[];
@@ -128,8 +134,10 @@ export default function DashboardPage({ type }: DashboardPageProps) {
       
       if (idExists) {
         setAssetIdError(`Asset ID "${currentId}" already exists. Please use a unique ID.`);
+        setAssetIdAvailable(false);
       } else {
         setAssetIdError(null);
+        setAssetIdAvailable(true);
       }
     }, 300); // 300ms debounce
 
@@ -200,6 +208,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     setIsEditing(false);
     setEditFormData({});
     setAssetIdError(null);
+    setAssetIdAvailable(false);
   };
 
   const handleViewChange = (newView: 'table' | 'card') => {
@@ -1006,6 +1015,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     // Check if this is the ID field and we're creating a new item (show real-time validation)
     const isIdField = key === 'id';
     const showIdError = isIdField && !selectedItem && assetIdError;
+    const showIdAvailable = isIdField && !selectedItem && assetIdAvailable && !assetIdError;
 
     return (
       <div className="flex flex-col space-y-2 py-3">
@@ -1014,13 +1024,23 @@ export default function DashboardPage({ type }: DashboardPageProps) {
           id={key} 
           value={displayValue} 
           onChange={(e) => handleInputChange(key, e.target.value)}
-          className={cn("font-semibold", showIdError && "border-red-500 focus-visible:ring-red-500")}
+          className={cn(
+            "font-semibold", 
+            showIdError && "border-red-500 focus-visible:ring-red-500",
+            showIdAvailable && "border-green-500 focus-visible:ring-green-500"
+          )}
           disabled={shouldDisable}
         />
         {showIdError && (
           <p className="text-sm text-red-500 flex items-center gap-1">
             <AlertTriangle className="h-3.5 w-3.5" />
             {assetIdError}
+          </p>
+        )}
+        {showIdAvailable && (
+          <p className="text-sm text-green-600 flex items-center gap-1">
+            <Check className="h-3.5 w-3.5" />
+            Asset ID is available
           </p>
         )}
       </div>
