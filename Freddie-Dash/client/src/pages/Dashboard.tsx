@@ -1217,51 +1217,53 @@ export default function DashboardPage({ type }: DashboardPageProps) {
             
             <div className="p-6 pt-4 border-t mt-auto bg-muted/20">
               {isEditing ? (
-                <div className="flex flex-col gap-3">
-                   {type === 'fast' && isAdmin && selectedItem && (
-                     <div className="flex gap-3">
-                       <Button variant="secondary" onClick={handleDuplicateClick} className="w-full">
-                         <Copy className="w-4 h-4 mr-2" /> Duplicate
-                       </Button>
-                       <Button 
-                         variant={selectedItem?.isFakeAsset ? "outline" : "destructive"}
-                         onClick={handleToggleFakeAsset} 
-                         className="w-full"
-                       >
-                         <AlertTriangle className="w-4 h-4 mr-2" /> {selectedItem?.isFakeAsset ? 'Unmark Fake Asset' : 'Mark as Fake Asset'}
-                       </Button>
-                     </div>
-                   )}
-                   <div className="flex gap-3">
-                     <Button onClick={handleSave} className="w-full bg-primary hover:bg-primary/90">
+                <div className="flex items-center justify-between gap-3">
+                   <Button variant="ghost" onClick={handleCancelEdit} className="text-muted-foreground hover:text-foreground">
+                     Cancel
+                   </Button>
+                   <div className="flex gap-2">
+                     {type === 'fast' && isAdmin && selectedItem && (
+                       <>
+                         <Button variant="secondary" onClick={handleDuplicateClick}>
+                           <Copy className="w-4 h-4 mr-2" /> Duplicate
+                         </Button>
+                         <Button 
+                           variant={selectedItem?.isFakeAsset ? "outline" : "destructive"}
+                           onClick={handleToggleFakeAsset}
+                         >
+                           <AlertTriangle className="w-4 h-4 mr-2" /> {selectedItem?.isFakeAsset ? 'Unmark Fake' : 'Mark Fake'}
+                         </Button>
+                       </>
+                     )}
+                     <Button onClick={handleSave} className="bg-primary hover:bg-primary/90">
                        <Save className="w-4 h-4 mr-2" /> Save Changes
-                     </Button>
-                     <Button variant="outline" onClick={handleCancelEdit} className="w-full">
-                       <X className="w-4 h-4 mr-2" /> Close
                      </Button>
                    </div>
                 </div>
               ) : (
-                <div className="flex flex-col gap-3">
-                   {type === 'fast' && isAdmin && (
-                     <div className="flex gap-3">
-                       <Button variant="secondary" onClick={handleDuplicateClick} className="w-full">
-                         <Copy className="w-4 h-4 mr-2" /> Duplicate
+                <div className="flex items-center justify-between gap-3">
+                   <Button variant="ghost" onClick={() => setIsDialogOpen(false)} className="text-muted-foreground hover:text-foreground">
+                     Close
+                   </Button>
+                   <div className="flex gap-2">
+                     {type === 'fast' && isAdmin && (
+                       <>
+                         <Button variant="secondary" onClick={handleDuplicateClick}>
+                           <Copy className="w-4 h-4 mr-2" /> Duplicate
+                         </Button>
+                         <Button 
+                           variant={selectedItem?.isFakeAsset ? "outline" : "destructive"}
+                           onClick={handleToggleFakeAsset}
+                         >
+                           <AlertTriangle className="w-4 h-4 mr-2" /> {selectedItem?.isFakeAsset ? 'Unmark Fake' : 'Mark Fake'}
+                         </Button>
+                       </>
+                     )}
+                     {type !== 'tpi' && type !== 'bto' && type !== 'cmdb' && isAdmin && (
+                       <Button onClick={() => handleEditClick()} className="bg-primary hover:bg-primary/90">
+                         <Pencil className="w-4 h-4 mr-2" /> Edit
                        </Button>
-                       <Button 
-                         variant={selectedItem?.isFakeAsset ? "outline" : "destructive"}
-                         onClick={handleToggleFakeAsset} 
-                         className="w-full"
-                       >
-                         <AlertTriangle className="w-4 h-4 mr-2" /> {selectedItem?.isFakeAsset ? 'Unmark Fake Asset' : 'Mark as Fake Asset'}
-                       </Button>
-                     </div>
-                   )}
-                   <div className="flex gap-3">
-                     {type !== 'tpi' && type !== 'bto' && type !== 'cmdb' && isAdmin && <Button onClick={() => handleEditClick()} className="w-full">Edit</Button>}
-                     <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="w-full">
-                       <X className="w-4 h-4 mr-2" /> Close
-                     </Button>
+                     )}
                    </div>
                 </div>
               )}
