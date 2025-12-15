@@ -404,10 +404,16 @@ export default function DashboardPage({ type }: DashboardPageProps) {
       lastModifiedDate: timestamp,
     };
     
-    // Update the list
-    const updatedList = currentList.map(item => 
-      item.id === selectedItem.id ? updatedItem : item
-    );
+    // Update the list - use composite key (id + version) to match the specific version
+    const selectedVersion = selectedItem.version || 1;
+    const updatedList = currentList.map(item => {
+      const itemVersion = item.version || 1;
+      // Match both id AND version to update only the specific version
+      if (item.id === selectedItem.id && itemVersion === selectedVersion) {
+        return updatedItem;
+      }
+      return item;
+    });
     
     setDataMap(prev => ({
       ...prev,
@@ -420,11 +426,12 @@ export default function DashboardPage({ type }: DashboardPageProps) {
       setEditFormData(updatedItem);
     }
     
+    const versionInfo = type === 'fast' ? ` (version ${selectedVersion})` : '';
     toast({
       title: newFakeStatus ? "Asset Marked as Fake" : "Fake Asset Status Removed",
       description: newFakeStatus 
-        ? `${selectedItem.id} has been marked as a Fake Asset.`
-        : `${selectedItem.id} is no longer marked as a Fake Asset.`,
+        ? `${selectedItem.id}${versionInfo} has been marked as a Fake Asset.`
+        : `${selectedItem.id}${versionInfo} is no longer marked as a Fake Asset.`,
       variant: "success"
     });
   };
