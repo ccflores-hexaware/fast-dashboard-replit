@@ -279,6 +279,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
       toast({
         title: "New Entry Created",
         description: `${newItem.id} has been successfully added to the list. You can continue editing this item.`,
+        variant: "success"
       });
 
     } else {
@@ -316,6 +317,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
         toast({
           title: "Changes saved",
           description: `${dataToSave.id} has been updated to version ${newVersion}.`,
+          variant: "success"
         });
       } else {
         // For other types: Replace existing item
@@ -333,6 +335,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
         toast({
           title: "Changes saved",
           description: `${dataToSave.id} has been successfully updated.`,
+          variant: "success"
         });
       }
     }
@@ -376,6 +379,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     toast({
       title: "Asset Duplicated",
       description: `${selectedItem.id} has been duplicated as ${newId}.`,
+      variant: "success"
     });
   };
 
@@ -415,6 +419,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
       description: newFakeStatus 
         ? `${selectedItem.id} has been marked as a Fake Asset.`
         : `${selectedItem.id} is no longer marked as a Fake Asset.`,
+      variant: "success"
     });
   };
 
