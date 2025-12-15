@@ -986,11 +986,28 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     return 0;
   });
 
-  // Pagination Logic
+  // Pagination Logic - handle grouped view for FAST History in card view
+  const isGroupedCardView = type === 'fast' && showVersionHistory && view === 'card';
+  
+  // For grouped card view, get unique Asset IDs for pagination
+  const uniqueAssetIds = isGroupedCardView 
+    ? [...new Set(filteredData.map((item: any) => item.id))]
+    : [];
+  
+  const paginationBase = isGroupedCardView ? uniqueAssetIds.length : filteredData.length;
+  const totalPages = Math.ceil(paginationBase / pageSize);
+  
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = startIndex + pageSize;
-  const currentData = filteredData.slice(startIndex, endIndex);
-  const totalPages = Math.ceil(filteredData.length / pageSize);
+  
+  // For grouped view, paginate by unique Asset IDs, then get all versions for those IDs
+  const currentData = isGroupedCardView
+    ? filteredData.filter((item: any) => 
+        uniqueAssetIds.slice(startIndex, endIndex).includes(item.id)
+      )
+    : filteredData.slice(startIndex, endIndex);
+  
+  const paginationTotalItems = isGroupedCardView ? uniqueAssetIds.length : filteredData.length;
 
   const renderDetailRow = (label: string, value: any) => (
     <div className="flex flex-col space-y-1 py-3 border-b border-border/50 last:border-0">
@@ -1301,8 +1318,8 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                       className="hover:shadow-md transition-all cursor-pointer border-t-4 border-t-primary relative overflow-hidden"
                     >
                       {/* Version pills at top */}
-                      <div className="flex items-center gap-1 px-4 pt-3 pb-2 border-b bg-slate-50 flex-wrap">
-                        <span className="text-xs text-slate-500 mr-1">Versions:</span>
+                      <div className="flex items-center gap-1.5 px-3 pt-2 pb-2 border-b bg-slate-50 overflow-x-auto scrollbar-thin">
+                        <span className="text-xs text-slate-500 shrink-0">v:</span>
                         {versions.map((v: any) => {
                           const ver = v.version || 1;
                           const isLatest = ver === latestVersion;
@@ -1318,7 +1335,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                                 }));
                               }}
                               className={cn(
-                                "px-2 py-0.5 rounded text-xs font-medium transition-all",
+                                "px-1.5 py-0.5 rounded text-xs font-medium transition-all shrink-0",
                                 isSelected
                                   ? "bg-primary text-white ring-2 ring-primary/30"
                                   : isLatest 
@@ -1326,7 +1343,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                                     : "bg-slate-200 text-slate-600 hover:bg-slate-300"
                               )}
                             >
-                              v{ver}{isLatest ? '*' : ''}
+                              {ver}{isLatest ? '*' : ''}
                             </button>
                           );
                         })}
@@ -1399,7 +1416,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
           currentPage={currentPage}
           totalPages={totalPages}
           pageSize={pageSize}
-          totalItems={filteredData.length}
+          totalItems={paginationTotalItems}
           onPageChange={setCurrentPage}
           onPageSizeChange={setPageSize}
           pageSizeOptions={view === 'card' ? [8, 12, 24, 48] : [10, 20, 50, 100]}
