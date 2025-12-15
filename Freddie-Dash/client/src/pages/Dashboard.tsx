@@ -948,13 +948,6 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                    {!isEditing ? (
                      <>
                         {/* Read-Only View */}
-                        {config.statusKey && (
-                          <div className="flex items-center justify-between py-2 border-b border-border/50">
-                             <span className="text-sm font-medium text-muted-foreground">Status</span>
-                             <span className="text-base font-semibold text-foreground">{selectedItem.status}</span>
-                          </div>
-                        )}
-                        
                         {config.columns.map((col: any) => {
                            const key = col.accessorKey;
                            if (!key) return null;
