@@ -1182,6 +1182,11 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                    <Button onClick={handleSave} className="w-full bg-primary hover:bg-primary/90">
                      <Save className="w-4 h-4 mr-2" /> Save Changes
                    </Button>
+                   {type === 'fast' && isAdmin && selectedItem && (
+                     <Button variant="secondary" onClick={handleDuplicateClick} className="w-full">
+                       <Copy className="w-4 h-4 mr-2" /> Duplicate
+                     </Button>
+                   )}
                    <Button variant="outline" onClick={handleCancelEdit} className="w-full">
                      <X className="w-4 h-4 mr-2" /> Close
                    </Button>
