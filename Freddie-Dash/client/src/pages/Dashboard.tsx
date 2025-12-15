@@ -43,6 +43,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/lib/userContext";
@@ -400,6 +407,27 @@ export default function DashboardPage({ type }: DashboardPageProps) {
           ],
           titleKey: 'name',
           statusKey: 'status',
+          enumFields: {
+            cmdbStatus: ['Active', 'Retired', 'Provisioning', 'Maintenance', 'Decommissioned'],
+            deploymentLifecyclePhase: ['Analysis', 'Design', 'Development', 'Testing', 'Staging', 'Production', 'Decommission'],
+            applicationTypeFinancial: ['Financial', 'Non-Financial'],
+            type: ['Application', 'Microservice', 'Database', 'Infrastructure', 'Platform', 'SaaS'],
+            hosted: ['On-Premise', 'AWS Cloud', 'Azure Cloud', 'Hybrid', 'Vendor Cloud'],
+            sox: ['Yes', 'No'],
+            customerFacing: ['Yes', 'No'],
+            sppi: ['Yes', 'No'],
+            ppiClassification: ['Public', 'Internal Use', 'Confidential', 'Restricted'],
+            foundational: ['Yes', 'No'],
+            missionCritical: ['Yes', 'No'],
+            businessCritical: ['Yes', 'No'],
+            supporting: ['Yes', 'No'],
+            cotsOrInHouse: ['COTS', 'In-House', 'Hybrid'],
+            isSaas: ['Yes', 'No'],
+            maintenanceWindow: ['Sundays 00:00-04:00', 'Weekends', 'Quarterly', 'Ad-hoc', 'Patch Tuesday'],
+            operationalHours: ['24/7', 'Business Hours', 'Extended Business Hours', 'Weekdays Only'],
+            assessmentCategory: ['Mission Critical', 'Business Critical', 'Business Operational', 'Administrative'],
+            supportedBy: ['Internal IT', 'Vendor Managed', 'Hybrid Team', 'Offshore Partner'],
+          } as Record<string, string[]>,
         };
       case 'tpi':
         return {
@@ -632,6 +660,33 @@ export default function DashboardPage({ type }: DashboardPageProps) {
             'theGap',
             'comments',
           ],
+          enumFields: {
+            onboardingStatus: ['Onboarded', 'In Progress', 'Pending', 'Not Started', 'Blocked'],
+            onboardingDisposition: ['Approved', 'Pending Review', 'Rejected', 'N/A', 'Waived'],
+            airDisposition: ['Approved', 'Pending Review', 'Rejected', 'N/A', 'Waived'],
+            maintenanceDisposition: ['Approved', 'Pending Review', 'Rejected', 'N/A', 'Waived'],
+            cmdbStatus: ['Active', 'Retired', 'Provisioning', 'Maintenance', 'Decommissioned'],
+            cmdbBeingRetired: ['Yes', 'No'],
+            cmdbLegalHold: ['Yes', 'No'],
+            assetType: ['Application', 'Service', 'API', 'Database', 'Infrastructure', 'Platform'],
+            monthOnboarded: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+            onboardingSchedule: ['Weekly', 'Bi-Weekly', 'Monthly', 'Quarterly', 'On-Demand'],
+            entitlementsMissing: ['Yes', 'No'],
+            membersMissing: ['Yes', 'No'],
+            cisMissing: ['Yes', 'No'],
+            reliesOnCAFederation: ['Yes', 'No'],
+            connectorPattern: ['REST API', 'SOAP', 'File Transfer', 'Database Direct', 'Message Queue', 'Custom'],
+            automationTeam: ['Team Alpha', 'Team Beta', 'Team Gamma', 'Team Delta', 'Enterprise Ops', 'Platform Team'],
+            connectorStatus: ['Active', 'Inactive', 'Pending', 'Error'],
+            enrollmentStatus: ['Enrolled', 'Not Enrolled', 'Pending', 'Exempt'],
+            evidenceStatus: ['Complete', 'Incomplete', 'Pending Review', 'N/A'],
+            miSchedule: ['Weekly', 'Bi-Weekly', 'Monthly', 'Quarterly', 'On-Demand'],
+            miStatus: ['Green', 'Yellow', 'Red', 'N/A'],
+            attestationKickedOff: ['Yes', 'No'],
+            attestationComplete: ['Yes', 'No'],
+            aiStatus: ['Green', 'Yellow', 'Red', 'N/A'],
+            technology: ['Java', '.NET', 'Python', 'Node.js', 'Angular', 'React', 'Legacy', 'Mainframe', 'Cloud Native'],
+          } as Record<string, string[]>,
         };
       default:
         return {
@@ -746,6 +801,33 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     const isAuditField = key === 'lastModifiedBy' || key === 'lastModifiedDate';
     const shouldDisable = isDisabled || (key === 'id' && !!selectedItem) || isAuditField;
     const displayValue = ((isAuditField || shouldDisable) && (value === undefined || value === null || value === 'undefined' || value === '')) ? '-' : value;
+
+    // Check if this field has enum options from the config
+    const enumOptions = (rawConfig as any).enumFields?.[key] as string[] | undefined;
+
+    // If field has enum options and is not disabled, render a Select dropdown
+    if (enumOptions && !shouldDisable) {
+      return (
+        <div className="flex flex-col space-y-2 py-3">
+          <Label htmlFor={key} className="text-sm font-medium text-muted-foreground">{label}</Label>
+          <Select
+            value={value || ''}
+            onValueChange={(newValue) => handleInputChange(key, newValue)}
+          >
+            <SelectTrigger id={key} className="font-semibold">
+              <SelectValue placeholder={`Select ${label}`} />
+            </SelectTrigger>
+            <SelectContent>
+              {enumOptions.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      );
+    }
 
     return (
       <div className="flex flex-col space-y-2 py-3">
