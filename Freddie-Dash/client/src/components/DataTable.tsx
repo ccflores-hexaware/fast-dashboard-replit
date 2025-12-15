@@ -153,7 +153,7 @@ export function DataTable<T extends { id: string }>({
                 key={String(col.accessorKey || index)} 
                 className={cn(
                   "font-bold text-primary whitespace-nowrap border-r border-border last:border-r-0 px-4 py-3 h-auto select-none",
-                  index === 0 && "sticky left-0 z-30 bg-muted shadow-[4px_0_8px_-2px_rgba(0,0,0,0.3)]"
+                  index === 0 && "sticky left-0 z-30 bg-slate-200"
                 )}
               >
                 <div className="flex items-center justify-between gap-1.5">
@@ -268,7 +268,7 @@ export function DataTable<T extends { id: string }>({
                   key={`${item.id}-${String(col.accessorKey || index)}`} 
                   className={cn(
                     "text-sm border-r border-border last:border-r-0 px-4 py-3 whitespace-nowrap",
-                    index === 0 && "sticky left-0 z-20 bg-card shadow-[4px_0_8px_-2px_rgba(0,0,0,0.3)]"
+                    index === 0 && "sticky left-0 z-20 bg-slate-100"
                   )}
                 >
                   {col.cell ? col.cell(item) : (col.accessorKey ? (
