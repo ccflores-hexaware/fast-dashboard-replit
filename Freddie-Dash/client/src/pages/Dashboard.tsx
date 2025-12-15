@@ -6,7 +6,7 @@ import { DataCard } from '@/components/DataCard';
 import { Pagination } from '@/components/Pagination';
 import { mockAssets, mockTPI, mockBTO, mockCMDB, mockFAST } from '@/lib/mockData';
 import { Button } from '@/components/ui/button';
-import { Download, Plus, Save, X, Pencil, Search, Check, ChevronsUpDown, Calendar as CalendarIcon, Copy } from 'lucide-react';
+import { Download, Plus, Save, X, Pencil, Search, Check, ChevronsUpDown, Calendar as CalendarIcon, Copy, Flag } from 'lucide-react';
 import { Calendar } from "@/components/ui/calendar";
 import { FilterMenu } from '@/components/FilterMenu';
 import { cn } from "@/lib/utils";
@@ -357,6 +357,42 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     toast({
       title: "Asset Duplicated",
       description: `${selectedItem.id} has been duplicated as ${newId}.`,
+    });
+  };
+
+  const handleMarkAsFakeAsset = () => {
+    if (!selectedItem) return;
+    
+    const currentList = dataMap[type] as any[];
+    const timestamp = format(new Date(), 'MMM d, yyyy HH:mm');
+    
+    // Update the asset with fake asset flag
+    const updatedItem = {
+      ...selectedItem,
+      isFakeAsset: true,
+      lastModifiedBy: user.name,
+      lastModifiedDate: timestamp,
+    };
+    
+    // Update the list
+    const updatedList = currentList.map(item => 
+      item.id === selectedItem.id ? updatedItem : item
+    );
+    
+    setDataMap(prev => ({
+      ...prev,
+      [type]: updatedList
+    }));
+    
+    // Update selected item and form data
+    setSelectedItem(updatedItem);
+    if (isEditing) {
+      setEditFormData(updatedItem);
+    }
+    
+    toast({
+      title: "Asset Marked as Fake",
+      description: `${selectedItem.id} has been marked as a Fake Asset.`,
     });
   };
 
@@ -1178,30 +1214,54 @@ export default function DashboardPage({ type }: DashboardPageProps) {
             
             <div className="p-6 pt-4 border-t mt-auto bg-muted/20">
               {isEditing ? (
-                <div className="flex gap-3">
-                   <Button onClick={handleSave} className="w-full bg-primary hover:bg-primary/90">
-                     <Save className="w-4 h-4 mr-2" /> Save Changes
-                   </Button>
-                   {type === 'fast' && isAdmin && selectedItem && (
-                     <Button variant="secondary" onClick={handleDuplicateClick} className="w-full">
-                       <Copy className="w-4 h-4 mr-2" /> Duplicate
+                <div className="flex flex-col gap-3">
+                   <div className="flex gap-3">
+                     <Button onClick={handleSave} className="w-full bg-primary hover:bg-primary/90">
+                       <Save className="w-4 h-4 mr-2" /> Save Changes
                      </Button>
+                     <Button variant="outline" onClick={handleCancelEdit} className="w-full">
+                       <X className="w-4 h-4 mr-2" /> Close
+                     </Button>
+                   </div>
+                   {type === 'fast' && isAdmin && selectedItem && (
+                     <div className="flex gap-3">
+                       <Button variant="secondary" onClick={handleDuplicateClick} className="w-full">
+                         <Copy className="w-4 h-4 mr-2" /> Duplicate
+                       </Button>
+                       <Button 
+                         variant="destructive" 
+                         onClick={handleMarkAsFakeAsset} 
+                         className="w-full"
+                         disabled={selectedItem?.isFakeAsset}
+                       >
+                         <Flag className="w-4 h-4 mr-2" /> {selectedItem?.isFakeAsset ? 'Marked as Fake' : 'Mark as Fake Asset'}
+                       </Button>
+                     </div>
                    )}
-                   <Button variant="outline" onClick={handleCancelEdit} className="w-full">
-                     <X className="w-4 h-4 mr-2" /> Close
-                   </Button>
                 </div>
               ) : (
-                <div className="flex gap-3">
-                   {type !== 'tpi' && type !== 'bto' && type !== 'cmdb' && isAdmin && <Button onClick={() => handleEditClick()} className="w-full">Edit</Button>}
-                   {type === 'fast' && isAdmin && (
-                     <Button variant="secondary" onClick={handleDuplicateClick} className="w-full">
-                       <Copy className="w-4 h-4 mr-2" /> Duplicate
+                <div className="flex flex-col gap-3">
+                   <div className="flex gap-3">
+                     {type !== 'tpi' && type !== 'bto' && type !== 'cmdb' && isAdmin && <Button onClick={() => handleEditClick()} className="w-full">Edit</Button>}
+                     <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="w-full">
+                       <X className="w-4 h-4 mr-2" /> Close
                      </Button>
+                   </div>
+                   {type === 'fast' && isAdmin && (
+                     <div className="flex gap-3">
+                       <Button variant="secondary" onClick={handleDuplicateClick} className="w-full">
+                         <Copy className="w-4 h-4 mr-2" /> Duplicate
+                       </Button>
+                       <Button 
+                         variant="destructive" 
+                         onClick={handleMarkAsFakeAsset} 
+                         className="w-full"
+                         disabled={selectedItem?.isFakeAsset}
+                       >
+                         <Flag className="w-4 h-4 mr-2" /> {selectedItem?.isFakeAsset ? 'Marked as Fake' : 'Mark as Fake Asset'}
+                       </Button>
+                     </div>
                    )}
-                   <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="w-full">
-                     <X className="w-4 h-4 mr-2" /> Close
-                   </Button>
                 </div>
               )}
             </div>
