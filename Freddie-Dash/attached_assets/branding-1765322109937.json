@@ -1,0 +1,115 @@
+{
+  "colorScheme": "light",
+  "fonts": [
+    {
+      "family": "Canada Type Gibson",
+      "role": "body"
+    },
+    {
+      "family": "Arial",
+      "role": "body"
+    },
+    {
+      "family": "Lucida Sans Unicode",
+      "role": "body"
+    }
+  ],
+  "colors": {
+    "primary": "#183567",
+    "accent": "#0276A1",
+    "background": "#FFFFFF",
+    "textPrimary": "#0276A1",
+    "link": "#0276A1"
+  },
+  "typography": {
+    "fontFamilies": {
+      "primary": "Canada Type Gibson",
+      "heading": "Canada Type Gibson"
+    },
+    "fontStacks": {
+      "heading": [
+        "canada-type-gibson",
+        "Arial",
+        "Lucida Sans Unicode",
+        "sans-serif"
+      ],
+      "body": [
+        "canada-type-gibson",
+        "Arial",
+        "Lucida Sans Unicode",
+        "sans-serif"
+      ],
+      "paragraph": [
+        "canada-type-gibson",
+        "Arial",
+        "Lucida Sans Unicode",
+        "sans-serif"
+      ]
+    },
+    "fontSizes": {
+      "h1": "35.2px",
+      "h2": "49.5px",
+      "body": "19.8px"
+    }
+  },
+  "spacing": {
+    "baseUnit": 4,
+    "borderRadius": "2px"
+  },
+  "components": {
+    "input": {
+      "borderColor": "#CCCCCC",
+      "borderRadius": "2px"
+    },
+    "buttonPrimary": {
+      "background": "#183567",
+      "textColor": "#FFFFFF",
+      "borderRadius": "16483.5px",
+      "shadow": "none"
+    },
+    "buttonSecondary": {
+      "background": "#F3F3F3",
+      "textColor": "#434343",
+      "borderRadius": "0px",
+      "shadow": "none"
+    }
+  },
+  "images": {
+    "logo": "https://mf.freddiemac.com/sites/g/files/ynjofi151/themes/site/mf_theme/images/FreddieMacLogo-no-tagline.svg",
+    "favicon": "https://mf.freddiemac.com/sites/g/files/ynjofi151/themes/site/mf_theme/favicon.ico",
+    "ogImage": "File saved at: attached_assets/ogImage.html"
+  },
+  "__framework_hints": [],
+  "__llm_logo_reasoning": {
+    "selectedIndex": 1,
+    "reasoning": "Logo #1 is the only one that visually represents the brand name 'Multifamily' and links to the homepage, making it the main brand logo.",
+    "confidence": 0.9
+  },
+  "__llm_button_reasoning": {
+    "primary": {
+      "index": 1,
+      "text": "Get Started with Optigo",
+      "reasoning": "Button #1 ('Get Started with Optigo') has a vibrant blue background (#183567), which is the brand color, and action-oriented text, making it the primary call-to-action."
+    },
+    "secondary": {
+      "index": 0,
+      "text": "Targeted Affordable Housing",
+      "reasoning": "Button #0 ('Targeted Affordable Housing') has a light background (#F3F3F3), which is distinctly different from the primary button's color, making it a suitable secondary option."
+    },
+    "confidence": 0.95
+  },
+  "personality": {
+    "tone": "professional",
+    "energy": "medium",
+    "targetAudience": "investors and housing professionals"
+  },
+  "designSystem": {
+    "framework": "unknown",
+    "componentLibrary": null
+  },
+  "confidence": {
+    "buttons": 0.95,
+    "colors": 0.9,
+    "overall": 0.925
+  }
+}
