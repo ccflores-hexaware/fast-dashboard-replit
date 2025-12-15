@@ -1238,7 +1238,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                     }}
                   />
                   <Label htmlFor="showVersionHistory" className="text-sm font-medium cursor-pointer whitespace-nowrap">
-                    Show Version History
+                    FAST History
                   </Label>
                 </div>
               )}
