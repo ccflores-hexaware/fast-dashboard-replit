@@ -31,7 +31,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { name: 'CMDB', path: '/cmdb' },
   ];
 
-  const isActive = (path: string) => location === path || (path === '/assets' && location === '/');
+  const isActive = (path: string) => location === path || (path === '/fast' && location === '/');
 
   const currentDate = format(new Date(), 'MMMM d, yyyy');
 

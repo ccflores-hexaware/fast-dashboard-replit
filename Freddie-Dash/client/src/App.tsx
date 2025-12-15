@@ -12,7 +12,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/">
-         <Redirect to="/assets" />
+         <Redirect to="/fast" />
       </Route>
       <Route path="/assets">
         <DashboardPage type="assets" />
