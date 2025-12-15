@@ -154,7 +154,7 @@ export function DataTable<T extends { id: string }>({
                 className={cn(
                   "font-bold text-primary whitespace-nowrap border-r border-border last:border-r-0 px-4 py-3 h-auto select-none",
                   index === 0 && "sticky left-0 z-20 bg-muted",
-                  index === 0 && isScrolled && "border-r-[3px] border-slate-300 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.1)]"
+                  index === 0 && isScrolled && "!border-r-2 !border-r-slate-400 shadow-[4px_0_6px_-2px_rgba(0,0,0,0.15)]"
                 )}
               >
                 <div className="flex items-center justify-between gap-1.5">
@@ -270,7 +270,7 @@ export function DataTable<T extends { id: string }>({
                   className={cn(
                     "text-sm border-r border-border last:border-r-0 px-4 py-3 whitespace-nowrap",
                     index === 0 && "sticky left-0 z-10 bg-card",
-                    index === 0 && isScrolled && "border-r-[3px] border-slate-300 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.1)]"
+                    index === 0 && isScrolled && "!border-r-2 !border-r-slate-400 shadow-[4px_0_6px_-2px_rgba(0,0,0,0.15)]"
                   )}
                 >
                   {col.cell ? col.cell(item) : (col.accessorKey ? (
