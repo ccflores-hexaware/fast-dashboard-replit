@@ -322,21 +322,15 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     
     const currentList = dataMap[type] as any[];
     
-    // Generate a new unique ID
-    let newId = '';
-    let attempts = 0;
-    do {
-      const randomId = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-      newId = `AST-${randomId}`;
-      attempts++;
-    } while (currentList.some(item => item.id === newId) && attempts < 100);
+    // Generate new ID as <Asset ID>-COPY
+    const newId = `${selectedItem.id}-COPY`;
     
     // Create duplicate with new ID and audit trail
     const timestamp = format(new Date(), 'MMM d, yyyy HH:mm');
     const duplicatedItem = {
       ...selectedItem,
       id: newId,
-      name: `${selectedItem.name} (Copy)`,
+      name: selectedItem.name,
       lastModifiedBy: user.name,
       lastModifiedDate: timestamp,
     };
