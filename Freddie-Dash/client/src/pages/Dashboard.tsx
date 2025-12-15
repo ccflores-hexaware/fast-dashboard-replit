@@ -606,6 +606,32 @@ export default function DashboardPage({ type }: DashboardPageProps) {
           ],
           titleKey: 'name',
           statusKey: 'onboardingStatus',
+          editableFields: [
+            'connectorStatus',
+            'enrollmentStatus',
+            'evidenceStatus',
+            'cisMissing',
+            'miStatus',
+            'automationTeam',
+            'onboardingDisposition',
+            'onboardingSchedule',
+            'reliesOnCAFederation',
+            'lastConnectorDeliveryDate',
+            'aiL2Assignee',
+            'assetPOCs',
+            'miL2Assignee',
+            'kalmAssignee',
+            'aiLastCandAAttestation',
+            'ticketsOpened',
+            'yearOnboarded',
+            'monthOnboarded',
+            'connectorPattern',
+            'airDisposition',
+            'maintenanceDisposition',
+            'nameOfConnector',
+            'theGap',
+            'comments',
+          ],
         };
       default:
         return {
@@ -992,7 +1018,20 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                            
                            // For non-assets, keep ID read-only during edit (if we were allowing edits for them)
                            // But since we are iterating columns, we just need to check if we should render input
-                           if (type !== 'assets' && key === 'id' && selectedItem) return null;
+                           if (type !== 'assets' && type !== 'fast' && key === 'id' && selectedItem) return null;
+                           
+                           // For FAST, check if field is in editableFields list
+                           const editableFields = (config as any).editableFields;
+                           const isFieldEditable = !editableFields || editableFields.includes(key);
+                           
+                           // If FAST and field not editable, show as read-only
+                           if (type === 'fast' && !isFieldEditable) {
+                             return (
+                               <React.Fragment key={key}>
+                                 {renderDetailRow(col.header, editFormData[key] !== undefined ? editFormData[key] : '')}
+                               </React.Fragment>
+                             );
+                           }
 
                            return (
                              <React.Fragment key={key}>
