@@ -297,13 +297,18 @@ export default function DashboardPage({ type }: DashboardPageProps) {
           }
       }
 
-      // For FAST: Create new version (increment version number, keep old version for history)
+      // For FAST: Create new version (always increment from max version for this asset ID)
       if (type === 'fast') {
-        const currentVersion = selectedItem.version || 1;
-        const newVersion = currentVersion + 1;
+        // Find the maximum version number for this asset ID across all versions
+        const assetId = dataToSave.id;
+        const allVersionsOfAsset = currentList.filter((item: any) => item.id === assetId);
+        const maxVersion = allVersionsOfAsset.length > 0 
+          ? Math.max(...allVersionsOfAsset.map((item: any) => item.version || 1))
+          : 0;
+        const newVersion = maxVersion + 1;
         dataToSave.version = newVersion;
         
-        // Add new version to the top, keep all existing items (including old version)
+        // Add new version to the top, keep all existing items (including old versions)
         const updatedList = [{ ...dataToSave }, ...currentList];
         
         setDataMap(prev => ({
@@ -314,9 +319,10 @@ export default function DashboardPage({ type }: DashboardPageProps) {
         setSelectedItem(dataToSave);
         setIsEditing(false);
         
+        const editedFromVersion = selectedItem.version || 1;
         toast({
-          title: "Changes saved",
-          description: `${dataToSave.id} has been updated to version ${newVersion}.`,
+          title: "New Version Created",
+          description: `${dataToSave.id} version ${newVersion} created (based on version ${editedFromVersion}).`,
           variant: "success"
         });
       } else {
