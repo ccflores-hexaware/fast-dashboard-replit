@@ -1269,29 +1269,86 @@ export default function DashboardPage({ type }: DashboardPageProps) {
             onSort={handleSort}
           />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {currentData.map((item: any) => {
-              const cardKey = item.version ? `${item.id}-v${item.version}` : item.id;
-              const itemVersion = item.version || 1;
-              const maxVersionForId = type === 'fast' && showVersionHistory
-                ? Math.max(...(config.data as any[]).filter((d: any) => d.id === item.id).map((d: any) => d.version || 1))
-                : 1;
-              const isLatest = itemVersion === maxVersionForId;
-              
-              return (
-              <DataCard
-                key={cardKey} 
-                item={item} 
-                titleKey={config.titleKey as any}
-                statusKey={config.statusKey as any}
-                fields={config.cardFields as any}
-                onClick={handleItemClick}
-                showVersion={type === 'fast' && showVersionHistory}
-                isLatestVersion={isLatest}
-              />
-              );
-            })}
-          </div>
+          type === 'fast' && showVersionHistory ? (
+            // Grouped view for FAST History
+            <div className="space-y-8">
+              {(() => {
+                // Group items by Asset ID
+                const groupedByAssetId = currentData.reduce((acc: Record<string, any[]>, item: any) => {
+                  const assetId = item.id;
+                  if (!acc[assetId]) {
+                    acc[assetId] = [];
+                  }
+                  acc[assetId].push(item);
+                  return acc;
+                }, {});
+
+                // Sort versions within each group (latest first)
+                Object.keys(groupedByAssetId).forEach(assetId => {
+                  groupedByAssetId[assetId].sort((a: any, b: any) => (b.version || 1) - (a.version || 1));
+                });
+
+                return Object.entries(groupedByAssetId).map(([assetId, versions]: [string, any[]]) => {
+                  const latestVersion = Math.max(...versions.map((v: any) => v.version || 1));
+                  const latestItem = versions.find((v: any) => (v.version || 1) === latestVersion);
+                  
+                  return (
+                    <div key={assetId} className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                      <div className="flex items-center gap-3 mb-4 pb-3 border-b border-slate-200">
+                        <div className="bg-primary text-white px-3 py-1.5 rounded-lg font-bold text-sm">
+                          {assetId}
+                        </div>
+                        <div className="text-lg font-semibold text-slate-700">
+                          {latestItem?.name || 'Unknown Asset'}
+                        </div>
+                        <div className="ml-auto text-sm text-slate-500">
+                          {versions.length} version{versions.length > 1 ? 's' : ''}
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {versions.map((item: any) => {
+                          const cardKey = `${item.id}-v${item.version || 1}`;
+                          const itemVersion = item.version || 1;
+                          const isLatest = itemVersion === latestVersion;
+                          
+                          return (
+                            <DataCard
+                              key={cardKey} 
+                              item={item} 
+                              titleKey={config.titleKey as any}
+                              statusKey={config.statusKey as any}
+                              fields={config.cardFields as any}
+                              onClick={handleItemClick}
+                              showVersion={true}
+                              isLatestVersion={isLatest}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+          ) : (
+            // Standard grid view
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {currentData.map((item: any) => {
+                const cardKey = item.version ? `${item.id}-v${item.version}` : item.id;
+                
+                return (
+                  <DataCard
+                    key={cardKey} 
+                    item={item} 
+                    titleKey={config.titleKey as any}
+                    statusKey={config.statusKey as any}
+                    fields={config.cardFields as any}
+                    onClick={handleItemClick}
+                  />
+                );
+              })}
+            </div>
+          )
         )}
 
         {/* Pagination */}
