@@ -527,7 +527,25 @@ export default function DashboardPage({ type }: DashboardPageProps) {
           description: 'Comprehensive asset tracking for onboarding, maintenance, and attestation workflows.',
           data: currentData,
           columns: [
-            { header: 'Asset ID', accessorKey: 'id', cell: (item: any) => <span className="font-bold text-primary">{item.id}</span> },
+            { 
+              header: 'Asset ID', 
+              accessorKey: 'id',
+              cell: (item: any) => (
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (isAdmin) {
+                      handleEditClick(item);
+                    } else {
+                      handleItemClick(item);
+                    }
+                  }}
+                  className="text-primary hover:underline font-bold underline decoration-2 underline-offset-2 hover:text-primary/80 transition-colors"
+                >
+                  {item.id}
+                </button>
+              )
+            },
             { header: 'Name', accessorKey: 'name', cell: (item: any) => <span className="font-semibold text-primary">{item.name}</span> },
             { header: 'KALM Assignee', accessorKey: 'kalmAssignee' },
             { header: 'Onboarding Status', accessorKey: 'onboardingStatus' },
