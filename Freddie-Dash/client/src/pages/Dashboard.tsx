@@ -465,9 +465,30 @@ export default function DashboardPage({ type }: DashboardPageProps) {
       return item;
     });
     
+    // Bidirectional sync between FAST and Fake Asset List
+    let updatedAssetsList = [...dataMap.assets];
+    
+    if (type === 'fast') {
+      if (newFakeStatus) {
+        // Adding to Fake Asset List - check if already exists (by id + version)
+        const existsInAssets = updatedAssetsList.some(
+          item => item.id === selectedItem.id && (item.version || 1) === selectedVersion
+        );
+        if (!existsInAssets) {
+          updatedAssetsList = [updatedItem, ...updatedAssetsList];
+        }
+      } else {
+        // Removing from Fake Asset List
+        updatedAssetsList = updatedAssetsList.filter(
+          item => !(item.id === selectedItem.id && (item.version || 1) === selectedVersion)
+        );
+      }
+    }
+    
     setDataMap(prev => ({
       ...prev,
-      [type]: updatedList
+      [type]: updatedList,
+      ...(type === 'fast' ? { assets: updatedAssetsList } : {})
     }));
     
     // Update selected item and form data
@@ -477,11 +498,14 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     }
     
     const versionInfo = type === 'fast' ? ` (version ${selectedVersion})` : '';
+    const syncInfo = type === 'fast' 
+      ? (newFakeStatus ? ' and added to Fake Asset List' : ' and removed from Fake Asset List')
+      : '';
     toast({
       title: newFakeStatus ? "Asset Marked as Fake" : "Fake Asset Status Removed",
       description: newFakeStatus 
-        ? `${selectedItem.id}${versionInfo} has been marked as a Fake Asset.`
-        : `${selectedItem.id}${versionInfo} is no longer marked as a Fake Asset.`,
+        ? `${selectedItem.id}${versionInfo} has been marked as a Fake Asset${syncInfo}.`
+        : `${selectedItem.id}${versionInfo} is no longer marked as a Fake Asset${syncInfo}.`,
       variant: "success"
     });
   };
