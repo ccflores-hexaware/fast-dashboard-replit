@@ -6,7 +6,7 @@ import { DataCard } from '@/components/DataCard';
 import { Pagination } from '@/components/Pagination';
 import { mockAssets, mockTPI, mockBTO, mockCMDB, mockFAST } from '@/lib/mockData';
 import { Button } from '@/components/ui/button';
-import { Download, Plus, Save, X, Pencil, Search, Check, ChevronsUpDown, Calendar as CalendarIcon } from 'lucide-react';
+import { Download, Plus, Save, X, Pencil, Search, Check, ChevronsUpDown, Calendar as CalendarIcon, Copy } from 'lucide-react';
 import { Calendar } from "@/components/ui/calendar";
 import { FilterMenu } from '@/components/FilterMenu';
 import { cn } from "@/lib/utils";
@@ -78,6 +78,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
   const [historyDate, setHistoryDate] = useState<Date | undefined>(undefined);
   const [tempHistoryDate, setTempHistoryDate] = useState<Date | undefined>(undefined);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isDuplicateConfirmOpen, setIsDuplicateConfirmOpen] = useState(false);
 
   // State to hold data so it can be edited
   const [dataMap, setDataMap] = useState({
@@ -310,6 +311,53 @@ export default function DashboardPage({ type }: DashboardPageProps) {
         description: `${dataToSave.id} has been successfully updated.`,
       });
     }
+  };
+
+  const handleDuplicateClick = () => {
+    setIsDuplicateConfirmOpen(true);
+  };
+
+  const handleConfirmDuplicate = () => {
+    if (!selectedItem) return;
+    
+    const currentList = dataMap[type] as any[];
+    
+    // Generate a new unique ID
+    let newId = '';
+    let attempts = 0;
+    do {
+      const randomId = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+      newId = `AST-${randomId}`;
+      attempts++;
+    } while (currentList.some(item => item.id === newId) && attempts < 100);
+    
+    // Create duplicate with new ID and audit trail
+    const timestamp = format(new Date(), 'MMM d, yyyy HH:mm');
+    const duplicatedItem = {
+      ...selectedItem,
+      id: newId,
+      name: `${selectedItem.name} (Copy)`,
+      lastModifiedBy: user.name,
+      lastModifiedDate: timestamp,
+    };
+    
+    // Add to the top of the list
+    const updatedList = [duplicatedItem, ...currentList];
+    
+    setDataMap(prev => ({
+      ...prev,
+      [type]: updatedList
+    }));
+    
+    // Close confirmation dialog and main dialog
+    setIsDuplicateConfirmOpen(false);
+    setIsDialogOpen(false);
+    
+    // Show success message
+    toast({
+      title: "Asset Duplicated",
+      description: `${selectedItem.id} has been duplicated as ${newId}.`,
+    });
   };
 
   // Action Column Definition
@@ -1141,11 +1189,36 @@ export default function DashboardPage({ type }: DashboardPageProps) {
               ) : (
                 <div className="flex gap-3">
                    {type !== 'tpi' && type !== 'bto' && type !== 'cmdb' && isAdmin && <Button onClick={() => handleEditClick()} className="w-full">Edit</Button>}
+                   {type === 'fast' && isAdmin && (
+                     <Button variant="secondary" onClick={handleDuplicateClick} className="w-full">
+                       <Copy className="w-4 h-4 mr-2" /> Duplicate
+                     </Button>
+                   )}
                    <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="w-full">
                      <X className="w-4 h-4 mr-2" /> Close
                    </Button>
                 </div>
               )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Duplicate Confirmation Dialog */}
+        <Dialog open={isDuplicateConfirmOpen} onOpenChange={setIsDuplicateConfirmOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Confirm Duplication</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to duplicate "{selectedItem?.name}"? A new asset will be created with a unique ID.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex gap-3 pt-4">
+              <Button onClick={handleConfirmDuplicate} className="w-full bg-primary hover:bg-primary/90">
+                <Copy className="w-4 h-4 mr-2" /> Yes, Duplicate
+              </Button>
+              <Button variant="outline" onClick={() => setIsDuplicateConfirmOpen(false)} className="w-full">
+                Cancel
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
