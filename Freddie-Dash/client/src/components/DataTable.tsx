@@ -253,9 +253,11 @@ export function DataTable<T extends { id: string }>({
               </TableCell>
             </TableRow>
           ) : (
-            data.map((item) => (
+            data.map((item, rowIndex) => {
+              const rowKey = (item as any).version ? `${item.id}-v${(item as any).version}` : item.id;
+              return (
             <TableRow 
-              key={item.id} 
+              key={rowKey} 
               className={cn(
                 "hover:bg-muted/30 transition-colors border-b border-border",
                 onRowClick && "cursor-pointer"
@@ -279,7 +281,8 @@ export function DataTable<T extends { id: string }>({
                 </TableCell>
               ))}
             </TableRow>
-            ))
+              );
+            })
           )}
         </TableBody>
       </Table>

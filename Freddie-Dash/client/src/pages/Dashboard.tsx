@@ -1133,16 +1133,19 @@ export default function DashboardPage({ type }: DashboardPageProps) {
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {currentData.map((item: any) => (
+            {currentData.map((item: any) => {
+              const cardKey = item.version ? `${item.id}-v${item.version}` : item.id;
+              return (
               <DataCard
-                key={item.id} 
+                key={cardKey} 
                 item={item} 
                 titleKey={config.titleKey as any}
                 statusKey={config.statusKey as any}
                 fields={config.cardFields as any}
                 onClick={handleItemClick}
               />
-            ))}
+              );
+            })}
           </div>
         )}
 
