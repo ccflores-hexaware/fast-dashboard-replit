@@ -951,7 +951,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                         {config.columns.map((col: any) => {
                            const key = col.accessorKey;
                            if (!key) return null;
-                           if (['id', 'status', config.titleKey, config.statusKey].includes(key)) return null;
+                           if (['id', 'status', config.titleKey].includes(key)) return null;
                            
                            // Skip if this field is hidden (though usually columns are visible fields)
                            if ((config as any).hiddenFields?.includes(key)) return null;
