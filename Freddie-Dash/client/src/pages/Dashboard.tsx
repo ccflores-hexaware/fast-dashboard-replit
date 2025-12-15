@@ -737,14 +737,15 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     </div>
   );
 
-  const renderEditRow = (key: string, value: any) => {
-    // Format key for display (camelCase to Title Case)
-    const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+  const renderEditRow = (key: string, value: any, isDisabled: boolean = false, headerLabel?: string) => {
+    // Use header label if provided, otherwise format key for display (camelCase to Title Case)
+    const label = headerLabel || key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
     
     // Determine if we should show a fallback for undefined values in edit mode
     // Typically for editable fields we want empty string, but for read-only audit fields we might want '-'
     const isAuditField = key === 'lastModifiedBy' || key === 'lastModifiedDate';
-    const displayValue = (isAuditField && (value === undefined || value === null || value === 'undefined' || value === '')) ? '-' : value;
+    const shouldDisable = isDisabled || (key === 'id' && !!selectedItem) || isAuditField;
+    const displayValue = ((isAuditField || shouldDisable) && (value === undefined || value === null || value === 'undefined' || value === '')) ? '-' : value;
 
     return (
       <div className="flex flex-col space-y-2 py-3">
@@ -754,7 +755,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
           value={displayValue} 
           onChange={(e) => handleInputChange(key, e.target.value)}
           className="font-semibold"
-          disabled={(key === 'id' && !!selectedItem) || isAuditField}
+          disabled={shouldDisable}
         />
       </div>
     );
@@ -1024,18 +1025,18 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                            const editableFields = (config as any).editableFields;
                            const isFieldEditable = !editableFields || editableFields.includes(key);
                            
-                           // If FAST and field not editable, show as read-only
+                           // If FAST and field not editable, show as disabled input
                            if (type === 'fast' && !isFieldEditable) {
                              return (
                                <React.Fragment key={key}>
-                                 {renderDetailRow(col.header, editFormData[key] !== undefined ? editFormData[key] : '')}
+                                 {renderEditRow(key, editFormData[key] !== undefined ? editFormData[key] : '', true, col.header)}
                                </React.Fragment>
                              );
                            }
 
                            return (
                              <React.Fragment key={key}>
-                               {renderEditRow(key, editFormData[key] !== undefined ? editFormData[key] : '')}
+                               {renderEditRow(key, editFormData[key] !== undefined ? editFormData[key] : '', false, col.header)}
                              </React.Fragment>
                            );
                         })}
