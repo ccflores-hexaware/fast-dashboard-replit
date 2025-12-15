@@ -356,6 +356,8 @@ export interface FAST {
   status: string;
   lastModifiedBy?: string;
   lastModifiedDate?: string;
+  version: number;
+  isFakeAsset?: boolean;
 }
 
 const generateFAST = (count: number): FAST[] => {
@@ -373,60 +375,74 @@ const generateFAST = (count: number): FAST[] => {
   const statuses = ['Green', 'Yellow', 'Red', 'N/A'];
   const yesNo = ['Yes', 'No'];
 
-  return Array.from({ length: count }).map((_, i) => {
+  const allAssets: FAST[] = [];
+  
+  for (let i = 0; i < count; i++) {
     const idNum = (i + 1).toString().padStart(4, '0');
-    const cmdbStatus = pick(cmdbStatuses);
-    return {
-      id: `AST-${idNum}`,
-      name: `${assetNames[i % assetNames.length]} ${Math.floor(i / assetNames.length) + 1}`,
-      kalmAssignee: pick(assignees),
-      onboardingStatus: pick(onboardingStatuses),
-      onboardingDisposition: pick(dispositions),
-      airDisposition: pick(dispositions),
-      maintenanceDisposition: pick(dispositions),
-      lastConnectorDeliveryDate: randomDate(2023, 2025),
-      maintenanceSLAExpiration: randomDate(2025, 2027),
-      technology: pick(technologies),
-      cmdbStatus: cmdbStatus,
-      cmdbBeingRetired: pick(yesNo),
-      cmdbLegalHold: pick(yesNo),
-      ticketsOpened: Math.floor(Math.random() * 20),
-      assetType: pick(assetTypes),
-      yearOnboarded: 2018 + Math.floor(Math.random() * 7),
-      monthOnboarded: pick(months),
-      assetPOCs: `${pick(assignees)}, ${pick(assignees)}`,
-      onboardingSchedule: pick(schedules),
-      entitlementsMissing: pick(yesNo),
-      membersMissing: pick(yesNo),
-      cisMissing: pick(yesNo),
-      reliesOnCAFederation: pick(yesNo),
-      connectorPattern: pick(connectorPatterns),
-      automationTeam: pick(teams),
-      nameOfConnector: `Connector-${Math.floor(Math.random() * 100) + 1}`,
-      connectorStatus: pick(['Active', 'Inactive', 'Pending', 'Error']),
-      enrollmentStatus: pick(['Enrolled', 'Not Enrolled', 'Pending', 'Exempt']),
-      evidenceStatus: pick(['Complete', 'Incomplete', 'Pending Review', 'N/A']),
-      miSchedule: pick(schedules),
-      miLastAIRUpload: randomDate(2024, 2025),
-      miDaysSince: Math.floor(Math.random() * 90),
-      miDueDate: randomDate(2025, 2026),
-      miOnboardingChangeDate: randomDate(2023, 2025),
-      miL2Assignee: pick(assignees),
-      miStatus: pick(statuses),
-      attestationKickedOff: pick(yesNo),
-      attestationComplete: pick(yesNo),
-      aiLastCandAAttestation: randomDate(2024, 2025),
-      keychainAttestationKickoffDate: randomDate(2024, 2025),
-      aiDaysSince: Math.floor(Math.random() * 120),
-      aiAttestationDueDate: randomDate(2025, 2026),
-      aiOnboardingChangeDate: randomDate(2023, 2025),
-      aiL2Assignee: pick(assignees),
-      aiStatus: pick(statuses),
-      theGap: `${Math.floor(Math.random() * 30)} days`,
-      comments: pick(['On track', 'Needs attention', 'Escalated', 'Waiting for approval', 'Under review', '']),
-      status: cmdbStatus
-    };
-  });
+    const baseId = `AST-${idNum}`;
+    const assetName = `${assetNames[i % assetNames.length]} ${Math.floor(i / assetNames.length) + 1}`;
+    
+    // Randomly decide how many versions this asset has (1-3)
+    const numVersions = Math.random() < 0.3 ? (Math.random() < 0.5 ? 2 : 3) : 1;
+    
+    for (let v = 1; v <= numVersions; v++) {
+      const cmdbStatus = pick(cmdbStatuses);
+      allAssets.push({
+        id: baseId,
+        name: assetName,
+        kalmAssignee: pick(assignees),
+        onboardingStatus: pick(onboardingStatuses),
+        onboardingDisposition: pick(dispositions),
+        airDisposition: pick(dispositions),
+        maintenanceDisposition: pick(dispositions),
+        lastConnectorDeliveryDate: randomDate(2023, 2025),
+        maintenanceSLAExpiration: randomDate(2025, 2027),
+        technology: pick(technologies),
+        cmdbStatus: cmdbStatus,
+        cmdbBeingRetired: pick(yesNo),
+        cmdbLegalHold: pick(yesNo),
+        ticketsOpened: Math.floor(Math.random() * 20),
+        assetType: pick(assetTypes),
+        yearOnboarded: 2018 + Math.floor(Math.random() * 7),
+        monthOnboarded: pick(months),
+        assetPOCs: `${pick(assignees)}, ${pick(assignees)}`,
+        onboardingSchedule: pick(schedules),
+        entitlementsMissing: pick(yesNo),
+        membersMissing: pick(yesNo),
+        cisMissing: pick(yesNo),
+        reliesOnCAFederation: pick(yesNo),
+        connectorPattern: pick(connectorPatterns),
+        automationTeam: pick(teams),
+        nameOfConnector: `Connector-${Math.floor(Math.random() * 100) + 1}`,
+        connectorStatus: pick(['Active', 'Inactive', 'Pending', 'Error']),
+        enrollmentStatus: pick(['Enrolled', 'Not Enrolled', 'Pending', 'Exempt']),
+        evidenceStatus: pick(['Complete', 'Incomplete', 'Pending Review', 'N/A']),
+        miSchedule: pick(schedules),
+        miLastAIRUpload: randomDate(2024, 2025),
+        miDaysSince: Math.floor(Math.random() * 90),
+        miDueDate: randomDate(2025, 2026),
+        miOnboardingChangeDate: randomDate(2023, 2025),
+        miL2Assignee: pick(assignees),
+        miStatus: pick(statuses),
+        attestationKickedOff: pick(yesNo),
+        attestationComplete: pick(yesNo),
+        aiLastCandAAttestation: randomDate(2024, 2025),
+        keychainAttestationKickoffDate: randomDate(2024, 2025),
+        aiDaysSince: Math.floor(Math.random() * 120),
+        aiAttestationDueDate: randomDate(2025, 2026),
+        aiOnboardingChangeDate: randomDate(2023, 2025),
+        aiL2Assignee: pick(assignees),
+        aiStatus: pick(statuses),
+        theGap: `${Math.floor(Math.random() * 30)} days`,
+        comments: pick(['On track', 'Needs attention', 'Escalated', 'Waiting for approval', 'Under review', '']),
+        status: cmdbStatus,
+        version: v,
+        isFakeAsset: false
+      });
+    }
+  }
+  
+  return allAssets;
 };
 
 export const mockAssets: Asset[] = generateAssets(1000);

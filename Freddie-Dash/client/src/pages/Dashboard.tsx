@@ -6,6 +6,7 @@ import { DataCard } from '@/components/DataCard';
 import { Pagination } from '@/components/Pagination';
 import { mockAssets, mockTPI, mockBTO, mockCMDB, mockFAST } from '@/lib/mockData';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Download, Plus, Save, X, Pencil, Search, Check, ChevronsUpDown, Calendar as CalendarIcon, Copy, AlertTriangle } from 'lucide-react';
 import { Calendar } from "@/components/ui/calendar";
 import { FilterMenu } from '@/components/FilterMenu';
@@ -79,6 +80,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
   const [tempHistoryDate, setTempHistoryDate] = useState<Date | undefined>(undefined);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isDuplicateConfirmOpen, setIsDuplicateConfirmOpen] = useState(false);
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
 
   // State to hold data so it can be edited
   const [dataMap, setDataMap] = useState({
@@ -656,6 +658,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
               )
             },
             { header: 'Name', accessorKey: 'name', cell: (item: any) => <span className="font-semibold text-primary">{item.name}</span> },
+            { header: 'Version', accessorKey: 'version' },
             { header: 'KALM Assignee', accessorKey: 'kalmAssignee' },
             { header: 'Onboarding Status', accessorKey: 'onboardingStatus' },
             { header: 'Onboarding Disposition', accessorKey: 'onboardingDisposition' },
@@ -826,6 +829,14 @@ export default function DashboardPage({ type }: DashboardPageProps) {
       });
     }
 
+    // Version History Filter (FAST only - show only latest version when checkbox is unchecked)
+    let matchesVersionFilter = true;
+    if (type === 'fast' && !showVersionHistory) {
+      const allFastData = dataMap.fast as any[];
+      const maxVersion = Math.max(...allFastData.filter((a: any) => a.id === item.id).map((a: any) => a.version || 1));
+      matchesVersionFilter = (item.version || 1) === maxVersion;
+    }
+
     // History Date Filter
     let matchesHistory = true;
     if (type === 'cmdb' && historyDate) {
@@ -833,7 +844,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
        matchesHistory = item.lastUpdated === dateStr;
     }
 
-    return matchesSearch && matchesStatus && matchesColumnFilters && matchesHistory;
+    return matchesSearch && matchesStatus && matchesColumnFilters && matchesVersionFilter && matchesHistory;
   }).sort((a: any, b: any) => {
     if (!sortConfig.key) return 0;
     
@@ -1078,7 +1089,19 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                 />
               </div>
             </div>
-            <div className="flex gap-2 shrink-0">
+            <div className="flex gap-2 shrink-0 items-center">
+              {type === 'fast' && (
+                <div className="flex items-center gap-2 mr-4">
+                  <Checkbox
+                    id="showVersionHistory"
+                    checked={showVersionHistory}
+                    onCheckedChange={(checked) => setShowVersionHistory(checked === true)}
+                  />
+                  <Label htmlFor="showVersionHistory" className="text-sm font-medium cursor-pointer whitespace-nowrap">
+                    Show Version History
+                  </Label>
+                </div>
+              )}
               {view === 'card' && (
                 <FilterMenu 
                   columns={config.columns as any}
