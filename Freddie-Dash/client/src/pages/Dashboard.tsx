@@ -980,7 +980,8 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     const ws = XLSX.utils.json_to_sheet(filteredData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Data");
-    XLSX.writeFile(wb, `${config.title.replace(/[^a-zA-Z0-9]/g, '_')}_Export.xlsx`);
+    const timestamp = format(new Date(), 'yyyyMMdd_HHmmss');
+    XLSX.writeFile(wb, `${config.title.replace(/[^a-zA-Z0-9]/g, '_')}_Export_${timestamp}.xlsx`);
   };
 
   return (
