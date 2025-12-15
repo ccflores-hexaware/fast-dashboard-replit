@@ -935,7 +935,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                   {isEditing ? (selectedItem ? 'Edit Item' : 'Add New Item') : (selectedItem ? selectedItem[config.titleKey as keyof typeof selectedItem] : 'Details')}
                 </DialogTitle>
                 {/* Status indicator in header */}
-                {!isEditing && selectedItem && config.statusKey && <StatusBadge status={selectedItem.status} />}
+                {!isEditing && selectedItem && config.statusKey && <StatusBadge status={selectedItem[config.statusKey as keyof typeof selectedItem]} />}
               </div>
               <DialogDescription>
                  {selectedItem?.id && `ID: ${selectedItem.id}`}
@@ -951,7 +951,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                         {config.columns.map((col: any) => {
                            const key = col.accessorKey;
                            if (!key) return null;
-                           if (['id', 'status', config.titleKey].includes(key)) return null;
+                           if (['id', 'status', config.titleKey, config.statusKey].includes(key)) return null;
                            
                            // Skip if this field is hidden (though usually columns are visible fields)
                            if ((config as any).hiddenFields?.includes(key)) return null;
