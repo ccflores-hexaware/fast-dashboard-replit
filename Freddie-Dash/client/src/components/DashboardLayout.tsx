@@ -24,11 +24,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, setUser } = useUser();
 
   const tabs = [
+    { name: 'FAST', path: '/fast' },
     { name: 'Fake Asset List', path: '/assets' },
     { name: 'TPI', path: '/tpi' },
     { name: 'BTO', path: '/bto' },
     { name: 'CMDB', path: '/cmdb' },
-    { name: 'FAST', path: '/fast' },
   ];
 
   const isActive = (path: string) => location === path || (path === '/assets' && location === '/');
