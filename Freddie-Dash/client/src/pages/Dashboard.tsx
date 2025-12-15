@@ -4,7 +4,7 @@ import { ViewToggle } from '@/components/ViewToggle';
 import { DataTable, StatusBadge } from '@/components/DataTable';
 import { DataCard } from '@/components/DataCard';
 import { Pagination } from '@/components/Pagination';
-import { mockAssets, mockTPI, mockBTO, mockCMDB } from '@/lib/mockData';
+import { mockAssets, mockTPI, mockBTO, mockCMDB, mockFAST } from '@/lib/mockData';
 import { Button } from '@/components/ui/button';
 import { Download, Plus, Save, X, Pencil, Search, Check, ChevronsUpDown, Calendar as CalendarIcon } from 'lucide-react';
 import { Calendar } from "@/components/ui/calendar";
@@ -49,7 +49,7 @@ import { useUser } from "@/lib/userContext";
 import * as XLSX from 'xlsx';
 
 interface DashboardPageProps {
-  type: 'assets' | 'tpi' | 'bto' | 'cmdb';
+  type: 'assets' | 'tpi' | 'bto' | 'cmdb' | 'fast';
 }
 
 export default function DashboardPage({ type }: DashboardPageProps) {
@@ -77,7 +77,8 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     assets: mockAssets,
     tpi: mockTPI,
     bto: mockBTO,
-    cmdb: mockCMDB
+    cmdb: mockCMDB,
+    fast: mockFAST
   });
 
   // Reset pagination and selection when tab changes
@@ -518,6 +519,49 @@ export default function DashboardPage({ type }: DashboardPageProps) {
             { label: 'Owner', key: 'owner' },
           ],
           titleKey: 'configItem',
+          statusKey: 'status',
+        };
+      case 'fast':
+        return {
+          title: 'Full Asset Status Tracker (FAST)',
+          description: 'Comprehensive asset health monitoring, compliance tracking, and risk assessment.',
+          data: currentData,
+          columns: [
+            { header: 'FAST ID', accessorKey: 'id', cell: (item: any) => <span className="font-bold text-primary">{item.id}</span> },
+            { header: 'Asset Name', accessorKey: 'assetName', cell: (item: any) => <span className="font-semibold text-primary">{item.assetName}</span> },
+            { header: 'Status', accessorKey: 'status' },
+            { header: 'Health Score', accessorKey: 'healthScore', cell: (item: any) => (
+              <span className={`font-semibold ${item.healthScore >= 80 ? 'text-green-600' : item.healthScore >= 60 ? 'text-yellow-600' : 'text-red-600'}`}>
+                {item.healthScore}%
+              </span>
+            )},
+            { header: 'Risk Level', accessorKey: 'riskLevel' },
+            { header: 'Compliance Status', accessorKey: 'complianceStatus' },
+            { header: 'Last Audit Date', accessorKey: 'lastAuditDate' },
+            { header: 'Owner', accessorKey: 'owner' },
+            { header: 'Department', accessorKey: 'department' },
+            { header: 'Lifecycle Stage', accessorKey: 'lifecycleStage' },
+            { header: 'Utilization Rate', accessorKey: 'utilizationRate' },
+            { header: 'Cost Center', accessorKey: 'costCenter' },
+            { header: 'Vendor', accessorKey: 'vendor' },
+            { header: 'Contract Expiry', accessorKey: 'contractExpiry' },
+            { header: 'Support Tier', accessorKey: 'supportTier' },
+            { header: 'Data Classification', accessorKey: 'dataClassification' },
+            { header: 'Backup Status', accessorKey: 'backupStatus' },
+            { header: 'DR Status', accessorKey: 'drStatus' },
+            { header: 'Patch Status', accessorKey: 'patchStatus' },
+            { header: 'Security Rating', accessorKey: 'securityRating' },
+          ],
+          cardFields: [
+            { label: 'FAST ID', key: 'id' },
+            { label: 'Status', key: 'status' },
+            { label: 'Health Score', key: 'healthScore' },
+            { label: 'Risk Level', key: 'riskLevel' },
+            { label: 'Compliance', key: 'complianceStatus' },
+            { label: 'Owner', key: 'owner' },
+            { label: 'Department', key: 'department' },
+          ],
+          titleKey: 'assetName',
           statusKey: 'status',
         };
       default:

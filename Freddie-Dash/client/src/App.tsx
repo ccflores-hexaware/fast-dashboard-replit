@@ -26,6 +26,9 @@ function Router() {
       <Route path="/cmdb">
         <DashboardPage type="cmdb" />
       </Route>
+      <Route path="/fast">
+        <DashboardPage type="fast" />
+      </Route>
       <Route component={NotFound} />
     </Switch>
   );
