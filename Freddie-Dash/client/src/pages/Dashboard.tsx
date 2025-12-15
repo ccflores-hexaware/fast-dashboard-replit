@@ -7,7 +7,8 @@ import { Pagination } from '@/components/Pagination';
 import { mockAssets, mockTPI, mockBTO, mockCMDB, mockFAST } from '@/lib/mockData';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Download, Plus, Save, X, Pencil, Search, Check, ChevronsUpDown, Calendar as CalendarIcon, Copy, AlertTriangle } from 'lucide-react';
+import { Download, Plus, Save, X, Pencil, Search, Check, ChevronsUpDown, Calendar as CalendarIcon, Copy, AlertTriangle, ArrowRight } from 'lucide-react';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { FilterMenu } from '@/components/FilterMenu';
 import { cn } from "@/lib/utils";
@@ -1270,8 +1271,8 @@ export default function DashboardPage({ type }: DashboardPageProps) {
           />
         ) : (
           type === 'fast' && showVersionHistory ? (
-            // Grouped view for FAST History
-            <div className="space-y-8">
+            // Compact grouped view for FAST History with version tabs
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {(() => {
                 // Group items by Asset ID
                 const groupedByAssetId = currentData.reduce((acc: Record<string, any[]>, item: any) => {
@@ -1290,42 +1291,73 @@ export default function DashboardPage({ type }: DashboardPageProps) {
 
                 return Object.entries(groupedByAssetId).map(([assetId, versions]: [string, any[]]) => {
                   const latestVersion = Math.max(...versions.map((v: any) => v.version || 1));
-                  const latestItem = versions.find((v: any) => (v.version || 1) === latestVersion);
+                  const latestItem = versions[0]; // Already sorted, first is latest
                   
                   return (
-                    <div key={assetId} className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-                      <div className="flex items-center gap-3 mb-4 pb-3 border-b border-slate-200">
-                        <div className="bg-primary text-white px-3 py-1.5 rounded-lg font-bold text-sm">
-                          {assetId}
-                        </div>
-                        <div className="text-lg font-semibold text-slate-700">
-                          {latestItem?.name || 'Unknown Asset'}
-                        </div>
-                        <div className="ml-auto text-sm text-slate-500">
-                          {versions.length} version{versions.length > 1 ? 's' : ''}
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {versions.map((item: any) => {
-                          const cardKey = `${item.id}-v${item.version || 1}`;
-                          const itemVersion = item.version || 1;
-                          const isLatest = itemVersion === latestVersion;
-                          
+                    <Card 
+                      key={assetId}
+                      className="hover:shadow-md transition-all cursor-pointer border-t-4 border-t-primary relative overflow-hidden"
+                    >
+                      {/* Version pills at top */}
+                      <div className="flex items-center gap-1 px-4 pt-3 pb-2 border-b bg-slate-50">
+                        <span className="text-xs text-slate-500 mr-1">Versions:</span>
+                        {versions.map((v: any) => {
+                          const ver = v.version || 1;
+                          const isLatest = ver === latestVersion;
                           return (
-                            <DataCard
-                              key={cardKey} 
-                              item={item} 
-                              titleKey={config.titleKey as any}
-                              statusKey={config.statusKey as any}
-                              fields={config.cardFields as any}
-                              onClick={handleItemClick}
-                              showVersion={true}
-                              isLatestVersion={isLatest}
-                            />
+                            <button
+                              key={`${assetId}-v${ver}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleItemClick(v);
+                              }}
+                              className={cn(
+                                "px-2 py-0.5 rounded text-xs font-medium transition-all",
+                                isLatest 
+                                  ? "bg-green-500 text-white" 
+                                  : "bg-slate-200 text-slate-600 hover:bg-slate-300"
+                              )}
+                            >
+                              v{ver}{isLatest ? ' (Latest)' : ''}
+                            </button>
                           );
                         })}
                       </div>
-                    </div>
+                      <CardHeader 
+                        className="pb-2 pt-3 cursor-pointer" 
+                        onClick={() => handleItemClick(latestItem)}
+                      >
+                        <div className="flex justify-between items-start">
+                          <CardTitle className="text-lg font-bold text-primary truncate pr-4">
+                            {latestItem?.name || 'Unknown'}
+                          </CardTitle>
+                          {config.statusKey && <StatusBadge status={latestItem?.[config.statusKey as string]} />}
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pt-0" onClick={() => handleItemClick(latestItem)}>
+                        <dl className="space-y-1.5 text-sm">
+                          <div className="flex justify-between">
+                            <dt className="text-muted-foreground font-medium">Asset ID:</dt>
+                            <dd className="text-right font-semibold text-foreground">{assetId}</dd>
+                          </div>
+                          {(config.cardFields as any[]).slice(1, 4).map((field: any) => (
+                            <div key={`${assetId}-${field.key}`} className="flex justify-between">
+                              <dt className="text-muted-foreground font-medium">{field.label}:</dt>
+                              <dd className="text-right font-semibold text-foreground">
+                                {String(latestItem?.[field.key] || 'N/A')}
+                              </dd>
+                            </div>
+                          ))}
+                        </dl>
+                      </CardContent>
+                      <CardFooter className="pt-2 pb-4" onClick={() => handleItemClick(latestItem)}>
+                        <div className="w-full flex justify-end text-primary text-sm font-semibold group">
+                          <span className="flex items-center group-hover:underline">
+                            View Details <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                          </span>
+                        </div>
+                      </CardFooter>
+                    </Card>
                   );
                 });
               })()}
