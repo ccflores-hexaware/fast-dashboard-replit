@@ -84,6 +84,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [assetIdError, setAssetIdError] = useState<string | null>(null);
   const [assetIdAvailable, setAssetIdAvailable] = useState<boolean>(false);
+  const [selectedCardVersions, setSelectedCardVersions] = useState<Record<string, number>>({});
 
   // State to hold data so it can be edited
   const [dataMap, setDataMap] = useState({
@@ -1291,7 +1292,8 @@ export default function DashboardPage({ type }: DashboardPageProps) {
 
                 return Object.entries(groupedByAssetId).map(([assetId, versions]: [string, any[]]) => {
                   const latestVersion = Math.max(...versions.map((v: any) => v.version || 1));
-                  const latestItem = versions[0]; // Already sorted, first is latest
+                  const selectedVersion = selectedCardVersions[assetId] || latestVersion;
+                  const displayItem = versions.find((v: any) => (v.version || 1) === selectedVersion) || versions[0];
                   
                   return (
                     <Card 
@@ -1299,58 +1301,67 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                       className="hover:shadow-md transition-all cursor-pointer border-t-4 border-t-primary relative overflow-hidden"
                     >
                       {/* Version pills at top */}
-                      <div className="flex items-center gap-1 px-4 pt-3 pb-2 border-b bg-slate-50">
+                      <div className="flex items-center gap-1 px-4 pt-3 pb-2 border-b bg-slate-50 flex-wrap">
                         <span className="text-xs text-slate-500 mr-1">Versions:</span>
                         {versions.map((v: any) => {
                           const ver = v.version || 1;
                           const isLatest = ver === latestVersion;
+                          const isSelected = ver === selectedVersion;
                           return (
                             <button
                               key={`${assetId}-v${ver}`}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleItemClick(v);
+                                setSelectedCardVersions(prev => ({
+                                  ...prev,
+                                  [assetId]: ver
+                                }));
                               }}
                               className={cn(
                                 "px-2 py-0.5 rounded text-xs font-medium transition-all",
-                                isLatest 
-                                  ? "bg-green-500 text-white" 
-                                  : "bg-slate-200 text-slate-600 hover:bg-slate-300"
+                                isSelected
+                                  ? "bg-primary text-white ring-2 ring-primary/30"
+                                  : isLatest 
+                                    ? "bg-green-100 text-green-700 hover:bg-green-200" 
+                                    : "bg-slate-200 text-slate-600 hover:bg-slate-300"
                               )}
                             >
-                              v{ver}{isLatest ? ' (Latest)' : ''}
+                              v{ver}{isLatest ? '*' : ''}
                             </button>
                           );
                         })}
                       </div>
                       <CardHeader 
                         className="pb-2 pt-3 cursor-pointer" 
-                        onClick={() => handleItemClick(latestItem)}
+                        onClick={() => handleItemClick(displayItem)}
                       >
                         <div className="flex justify-between items-start">
                           <CardTitle className="text-lg font-bold text-primary truncate pr-4">
-                            {latestItem?.name || 'Unknown'}
+                            {displayItem?.name || 'Unknown'}
                           </CardTitle>
-                          {config.statusKey && <StatusBadge status={latestItem?.[config.statusKey as string]} />}
+                          {config.statusKey && <StatusBadge status={displayItem?.[config.statusKey as string]} />}
                         </div>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Viewing v{selectedVersion}{selectedVersion === latestVersion ? ' (Latest)' : ''}
+                        </p>
                       </CardHeader>
-                      <CardContent className="pt-0" onClick={() => handleItemClick(latestItem)}>
+                      <CardContent className="pt-0" onClick={() => handleItemClick(displayItem)}>
                         <dl className="space-y-1.5 text-sm">
                           <div className="flex justify-between">
                             <dt className="text-muted-foreground font-medium">Asset ID:</dt>
                             <dd className="text-right font-semibold text-foreground">{assetId}</dd>
                           </div>
                           {(config.cardFields as any[]).slice(1, 4).map((field: any) => (
-                            <div key={`${assetId}-${field.key}`} className="flex justify-between">
+                            <div key={`${assetId}-${field.key}-${selectedVersion}`} className="flex justify-between">
                               <dt className="text-muted-foreground font-medium">{field.label}:</dt>
                               <dd className="text-right font-semibold text-foreground">
-                                {String(latestItem?.[field.key] || 'N/A')}
+                                {String(displayItem?.[field.key] || 'N/A')}
                               </dd>
                             </div>
                           ))}
                         </dl>
                       </CardContent>
-                      <CardFooter className="pt-2 pb-4" onClick={() => handleItemClick(latestItem)}>
+                      <CardFooter className="pt-2 pb-4" onClick={() => handleItemClick(displayItem)}>
                         <div className="w-full flex justify-end text-primary text-sm font-semibold group">
                           <span className="flex items-center group-hover:underline">
                             View Details <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
