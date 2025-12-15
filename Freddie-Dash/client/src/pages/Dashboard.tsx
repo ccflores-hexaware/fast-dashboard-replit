@@ -1142,7 +1142,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
           setIsDialogOpen(open);
           if (!open) setIsEditing(false);
         }}>
-          <DialogContent className="w-full sm:max-w-lg max-h-[90vh] flex flex-col p-0 gap-0">
+          <DialogContent className="w-full sm:max-w-2xl max-h-[90vh] flex flex-col p-0 gap-0">
             <DialogHeader className="p-6 pb-2">
               <div className="flex justify-between items-center pr-8">
                 <DialogTitle className="text-2xl font-bold text-primary">
