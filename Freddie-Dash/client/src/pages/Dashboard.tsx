@@ -1095,7 +1095,10 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                   <Checkbox
                     id="showVersionHistory"
                     checked={showVersionHistory}
-                    onCheckedChange={(checked) => setShowVersionHistory(checked === true)}
+                    onCheckedChange={(checked) => {
+                      setShowVersionHistory(checked === true);
+                      setCurrentPage(1);
+                    }}
                   />
                   <Label htmlFor="showVersionHistory" className="text-sm font-medium cursor-pointer whitespace-nowrap">
                     Show Version History
