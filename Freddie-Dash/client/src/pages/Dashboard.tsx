@@ -773,7 +773,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
               )
             },
             { header: 'Name', accessorKey: 'name', cell: (item: any) => <span className="font-semibold text-primary">{item.name}</span> },
-            { header: 'Version', accessorKey: 'version' },
+            ...(showVersionHistory ? [{ header: 'Version', accessorKey: 'version' }] : []),
             { header: 'KALM Assignee', accessorKey: 'kalmAssignee' },
             { header: 'Onboarding Status', accessorKey: 'onboardingStatus' },
             { header: 'Onboarding Disposition', accessorKey: 'onboardingDisposition' },
