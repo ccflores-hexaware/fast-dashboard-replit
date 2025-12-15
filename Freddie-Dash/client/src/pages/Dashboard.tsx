@@ -81,6 +81,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isDuplicateConfirmOpen, setIsDuplicateConfirmOpen] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [assetIdError, setAssetIdError] = useState<string | null>(null);
 
   // State to hold data so it can be edited
   const [dataMap, setDataMap] = useState({
@@ -104,7 +105,36 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     setHistoryDate(undefined);
     setTempHistoryDate(undefined);
     setIsHistoryOpen(false);
+    setAssetIdError(null);
   }, [type]);
+
+  // Debounced Asset ID validation for real-time duplicate checking
+  useEffect(() => {
+    // Only check when creating new item (selectedItem is null) and user is editing
+    if (!isEditing || selectedItem) {
+      setAssetIdError(null);
+      return;
+    }
+
+    const currentId = editFormData.id;
+    if (!currentId || currentId.trim() === '') {
+      setAssetIdError(null);
+      return;
+    }
+
+    const debounceTimer = setTimeout(() => {
+      const currentList = dataMap[type] as any[];
+      const idExists = currentList.some(item => item.id === currentId);
+      
+      if (idExists) {
+        setAssetIdError(`Asset ID "${currentId}" already exists. Please use a unique ID.`);
+      } else {
+        setAssetIdError(null);
+      }
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(debounceTimer);
+  }, [editFormData.id, isEditing, selectedItem, dataMap, type]);
 
   const handleItemClick = (item: any) => {
     setSelectedItem(item);
@@ -169,6 +199,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     setIsDialogOpen(false);
     setIsEditing(false);
     setEditFormData({});
+    setAssetIdError(null);
   };
 
   const handleViewChange = (newView: 'table' | 'card') => {
@@ -211,6 +242,16 @@ export default function DashboardPage({ type }: DashboardPageProps) {
   const handleSave = () => {
     const currentList = dataMap[type] as any[];
     const isCreating = !selectedItem; // If no selectedItem, we are creating
+    
+    // Prevent saving if there's a real-time validation error
+    if (isCreating && assetIdError) {
+      toast({
+        title: "Error: Duplicate ID",
+        description: assetIdError,
+        variant: "destructive"
+      });
+      return;
+    }
     
     // Copy form data to avoid mutating state directly in the next steps
     const dataToSave = { ...editFormData };
@@ -962,6 +1003,10 @@ export default function DashboardPage({ type }: DashboardPageProps) {
       );
     }
 
+    // Check if this is the ID field and we're creating a new item (show real-time validation)
+    const isIdField = key === 'id';
+    const showIdError = isIdField && !selectedItem && assetIdError;
+
     return (
       <div className="flex flex-col space-y-2 py-3">
         <Label htmlFor={key} className="text-sm font-medium text-muted-foreground">{label}</Label>
@@ -969,9 +1014,15 @@ export default function DashboardPage({ type }: DashboardPageProps) {
           id={key} 
           value={displayValue} 
           onChange={(e) => handleInputChange(key, e.target.value)}
-          className="font-semibold"
+          className={cn("font-semibold", showIdError && "border-red-500 focus-visible:ring-red-500")}
           disabled={shouldDisable}
         />
+        {showIdError && (
+          <p className="text-sm text-red-500 flex items-center gap-1">
+            <AlertTriangle className="h-3.5 w-3.5" />
+            {assetIdError}
+          </p>
+        )}
       </div>
     );
   };
