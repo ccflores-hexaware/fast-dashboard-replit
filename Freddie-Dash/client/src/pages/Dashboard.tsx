@@ -578,14 +578,13 @@ export default function DashboardPage({ type }: DashboardPageProps) {
           cardFields: [
             { label: 'Asset ID', key: 'id' },
             { label: 'KALM Assignee', key: 'kalmAssignee' },
-            { label: 'Onboarding Status', key: 'onboardingStatus' },
             { label: 'CMDB Status', key: 'cmdbStatus' },
             { label: 'Technology', key: 'technology' },
             { label: 'Asset Type', key: 'assetType' },
             { label: 'Connector Status', key: 'connectorStatus' },
           ],
           titleKey: 'name',
-          statusKey: 'status',
+          statusKey: 'onboardingStatus',
         };
       default:
         return {
