@@ -354,6 +354,8 @@ export interface FAST {
   theGap: string;
   comments: string;
   status: string;
+  lastModifiedBy?: string;
+  lastModifiedDate?: string;
 }
 
 const generateFAST = (count: number): FAST[] => {

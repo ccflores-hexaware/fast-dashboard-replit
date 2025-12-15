@@ -574,6 +574,8 @@ export default function DashboardPage({ type }: DashboardPageProps) {
             { header: 'AI Status', accessorKey: 'aiStatus' },
             { header: 'The Gap', accessorKey: 'theGap' },
             { header: 'Comments', accessorKey: 'comments' },
+            { header: 'Last Modified By', accessorKey: 'lastModifiedBy' },
+            { header: 'Last Modified Date', accessorKey: 'lastModifiedDate' },
           ],
           cardFields: [
             { label: 'Asset ID', key: 'id' },
