@@ -307,62 +307,122 @@ const generateCMDB = (count: number): CMDB[] => {
 
 export interface FAST {
   id: string;
-  assetName: string;
+  name: string;
+  kalmAssignee: string;
+  onboardingStatus: string;
+  onboardingDisposition: string;
+  airDisposition: string;
+  maintenanceDisposition: string;
+  lastConnectorDeliveryDate: string;
+  maintenanceSLAExpiration: string;
+  technology: string;
+  cmdbStatus: string;
+  cmdbBeingRetired: string;
+  cmdbLegalHold: string;
+  ticketsOpened: number;
+  assetType: string;
+  yearOnboarded: number;
+  monthOnboarded: string;
+  assetPOCs: string;
+  onboardingSchedule: string;
+  entitlementsMissing: string;
+  membersMissing: string;
+  cisMissing: string;
+  reliesOnCAFederation: string;
+  connectorPattern: string;
+  automationTeam: string;
+  nameOfConnector: string;
+  connectorStatus: string;
+  enrollmentStatus: string;
+  evidenceStatus: string;
+  miSchedule: string;
+  miLastAIRUpload: string;
+  miDaysSince: number;
+  miDueDate: string;
+  miOnboardingChangeDate: string;
+  miL2Assignee: string;
+  miStatus: string;
+  attestationKickedOff: string;
+  attestationComplete: string;
+  aiLastCandAAttestation: string;
+  keychainAttestationKickoffDate: string;
+  aiDaysSince: number;
+  aiAttestationDueDate: string;
+  aiOnboardingChangeDate: string;
+  aiL2Assignee: string;
+  aiStatus: string;
+  theGap: string;
+  comments: string;
   status: string;
-  healthScore: number;
-  lastAuditDate: string;
-  complianceStatus: string;
-  riskLevel: string;
-  owner: string;
-  department: string;
-  lifecycleStage: string;
-  utilizationRate: string;
-  costCenter: string;
-  vendor: string;
-  contractExpiry: string;
-  supportTier: string;
-  dataClassification: string;
-  backupStatus: string;
-  drStatus: string;
-  patchStatus: string;
-  securityRating: string;
 }
 
 const generateFAST = (count: number): FAST[] => {
   const assetNames = ['Core Banking System', 'Payment Gateway', 'Loan Origination Platform', 'Risk Analytics Engine', 'Customer Portal', 'Document Management', 'Fraud Detection', 'Data Warehouse', 'Mobile Banking App', 'Treasury Management', 'Reporting Hub', 'Identity Service', 'Notification Engine', 'Workflow Automation', 'Integration Hub'];
-  const owners = ['Sarah Jenkins', 'Mike Ross', 'Jessica Pearson', 'Louis Litt', 'Harvey Specter', 'Donna Paulsen', 'Rachel Zane', 'Alex Williams'];
-  const departments = ['Single-Family', 'Multifamily', 'Capital Markets', 'Investments', 'Enterprise Ops', 'Risk Management', 'Finance', 'IT Operations'];
-  const statuses = ['Active', 'Under Review', 'Maintenance', 'Critical', 'Stable'];
-  const riskLevels = ['Low', 'Medium', 'High', 'Critical'];
-  const complianceStatuses = ['Compliant', 'Non-Compliant', 'Pending Review', 'Exempted'];
-  const lifecycleStages = ['Production', 'Development', 'Testing', 'Sunset', 'Decommission'];
-  const supportTiers = ['Platinum', 'Gold', 'Silver', 'Bronze'];
-  const dataClassifications = ['Public', 'Internal', 'Confidential', 'Restricted'];
-  const patchStatuses = ['Current', 'Behind 1 Cycle', 'Behind 2+ Cycles', 'N/A'];
+  const assignees = ['Sarah Jenkins', 'Mike Ross', 'Jessica Pearson', 'Louis Litt', 'Harvey Specter', 'Donna Paulsen', 'Rachel Zane', 'Alex Williams', 'Katrina Bennett', 'Robert Zane'];
+  const onboardingStatuses = ['Onboarded', 'In Progress', 'Pending', 'Not Started', 'Blocked'];
+  const dispositions = ['Approved', 'Pending Review', 'Rejected', 'N/A', 'Waived'];
+  const technologies = ['Java', '.NET', 'Python', 'Node.js', 'Angular', 'React', 'Legacy', 'Mainframe', 'Cloud Native'];
+  const cmdbStatuses = ['Active', 'Retired', 'Provisioning', 'Maintenance', 'Decommissioned'];
+  const assetTypes = ['Application', 'Service', 'API', 'Database', 'Infrastructure', 'Platform'];
+  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const connectorPatterns = ['REST API', 'SOAP', 'File Transfer', 'Database Direct', 'Message Queue', 'Custom'];
+  const teams = ['Team Alpha', 'Team Beta', 'Team Gamma', 'Team Delta', 'Enterprise Ops', 'Platform Team'];
+  const schedules = ['Weekly', 'Bi-Weekly', 'Monthly', 'Quarterly', 'On-Demand'];
+  const statuses = ['Green', 'Yellow', 'Red', 'N/A'];
+  const yesNo = ['Yes', 'No'];
 
   return Array.from({ length: count }).map((_, i) => {
     const idNum = (i + 1).toString().padStart(4, '0');
+    const cmdbStatus = pick(cmdbStatuses);
     return {
-      id: `FAST-${idNum}`,
-      assetName: `${assetNames[i % assetNames.length]} ${Math.floor(i / assetNames.length) + 1}`,
-      status: pick(statuses),
-      healthScore: Math.floor(Math.random() * 40) + 60,
-      lastAuditDate: randomDate(2024, 2025),
-      complianceStatus: pick(complianceStatuses),
-      riskLevel: pick(riskLevels),
-      owner: pick(owners),
-      department: pick(departments),
-      lifecycleStage: pick(lifecycleStages),
-      utilizationRate: `${Math.floor(Math.random() * 60) + 40}%`,
-      costCenter: `CC-${Math.floor(Math.random() * 900) + 100}`,
-      vendor: pick(['Internal', 'Oracle', 'Microsoft', 'Salesforce', 'SAP', 'Custom Build']),
-      contractExpiry: randomDate(2025, 2028),
-      supportTier: pick(supportTiers),
-      dataClassification: pick(dataClassifications),
-      backupStatus: pick(['Verified', 'Pending', 'Failed', 'N/A']),
-      drStatus: pick(['Tested', 'Untested', 'Partial', 'N/A']),
-      patchStatus: pick(patchStatuses),
-      securityRating: pick(['A', 'B', 'C', 'D', 'F'])
+      id: `AST-${idNum}`,
+      name: `${assetNames[i % assetNames.length]} ${Math.floor(i / assetNames.length) + 1}`,
+      kalmAssignee: pick(assignees),
+      onboardingStatus: pick(onboardingStatuses),
+      onboardingDisposition: pick(dispositions),
+      airDisposition: pick(dispositions),
+      maintenanceDisposition: pick(dispositions),
+      lastConnectorDeliveryDate: randomDate(2023, 2025),
+      maintenanceSLAExpiration: randomDate(2025, 2027),
+      technology: pick(technologies),
+      cmdbStatus: cmdbStatus,
+      cmdbBeingRetired: pick(yesNo),
+      cmdbLegalHold: pick(yesNo),
+      ticketsOpened: Math.floor(Math.random() * 20),
+      assetType: pick(assetTypes),
+      yearOnboarded: 2018 + Math.floor(Math.random() * 7),
+      monthOnboarded: pick(months),
+      assetPOCs: `${pick(assignees)}, ${pick(assignees)}`,
+      onboardingSchedule: pick(schedules),
+      entitlementsMissing: pick(yesNo),
+      membersMissing: pick(yesNo),
+      cisMissing: pick(yesNo),
+      reliesOnCAFederation: pick(yesNo),
+      connectorPattern: pick(connectorPatterns),
+      automationTeam: pick(teams),
+      nameOfConnector: `Connector-${Math.floor(Math.random() * 100) + 1}`,
+      connectorStatus: pick(['Active', 'Inactive', 'Pending', 'Error']),
+      enrollmentStatus: pick(['Enrolled', 'Not Enrolled', 'Pending', 'Exempt']),
+      evidenceStatus: pick(['Complete', 'Incomplete', 'Pending Review', 'N/A']),
+      miSchedule: pick(schedules),
+      miLastAIRUpload: randomDate(2024, 2025),
+      miDaysSince: Math.floor(Math.random() * 90),
+      miDueDate: randomDate(2025, 2026),
+      miOnboardingChangeDate: randomDate(2023, 2025),
+      miL2Assignee: pick(assignees),
+      miStatus: pick(statuses),
+      attestationKickedOff: pick(yesNo),
+      attestationComplete: pick(yesNo),
+      aiLastCandAAttestation: randomDate(2024, 2025),
+      keychainAttestationKickoffDate: randomDate(2024, 2025),
+      aiDaysSince: Math.floor(Math.random() * 120),
+      aiAttestationDueDate: randomDate(2025, 2026),
+      aiOnboardingChangeDate: randomDate(2023, 2025),
+      aiL2Assignee: pick(assignees),
+      aiStatus: pick(statuses),
+      theGap: `${Math.floor(Math.random() * 30)} days`,
+      comments: pick(['On track', 'Needs attention', 'Escalated', 'Waiting for approval', 'Under review', '']),
+      status: cmdbStatus
     };
   });
 };
