@@ -1272,6 +1272,12 @@ export default function DashboardPage({ type }: DashboardPageProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {currentData.map((item: any) => {
               const cardKey = item.version ? `${item.id}-v${item.version}` : item.id;
+              const itemVersion = item.version || 1;
+              const maxVersionForId = type === 'fast' && showVersionHistory
+                ? Math.max(...(config.data as any[]).filter((d: any) => d.id === item.id).map((d: any) => d.version || 1))
+                : 1;
+              const isLatest = itemVersion === maxVersionForId;
+              
               return (
               <DataCard
                 key={cardKey} 
@@ -1280,6 +1286,8 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                 statusKey={config.statusKey as any}
                 fields={config.cardFields as any}
                 onClick={handleItemClick}
+                showVersion={type === 'fast' && showVersionHistory}
+                isLatestVersion={isLatest}
               />
               );
             })}

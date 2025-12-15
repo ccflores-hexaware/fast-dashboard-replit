@@ -2,7 +2,8 @@ import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from './DataTable';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, History, Star } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface DataCardProps<T> {
   item: T;
@@ -10,12 +11,28 @@ interface DataCardProps<T> {
   statusKey?: keyof T;
   fields: { label: string; key: keyof T; format?: (val: any) => string }[];
   onClick?: (item: T) => void;
+  showVersion?: boolean;
+  isLatestVersion?: boolean;
 }
 
-export function DataCard<T extends { id: string }>({ item, titleKey, statusKey, fields, onClick }: DataCardProps<T>) {
+export function DataCard<T extends { id: string; version?: number }>({ 
+  item, 
+  titleKey, 
+  statusKey, 
+  fields, 
+  onClick,
+  showVersion = false,
+  isLatestVersion = false
+}: DataCardProps<T>) {
+  const version = item.version || 1;
+  
   return (
     <Card 
-      className="hover:shadow-md transition-shadow cursor-pointer border-t-4 border-t-primary"
+      className={cn(
+        "hover:shadow-md transition-all cursor-pointer border-t-4 relative",
+        isLatestVersion && showVersion ? "border-t-green-500 ring-2 ring-green-200" : "border-t-primary",
+        !isLatestVersion && showVersion && "opacity-80 hover:opacity-100"
+      )}
       onClick={() => onClick && onClick(item)}
       tabIndex={0}
       onKeyDown={(e) => {
@@ -24,7 +41,29 @@ export function DataCard<T extends { id: string }>({ item, titleKey, statusKey, 
         }
       }}
     >
-      <CardHeader className="pb-2 flex flex-row items-start justify-between space-y-0">
+      {showVersion && (
+        <div className="absolute -top-0 -right-0">
+          <div className={cn(
+            "flex items-center gap-1 px-3 py-1.5 rounded-bl-lg rounded-tr-sm text-xs font-bold shadow-sm",
+            isLatestVersion 
+              ? "bg-green-500 text-white" 
+              : "bg-slate-200 text-slate-600"
+          )}>
+            {isLatestVersion ? (
+              <>
+                <Star className="h-3 w-3 fill-current" />
+                <span>v{version} Latest</span>
+              </>
+            ) : (
+              <>
+                <History className="h-3 w-3" />
+                <span>v{version}</span>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+      <CardHeader className={cn("pb-2 flex flex-row items-start justify-between space-y-0", showVersion && "pt-8")}>
         <CardTitle className="text-lg font-bold text-primary truncate pr-4">
           {String(item[titleKey])}
         </CardTitle>
