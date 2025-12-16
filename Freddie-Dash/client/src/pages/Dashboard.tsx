@@ -56,6 +56,8 @@ import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/lib/userContext";
 import * as XLSX from 'xlsx';
+import { FieldHistoryIndicator } from '@/components/FieldHistoryIndicator';
+import { generateMockFieldHistory, FieldVersionHistory } from '@/lib/fieldVersionHistory';
 
 interface DashboardPageProps {
   type: 'assets' | 'tpi' | 'bto' | 'cmdb' | 'fast';
@@ -380,6 +382,11 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     cmdb: mockCMDB,
     fast: mockFAST
   });
+
+  // Generate and store field version history for FAST assets
+  const [fieldVersionHistory] = useState<FieldVersionHistory>(() => 
+    generateMockFieldHistory(mockFAST)
+  );
 
   // Reset pagination and selection when tab changes
   useEffect(() => {
@@ -1253,14 +1260,29 @@ export default function DashboardPage({ type }: DashboardPageProps) {
   
   const paginationTotalItems = filteredData.length;
 
-  const renderDetailRow = (label: string, value: any) => (
-    <div className="flex flex-col space-y-1 py-3 border-b border-border/50 last:border-0">
-      <span className="text-sm font-medium text-muted-foreground">{label}</span>
-      <span className="text-base font-semibold text-foreground">
-        {(value === undefined || value === null || value === 'undefined') ? '-' : value}
-      </span>
-    </div>
-  );
+  const renderDetailRow = (label: string, value: any, fieldKey?: string, itemId?: string) => {
+    const history = type === 'fast' && fieldKey && itemId 
+      ? fieldVersionHistory[itemId]?.[fieldKey] 
+      : undefined;
+    
+    return (
+      <div className="flex flex-col space-y-1 py-3 border-b border-border/50 last:border-0">
+        <div className="flex items-center">
+          <span className="text-sm font-medium text-muted-foreground">{label}</span>
+          {type === 'fast' && history && history.length > 0 && (
+            <FieldHistoryIndicator 
+              fieldKey={fieldKey!} 
+              fieldLabel={label} 
+              history={history} 
+            />
+          )}
+        </div>
+        <span className="text-base font-semibold text-foreground">
+          {(value === undefined || value === null || value === 'undefined') ? '-' : value}
+        </span>
+      </div>
+    );
+  };
 
   const renderEditRow = (key: string, value: any, isDisabled: boolean = false, headerLabel?: string) => {
     // Use header label if provided, otherwise format key for display (camelCase to Title Case)
@@ -1799,7 +1821,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                            
                            return (
                              <React.Fragment key={key}>
-                               {renderDetailRow(col.header, selectedItem[key])}
+                               {renderDetailRow(col.header, selectedItem[key], key, selectedItem?.id)}
                              </React.Fragment>
                            );
                         })}
