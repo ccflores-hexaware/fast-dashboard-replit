@@ -56,8 +56,6 @@ import { format, parse, isValid } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/lib/userContext";
 import * as XLSX from 'xlsx';
-import { FieldHistoryIndicator } from '@/components/FieldHistoryIndicator';
-import { generateMockFieldHistory, FieldVersionHistory } from '@/lib/fieldVersionHistory';
 
 interface DashboardPageProps {
   type: 'assets' | 'tpi' | 'bto' | 'cmdb' | 'fast';
@@ -460,52 +458,6 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     fast: mockFAST
   });
 
-  // Generate and store field version history for FAST assets
-  const [fieldVersionHistory, setFieldVersionHistory] = useState<FieldVersionHistory>(() => 
-    generateMockFieldHistory(mockFAST)
-  );
-
-  // Function to record field changes to version history
-  const recordFieldChanges = (assetId: string, oldData: any, newData: any) => {
-    const changedFields: { key: string; oldValue: any; newValue: any }[] = [];
-    
-    // Compare old and new data to find changes
-    Object.keys(newData).forEach(key => {
-      const oldValue = oldData[key];
-      const newValue = newData[key];
-      
-      // Only record if value actually changed (and not undefined/null comparisons)
-      if (oldValue !== newValue && !(oldValue === undefined && newValue === '') && !(oldValue === '' && newValue === undefined)) {
-        changedFields.push({ key, oldValue, newValue });
-      }
-    });
-    
-    if (changedFields.length === 0) return;
-    
-    // Update field version history
-    setFieldVersionHistory(prev => {
-      const assetHistory = prev[assetId] || {};
-      const updatedAssetHistory = { ...assetHistory };
-      
-      changedFields.forEach(({ key, oldValue, newValue }) => {
-        const fieldHistory = updatedAssetHistory[key] || [];
-        const newEntry = {
-          oldValue: oldValue ?? null,
-          newValue: newValue ?? null,
-          changedBy: user.name,
-          changedAt: new Date().toISOString()
-        };
-        // Add new entry at the beginning (most recent first)
-        updatedAssetHistory[key] = [newEntry, ...fieldHistory];
-      });
-      
-      return {
-        ...prev,
-        [assetId]: updatedAssetHistory
-      };
-    });
-  };
-
   // Reset pagination and selection when tab changes
   useEffect(() => {
     setCurrentPage(1);
@@ -758,11 +710,6 @@ export default function DashboardPage({ type }: DashboardPageProps) {
             });
             return;
           }
-      }
-
-      // Record field changes to version history (FAST module only)
-      if (type === 'fast') {
-        recordFieldChanges(selectedItem.id, selectedItem, dataToSave);
       }
 
       // Replace existing item
@@ -1383,23 +1330,10 @@ export default function DashboardPage({ type }: DashboardPageProps) {
   
   const paginationTotalItems = filteredData.length;
 
-  const renderDetailRow = (label: string, value: any, fieldKey?: string, itemId?: string) => {
-    const history = type === 'fast' && fieldKey && itemId 
-      ? fieldVersionHistory[itemId]?.[fieldKey] 
-      : undefined;
-    
+  const renderDetailRow = (label: string, value: any) => {
     return (
       <div className="flex flex-col space-y-1 py-3 border-b border-border/50 last:border-0">
-        <div className="flex items-center">
-          <span className="text-sm font-medium text-muted-foreground">{label}</span>
-          {type === 'fast' && history && history.length > 0 && (
-            <FieldHistoryIndicator 
-              fieldKey={fieldKey!} 
-              fieldLabel={label} 
-              history={history} 
-            />
-          )}
-        </div>
+        <span className="text-sm font-medium text-muted-foreground">{label}</span>
         <span className="text-base font-semibold text-foreground">
           {(value === undefined || value === null || value === 'undefined') ? '-' : value}
         </span>
@@ -1407,14 +1341,9 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     );
   };
 
-  const renderEditRow = (key: string, value: any, isDisabled: boolean = false, headerLabel?: string, itemId?: string) => {
+  const renderEditRow = (key: string, value: any, isDisabled: boolean = false, headerLabel?: string) => {
     // Use header label if provided, otherwise format key for display (camelCase to Title Case)
     const label = headerLabel || key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
-    
-    // Get field history for FAST module
-    const history = type === 'fast' && itemId 
-      ? fieldVersionHistory[itemId]?.[key] 
-      : undefined;
     
     // Determine if we should show a fallback for undefined values in edit mode
     // Typically for editable fields we want empty string, but for read-only audit fields we might want '-'
@@ -1425,25 +1354,11 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     // Check if this field has enum options from the config
     const enumOptions = (rawConfig as any).enumFields?.[key] as string[] | undefined;
 
-    // Label with optional history indicator
-    const labelWithHistory = (
-      <div className="flex items-center">
-        <Label htmlFor={key} className="text-sm font-medium text-muted-foreground">{label}</Label>
-        {type === 'fast' && history && history.length > 0 && (
-          <FieldHistoryIndicator 
-            fieldKey={key} 
-            fieldLabel={label} 
-            history={history} 
-          />
-        )}
-      </div>
-    );
-
     // If field has enum options and is not disabled, render a Select dropdown
     if (enumOptions && !shouldDisable) {
       return (
         <div className="flex flex-col space-y-2 py-3">
-          {labelWithHistory}
+          <Label htmlFor={key} className="text-sm font-medium text-muted-foreground">{label}</Label>
           <Select
             value={value || ''}
             onValueChange={(newValue) => handleInputChange(key, newValue)}
@@ -1483,7 +1398,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
 
       return (
         <div className="flex flex-col space-y-2 py-3">
-          {labelWithHistory}
+          <Label htmlFor={key} className="text-sm font-medium text-muted-foreground">{label}</Label>
           <div className="flex gap-2">
             <Input 
               id={key} 
@@ -1529,7 +1444,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
 
     return (
       <div className="flex flex-col space-y-2 py-3">
-        {labelWithHistory}
+        <Label htmlFor={key} className="text-sm font-medium text-muted-foreground">{label}</Label>
         <Input 
           id={key} 
           value={displayValue} 
@@ -2022,7 +1937,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                            
                            return (
                              <React.Fragment key={key}>
-                               {renderDetailRow(col.header, selectedItem[key], key, selectedItem?.id)}
+                               {renderDetailRow(col.header, selectedItem[key])}
                              </React.Fragment>
                            );
                         })}
@@ -2048,14 +1963,14 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                            if (type === 'fast' && !isFieldEditable) {
                              return (
                                <React.Fragment key={key}>
-                                 {renderEditRow(key, editFormData[key] !== undefined ? editFormData[key] : '', true, col.header, selectedItem?.id)}
+                                 {renderEditRow(key, editFormData[key] !== undefined ? editFormData[key] : '', true, col.header)}
                                </React.Fragment>
                              );
                            }
 
                            return (
                              <React.Fragment key={key}>
-                               {renderEditRow(key, editFormData[key] !== undefined ? editFormData[key] : '', false, col.header, selectedItem?.id)}
+                               {renderEditRow(key, editFormData[key] !== undefined ? editFormData[key] : '', false, col.header)}
                              </React.Fragment>
                            );
                         })}
