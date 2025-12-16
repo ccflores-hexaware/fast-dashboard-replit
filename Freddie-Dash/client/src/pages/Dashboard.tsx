@@ -384,9 +384,50 @@ export default function DashboardPage({ type }: DashboardPageProps) {
   });
 
   // Generate and store field version history for FAST assets
-  const [fieldVersionHistory] = useState<FieldVersionHistory>(() => 
+  const [fieldVersionHistory, setFieldVersionHistory] = useState<FieldVersionHistory>(() => 
     generateMockFieldHistory(mockFAST)
   );
+
+  // Function to record field changes to version history
+  const recordFieldChanges = (assetId: string, oldData: any, newData: any) => {
+    const changedFields: { key: string; oldValue: any; newValue: any }[] = [];
+    
+    // Compare old and new data to find changes
+    Object.keys(newData).forEach(key => {
+      const oldValue = oldData[key];
+      const newValue = newData[key];
+      
+      // Only record if value actually changed (and not undefined/null comparisons)
+      if (oldValue !== newValue && !(oldValue === undefined && newValue === '') && !(oldValue === '' && newValue === undefined)) {
+        changedFields.push({ key, oldValue, newValue });
+      }
+    });
+    
+    if (changedFields.length === 0) return;
+    
+    // Update field version history
+    setFieldVersionHistory(prev => {
+      const assetHistory = prev[assetId] || {};
+      const updatedAssetHistory = { ...assetHistory };
+      
+      changedFields.forEach(({ key, oldValue, newValue }) => {
+        const fieldHistory = updatedAssetHistory[key] || [];
+        const newEntry = {
+          oldValue: oldValue ?? null,
+          newValue: newValue ?? null,
+          changedBy: user.name,
+          changedAt: new Date().toISOString()
+        };
+        // Add new entry at the beginning (most recent first)
+        updatedAssetHistory[key] = [newEntry, ...fieldHistory];
+      });
+      
+      return {
+        ...prev,
+        [assetId]: updatedAssetHistory
+      };
+    });
+  };
 
   // Reset pagination and selection when tab changes
   useEffect(() => {
@@ -640,6 +681,11 @@ export default function DashboardPage({ type }: DashboardPageProps) {
             });
             return;
           }
+      }
+
+      // Record field changes to version history (FAST module only)
+      if (type === 'fast') {
+        recordFieldChanges(selectedItem.id, selectedItem, dataToSave);
       }
 
       // Replace existing item
