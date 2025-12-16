@@ -90,6 +90,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
   const [cardFieldSearchQuery, setCardFieldSearchQuery] = useState('');
   const [isCardFieldSettingsOpen, setIsCardFieldSettingsOpen] = useState(false);
   const [dateFieldErrors, setDateFieldErrors] = useState<Record<string, string | null>>({});
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
 
   // Maximum number of fields visible on cards
   const MAX_CARD_FIELDS = 7;
@@ -97,7 +98,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
   // Default visible columns per module type for Admin persona - full operational view
   const adminDefaultColumns: Record<string, string[]> = {
     fast: [
-      'id', 'name', 'kalmAssignee', 'onboardingStatus', 'onboardingDisposition',
+      'id', 'name', 'version', 'kalmAssignee', 'onboardingStatus', 'onboardingDisposition',
       'airDisposition', 'maintenanceDisposition', 'cmdbStatus', 'assetType', 'technology',
       'connectorStatus', 'enrollmentStatus', 'evidenceStatus', 'lastModifiedBy', 'lastModifiedDate'
     ],
@@ -122,8 +123,8 @@ export default function DashboardPage({ type }: DashboardPageProps) {
   // Default visible columns for Viewer persona - focused on key information for read-only consumption
   const viewerDefaultColumns: Record<string, string[]> = {
     fast: [
-      'id', 'name', 'assetType', 'technology', 'onboardingStatus', 'cmdbStatus',
-      'maintenanceDisposition', 'airDisposition', 'division'
+      'id', 'name', 'version', 'assetType', 'technology', 'onboardingStatus', 'cmdbStatus',
+      'maintenanceDisposition', 'airDisposition'
     ],
     assets: [
       'id', 'name', 'type', 'cmdbStatus', 'division', 'itOwner', 'businessOwner',
@@ -1100,6 +1101,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
               )
             },
             { header: 'Name', accessorKey: 'name', cell: (item: any) => <span className="font-semibold text-primary">{item.name}</span> },
+            { header: 'Version', accessorKey: 'version' },
             { header: 'KALM Assignee', accessorKey: 'kalmAssignee' },
             { header: 'Onboarding Status', accessorKey: 'onboardingStatus' },
             { header: 'Onboarding Disposition', accessorKey: 'onboardingDisposition' },
@@ -1295,7 +1297,13 @@ export default function DashboardPage({ type }: DashboardPageProps) {
        matchesHistory = item.lastUpdated === dateStr;
     }
 
-    return matchesSearch && matchesStatus && matchesColumnFilters && matchesHistory;
+    // Version Filter - for FAST module, show only latest version unless showVersionHistory is checked
+    let matchesVersionFilter = true;
+    if (type === 'fast' && !showVersionHistory) {
+       matchesVersionFilter = item.isLatestVersion === true;
+    }
+
+    return matchesSearch && matchesStatus && matchesColumnFilters && matchesHistory && matchesVersionFilter;
   }).sort((a: any, b: any) => {
     if (!sortConfig.key) return 0;
     
@@ -1839,6 +1847,27 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                   </div>
                 </PopoverContent>
               </Popover>
+              )}
+              
+              {/* Show Version History Checkbox - Only for FAST module */}
+              {type === 'fast' && (
+                <div className="flex items-center gap-2 px-3 py-1.5 border border-input rounded-md bg-background h-9">
+                  <Checkbox
+                    id="showVersionHistory"
+                    checked={showVersionHistory}
+                    onCheckedChange={(checked) => {
+                      setShowVersionHistory(checked as boolean);
+                      setCurrentPage(1);
+                    }}
+                    className="h-4 w-4"
+                  />
+                  <Label 
+                    htmlFor="showVersionHistory" 
+                    className="text-sm font-medium cursor-pointer whitespace-nowrap"
+                  >
+                    Show Version History
+                  </Label>
+                </div>
               )}
               
               <ViewToggle view={view} setView={handleViewChange} />
