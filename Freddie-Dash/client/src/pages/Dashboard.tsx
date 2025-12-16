@@ -270,12 +270,13 @@ export default function DashboardPage({ type }: DashboardPageProps) {
   };
 
   // Default visible card fields per module type (max 7 fields)
+  // These must match the actual columns defined for each module
   const defaultVisibleCardFields: Record<string, string[]> = {
     fast: ['id', 'name', 'kalmAssignee', 'onboardingStatus', 'cmdbStatus', 'technology', 'connectorStatus'],
     assets: ['id', 'name', 'cmdbStatus', 'itOwner', 'businessOwner', 'division', 'type'],
     tpi: ['id', 'name', 'cmdbStatus', 'assetType', 'connectorStatus', 'onboardingStatus', 'disposition'],
-    bto: ['id', 'bto', 'higherLevelBTO', 'division', 'owner', 'status', 'progress'],
-    cmdb: ['id', 'configItem', 'version', 'environment', 'status', 'owner', 'lastUpdated']
+    bto: ['higherLevelBTO', 'bto', 'division', 'concatValue'],
+    cmdb: ['id', 'configItem', 'status', 'environment', 'version', 'owner']
   };
 
   // Load saved card field visibility from localStorage
@@ -319,15 +320,21 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     }
   }, [cardFieldVisibility, type]);
 
-  const toggleCardFieldVisibility = (fieldKey: string) => {
-    const currentVisible = Object.entries(cardFieldVisibility).filter(([_, v]) => v).length;
-    const isCurrentlyVisible = cardFieldVisibility[fieldKey];
+  const toggleCardFieldVisibility = (fieldKey: string, allColumns?: any[]) => {
+    const currentVisible = getVisibleCardFieldCount(allColumns);
+    const totalAvailable = getTotalCardFieldCount(allColumns);
+    const maxForModule = Math.min(totalAvailable, MAX_CARD_FIELDS);
+    
+    // Check if field is currently visible (with proper parentheses for nullish coalescing)
+    const isCurrentlyVisible = (fieldKey in cardFieldVisibility) 
+      ? cardFieldVisibility[fieldKey] 
+      : (defaultVisibleCardFields[type]?.includes(fieldKey) ?? false);
     
     // If trying to enable and already at max, show warning
-    if (!isCurrentlyVisible && currentVisible >= MAX_CARD_FIELDS) {
+    if (!isCurrentlyVisible && currentVisible >= maxForModule) {
       toast({
         title: "Maximum Fields Reached",
-        description: `You can only display up to ${MAX_CARD_FIELDS} fields on cards. Please deselect another field first.`,
+        description: `You can only display up to ${maxForModule} fields on cards. Please deselect another field first.`,
         variant: "destructive"
       });
       return;
@@ -339,15 +346,30 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     }));
   };
 
-  const getVisibleCardFieldCount = () => {
+  const getVisibleCardFieldCount = (allColumns?: any[]) => {
     // Count fields that are explicitly visible or in defaults (when not explicitly set)
-    const allFieldKeys = getAllColumnKeysForType(type);
-    return allFieldKeys.filter(key => {
+    const allFieldKeys = allColumns 
+      ? allColumns.filter(col => col.accessorKey).map(col => col.accessorKey as string)
+      : getAllColumnKeysForType(type);
+    
+    const visibleCount = allFieldKeys.filter(key => {
       if (key in cardFieldVisibility) {
         return cardFieldVisibility[key];
       }
       return defaultVisibleCardFields[type]?.includes(key) ?? false;
     }).length;
+    
+    // Return actual visible count (capped at MAX_CARD_FIELDS for display purposes)
+    return Math.min(visibleCount, MAX_CARD_FIELDS);
+  };
+
+  const getTotalCardFieldCount = (allColumns?: any[]) => {
+    // Get total available fields (actual count, not capped)
+    const totalFields = allColumns 
+      ? allColumns.filter(col => col.accessorKey).length
+      : getAllColumnKeysForType(type).length;
+    // Return the lesser of total fields or MAX_CARD_FIELDS for the max display
+    return Math.min(totalFields, MAX_CARD_FIELDS);
   };
 
   // State to hold data so it can be edited
@@ -1484,14 +1506,14 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                         <Settings2 className="h-4 w-4" />
                         <span className="hidden sm:inline">Fields</span>
                         <span className="bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded-full">
-                          {getVisibleCardFieldCount()}/{MAX_CARD_FIELDS}
+                          {getVisibleCardFieldCount(config.allColumns as any[])}/{getTotalCardFieldCount(config.allColumns as any[])}
                         </span>
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-80 p-0" align="end">
                       <div className="p-3 border-b bg-muted/30">
                         <h4 className="font-semibold text-sm mb-1">Card Field Visibility</h4>
-                        <p className="text-xs text-muted-foreground mb-2">Select up to {MAX_CARD_FIELDS} fields to display on cards</p>
+                        <p className="text-xs text-muted-foreground mb-2">Select up to {getTotalCardFieldCount(config.allColumns as any[])} fields to display on cards</p>
                         <div className="relative">
                           <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                           <Input
@@ -1514,8 +1536,9 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                               const isVisible = (key in cardFieldVisibility) 
                                 ? cardFieldVisibility[key] 
                                 : (defaultVisibleCardFields[type]?.includes(key) ?? false);
-                              const currentVisibleCount = getVisibleCardFieldCount();
-                              const wouldExceedMax = !isVisible && currentVisibleCount >= MAX_CARD_FIELDS;
+                              const currentVisibleCount = getVisibleCardFieldCount(config.allColumns as any[]);
+                              const maxForModule = getTotalCardFieldCount(config.allColumns as any[]);
+                              const wouldExceedMax = !isVisible && currentVisibleCount >= maxForModule;
                               
                               return (
                                 <div
@@ -1524,11 +1547,11 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                                     "flex items-center gap-2 px-2 py-1.5 hover:bg-muted/50 rounded cursor-pointer",
                                     wouldExceedMax && "opacity-50"
                                   )}
-                                  onClick={() => toggleCardFieldVisibility(key)}
+                                  onClick={() => toggleCardFieldVisibility(key, config.allColumns as any[])}
                                 >
                                   <Checkbox
                                     checked={isVisible}
-                                    onCheckedChange={() => toggleCardFieldVisibility(key)}
+                                    onCheckedChange={() => toggleCardFieldVisibility(key, config.allColumns as any[])}
                                     className="h-4 w-4"
                                     disabled={wouldExceedMax}
                                   />
