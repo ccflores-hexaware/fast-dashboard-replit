@@ -96,8 +96,8 @@ export default function DashboardPage({ type }: DashboardPageProps) {
   // Maximum number of fields visible on cards
   const MAX_CARD_FIELDS = 7;
 
-  // Default visible columns per module type - optimized for typical user personas
-  const defaultVisibleColumns: Record<string, string[]> = {
+  // Default visible columns per module type for Admin persona - full operational view
+  const adminDefaultColumns: Record<string, string[]> = {
     fast: [
       'id', 'name', 'kalmAssignee', 'onboardingStatus', 'onboardingDisposition',
       'airDisposition', 'maintenanceDisposition', 'cmdbStatus', 'assetType', 'technology',
@@ -120,6 +120,31 @@ export default function DashboardPage({ type }: DashboardPageProps) {
       'id', 'configItem', 'status', 'environment', 'owner', 'version'
     ]
   };
+
+  // Default visible columns for Viewer persona - focused on key information for read-only consumption
+  const viewerDefaultColumns: Record<string, string[]> = {
+    fast: [
+      'id', 'name', 'assetType', 'technology', 'onboardingStatus', 'cmdbStatus',
+      'maintenanceDisposition', 'airDisposition', 'division'
+    ],
+    assets: [
+      'id', 'name', 'type', 'cmdbStatus', 'division', 'itOwner', 'businessOwner',
+      'missionCritical', 'businessCritical'
+    ],
+    tpi: [
+      'id', 'name', 'cmdbStatus', 'assetType', 'disposition', 'assetTier',
+      'itOwnerManagedBy', 'businessOwnerOwnedBy'
+    ],
+    bto: [
+      'id', 'higherLevelBTO', 'bto', 'division', 'owner', 'status', 'progress'
+    ],
+    cmdb: [
+      'id', 'configItem', 'status', 'environment', 'owner', 'version'
+    ]
+  };
+
+  // Get the appropriate default columns based on user role
+  const defaultVisibleColumns = isAdmin ? adminDefaultColumns : viewerDefaultColumns;
 
   // Column visibility presets
   const columnPresets: Record<string, { name: string; columns: string[] | 'all' | 'default' }[]> = {
@@ -1255,11 +1280,11 @@ export default function DashboardPage({ type }: DashboardPageProps) {
 
   const rawConfig = getPageConfig();
   
-  // Apply column limit for "View" role (Test User)
-  // Show only first 20 columns in table and card popup
+  // All columns are available for both Admin and Viewer personas
+  // Viewers get different default visible columns but can customize their view
   const baseConfig = {
     ...rawConfig,
-    columns: (!isAdmin && rawConfig.columns.length > 20) ? rawConfig.columns.slice(0, 20) : rawConfig.columns
+    columns: rawConfig.columns
   };
 
   // Filter columns based on visibility settings
