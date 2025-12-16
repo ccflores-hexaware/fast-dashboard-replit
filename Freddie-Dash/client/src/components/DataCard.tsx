@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from './DataTable';
-import { ArrowRight, History, Star } from 'lucide-react';
+import { ArrowRight, History, Star, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface DataCardProps<T> {
@@ -16,6 +16,8 @@ interface DataCardProps<T> {
   allVersions?: T[];
 }
 
+const MAX_VISIBLE_VERSIONS = 6;
+
 export function DataCard<T extends { id: string; version?: number; isLatestVersion?: boolean }>({ 
   item, 
   titleKey, 
@@ -27,6 +29,7 @@ export function DataCard<T extends { id: string; version?: number; isLatestVersi
   allVersions = []
 }: DataCardProps<T>) {
   const [selectedVersion, setSelectedVersion] = useState<number | null>(null);
+  const [showAllVersions, setShowAllVersions] = useState(false);
   
   const sortedVersions = allVersions.length > 0 
     ? [...allVersions].sort((a, b) => (b.version || 1) - (a.version || 1))
@@ -39,6 +42,10 @@ export function DataCard<T extends { id: string; version?: number; isLatestVersi
   const currentVersion = displayItem.version || 1;
   const latestVersion = sortedVersions.length > 0 ? sortedVersions[0].version || 1 : item.version || 1;
   const isViewingLatest = selectedVersion === null || selectedVersion === latestVersion;
+  
+  const hasMoreVersions = sortedVersions.length > MAX_VISIBLE_VERSIONS;
+  const visibleVersions = showAllVersions ? sortedVersions : sortedVersions.slice(0, MAX_VISIBLE_VERSIONS);
+  const hiddenCount = sortedVersions.length - MAX_VISIBLE_VERSIONS;
   
   return (
     <Card 
@@ -57,9 +64,9 @@ export function DataCard<T extends { id: string; version?: number; isLatestVersi
     >
       {showVersion && sortedVersions.length > 0 && (
         <div className="px-4 pt-3 pb-1 border-b bg-muted/30">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-medium text-muted-foreground">Versions:</span>
-            {sortedVersions.map((v) => {
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-xs font-medium text-muted-foreground mr-1">Versions:</span>
+            {visibleVersions.map((v) => {
               const ver = v.version || 1;
               const isSelected = selectedVersion === ver || (selectedVersion === null && v.isLatestVersion);
               const isLatest = v.isLatestVersion;
@@ -85,6 +92,21 @@ export function DataCard<T extends { id: string; version?: number; isLatestVersi
                 </button>
               );
             })}
+            {hasMoreVersions && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowAllVersions(!showAllVersions);
+                }}
+                className="px-2 py-0.5 rounded text-xs font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 transition-all flex items-center gap-0.5"
+              >
+                {showAllVersions ? (
+                  <>Less <ChevronUp className="h-3 w-3" /></>
+                ) : (
+                  <>+{hiddenCount} more <ChevronDown className="h-3 w-3" /></>
+                )}
+              </button>
+            )}
           </div>
           <div className="text-xs text-muted-foreground mt-1">
             Viewing: v{currentVersion}
