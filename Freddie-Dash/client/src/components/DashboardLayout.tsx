@@ -42,21 +42,19 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="w-full px-6 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-6">
             {/* Logo Area */}
-            <Link href="/">
-              <a className="flex items-center space-x-4 hover:opacity-90 transition-opacity">
-                {/* Freddie Mac Logo */}
-                <img 
-                  src={freddieMacLogo} 
-                  alt="Freddie Mac" 
-                  className="h-8 w-auto" 
-                />
-                
-                {/* Heading and Date Display */}
-                <div className="flex flex-col justify-center border-l border-muted-foreground/20 pl-6 h-10">
-                  <h1 className="text-2xl font-bold leading-none text-primary tracking-tight">FAST DASHBOARD</h1>
-                  <span className="text-xs font-medium leading-none text-muted-foreground mt-0.5">{currentDate}</span>
-                </div>
-              </a>
+            <Link href="/" className="flex items-center space-x-4 hover:opacity-90 transition-opacity">
+              {/* Freddie Mac Logo */}
+              <img 
+                src={freddieMacLogo} 
+                alt="Freddie Mac" 
+                className="h-8 w-auto" 
+              />
+              
+              {/* Heading and Date Display */}
+              <div className="flex flex-col justify-center border-l border-muted-foreground/20 pl-6 h-10">
+                <h1 className="text-2xl font-bold leading-none text-primary tracking-tight">FAST DASHBOARD</h1>
+                <span className="text-xs font-medium leading-none text-muted-foreground mt-0.5">{currentDate}</span>
+              </div>
             </Link>
           </div>
 
@@ -107,18 +105,18 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="w-full px-6">
           <div className="flex h-14 space-x-1">
             {tabs.map((tab) => (
-              <Link key={tab.path} href={tab.path}>
-                <a
-                  className={`
-                    px-6 h-full flex items-center text-sm font-semibold transition-colors border-b-4 whitespace-nowrap
-                    ${isActive(tab.path) 
-                      ? 'bg-secondary text-primary border-accent' 
-                      : 'text-primary-foreground/90 hover:bg-primary-foreground/10 hover:text-white border-transparent'
-                    }
-                  `}
-                >
-                  {tab.name}
-                </a>
+              <Link 
+                key={tab.path} 
+                href={tab.path}
+                className={`
+                  px-6 h-full flex items-center text-sm font-semibold transition-colors border-b-4 whitespace-nowrap
+                  ${isActive(tab.path) 
+                    ? 'bg-secondary text-primary border-accent' 
+                    : 'text-primary-foreground/90 hover:bg-primary-foreground/10 hover:text-white border-transparent'
+                  }
+                `}
+              >
+                {tab.name}
               </Link>
             ))}
           </div>
