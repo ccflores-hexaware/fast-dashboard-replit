@@ -603,12 +603,9 @@ export default function DashboardPage({ type }: DashboardPageProps) {
       lastModifiedDate: timestamp,
     };
     
-    // Update the list - use composite key (id + version) to match the specific version
-    const selectedVersion = selectedItem.version || 1;
+    // Update the list by matching the asset ID
     const updatedList = currentList.map(item => {
-      const itemVersion = item.version || 1;
-      // Match both id AND version to update only the specific version
-      if (item.id === selectedItem.id && itemVersion === selectedVersion) {
+      if (item.id === selectedItem.id) {
         return updatedItem;
       }
       return item;
@@ -619,18 +616,14 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     
     if (type === 'fast') {
       if (newFakeStatus) {
-        // Adding to Fake Asset List - check if already exists (by id + version)
-        const existsInAssets = updatedAssetsList.some(
-          item => item.id === selectedItem.id && (item.version || 1) === selectedVersion
-        );
+        // Adding to Fake Asset List - check if already exists
+        const existsInAssets = updatedAssetsList.some(item => item.id === selectedItem.id);
         if (!existsInAssets) {
           updatedAssetsList = [updatedItem, ...updatedAssetsList];
         }
       } else {
         // Removing from Fake Asset List
-        updatedAssetsList = updatedAssetsList.filter(
-          item => !(item.id === selectedItem.id && (item.version || 1) === selectedVersion)
-        );
+        updatedAssetsList = updatedAssetsList.filter(item => item.id !== selectedItem.id);
       }
     }
     
@@ -646,15 +639,14 @@ export default function DashboardPage({ type }: DashboardPageProps) {
       setEditFormData(updatedItem);
     }
     
-    const versionInfo = type === 'fast' ? ` (version ${selectedVersion})` : '';
     const syncInfo = type === 'fast' 
       ? (newFakeStatus ? ' and added to Fake Asset List' : ' and removed from Fake Asset List')
       : '';
     toast({
       title: newFakeStatus ? "Asset Marked as Fake" : "Fake Asset Status Removed",
       description: newFakeStatus 
-        ? `${selectedItem.id}${versionInfo} has been marked as a Fake Asset${syncInfo}.`
-        : `${selectedItem.id}${versionInfo} is no longer marked as a Fake Asset${syncInfo}.`,
+        ? `${selectedItem.id} has been marked as a Fake Asset${syncInfo}.`
+        : `${selectedItem.id} is no longer marked as a Fake Asset${syncInfo}.`,
       variant: "success"
     });
   };
