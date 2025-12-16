@@ -50,8 +50,8 @@ export function DataCard<T extends { id: string; version?: number; isLatestVersi
   return (
     <Card 
       className={cn(
-        "hover:shadow-md transition-all cursor-pointer border-t-4 relative",
-        isLatestVersion && showVersion ? "border-t-green-500 ring-2 ring-green-200" : "border-t-primary",
+        "hover:shadow-md transition-all cursor-pointer border-t-4 relative border-t-[#89c24b]",
+        isLatestVersion && showVersion && "ring-2 ring-[#89c24b]/30",
         !isLatestVersion && showVersion && "opacity-80 hover:opacity-100"
       )}
       onClick={() => onClick && onClick(displayItem)}
