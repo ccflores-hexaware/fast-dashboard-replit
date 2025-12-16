@@ -86,6 +86,12 @@ export default function DashboardPage({ type }: DashboardPageProps) {
   const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({});
   const [columnSearchQuery, setColumnSearchQuery] = useState('');
   const [isColumnSettingsOpen, setIsColumnSettingsOpen] = useState(false);
+  const [cardFieldVisibility, setCardFieldVisibility] = useState<Record<string, boolean>>({});
+  const [cardFieldSearchQuery, setCardFieldSearchQuery] = useState('');
+  const [isCardFieldSettingsOpen, setIsCardFieldSettingsOpen] = useState(false);
+
+  // Maximum number of fields visible on cards
+  const MAX_CARD_FIELDS = 7;
 
   // Default visible columns per module type - optimized for typical user personas
   const defaultVisibleColumns: Record<string, string[]> = {
@@ -261,6 +267,80 @@ export default function DashboardPage({ type }: DashboardPageProps) {
 
   const getVisibleColumnCount = (allColumns: any[]) => {
     return allColumns.filter(col => col.accessorKey && columnVisibility[col.accessorKey]).length;
+  };
+
+  // Default visible card fields per module type (max 7 fields)
+  const defaultVisibleCardFields: Record<string, string[]> = {
+    fast: ['id', 'name', 'kalmAssignee', 'onboardingStatus', 'cmdbStatus', 'technology', 'connectorStatus'],
+    assets: ['id', 'name', 'cmdbStatus', 'itOwner', 'businessOwner', 'division', 'type'],
+    tpi: ['id', 'name', 'cmdbStatus', 'assetType', 'connectorStatus', 'onboardingStatus', 'disposition'],
+    bto: ['id', 'bto', 'higherLevelBTO', 'division', 'owner', 'status', 'progress'],
+    cmdb: ['id', 'configItem', 'version', 'environment', 'status', 'owner', 'lastUpdated']
+  };
+
+  // Load saved card field visibility from localStorage
+  useEffect(() => {
+    const savedVisibility = localStorage.getItem(`cardFieldVisibility_${type}`);
+    if (savedVisibility) {
+      try {
+        const parsed = JSON.parse(savedVisibility);
+        if (Object.keys(parsed).length > 0) {
+          setCardFieldVisibility(parsed);
+        } else {
+          initializeDefaultCardFieldVisibility();
+        }
+      } catch {
+        initializeDefaultCardFieldVisibility();
+      }
+    } else {
+      initializeDefaultCardFieldVisibility();
+    }
+  }, [type]);
+
+  const initializeDefaultCardFieldVisibility = (allFields?: any[]) => {
+    const defaults = defaultVisibleCardFields[type] || [];
+    const visibility: Record<string, boolean> = {};
+    
+    const allFieldKeys = allFields 
+      ? allFields.filter(f => f.key).map(f => f.key as string)
+      : getAllColumnKeysForType(type);
+    
+    allFieldKeys.forEach((key: string) => {
+      visibility[key] = defaults.includes(key);
+    });
+    
+    setCardFieldVisibility(visibility);
+  };
+
+  // Save card field visibility to localStorage when it changes
+  useEffect(() => {
+    if (Object.keys(cardFieldVisibility).length > 0) {
+      localStorage.setItem(`cardFieldVisibility_${type}`, JSON.stringify(cardFieldVisibility));
+    }
+  }, [cardFieldVisibility, type]);
+
+  const toggleCardFieldVisibility = (fieldKey: string) => {
+    const currentVisible = Object.entries(cardFieldVisibility).filter(([_, v]) => v).length;
+    const isCurrentlyVisible = cardFieldVisibility[fieldKey];
+    
+    // If trying to enable and already at max, show warning
+    if (!isCurrentlyVisible && currentVisible >= MAX_CARD_FIELDS) {
+      toast({
+        title: "Maximum Fields Reached",
+        description: `You can only display up to ${MAX_CARD_FIELDS} fields on cards. Please deselect another field first.`,
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setCardFieldVisibility(prev => ({
+      ...prev,
+      [fieldKey]: !prev[fieldKey]
+    }));
+  };
+
+  const getVisibleCardFieldCount = () => {
+    return Object.entries(cardFieldVisibility).filter(([_, v]) => v).length;
   };
 
   // State to hold data so it can be edited
@@ -1382,12 +1462,107 @@ export default function DashboardPage({ type }: DashboardPageProps) {
             </div>
             <div className="flex gap-2 shrink-0 items-center">
               {view === 'card' && (
-                <FilterMenu 
-                  columns={config.columns as any}
-                  allData={config.data as any}
-                  filters={columnFilters}
-                  onFiltersChange={setColumnFilters}
-                />
+                <>
+                  <FilterMenu 
+                    columns={config.columns as any}
+                    allData={config.data as any}
+                    filters={columnFilters}
+                    onFiltersChange={setColumnFilters}
+                  />
+                  
+                  {/* Card Field Visibility Settings */}
+                  <Popover open={isCardFieldSettingsOpen} onOpenChange={setIsCardFieldSettingsOpen}>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-9 gap-2">
+                        <Settings2 className="h-4 w-4" />
+                        <span className="hidden sm:inline">Fields</span>
+                        <span className="bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded-full">
+                          {getVisibleCardFieldCount()}/{MAX_CARD_FIELDS}
+                        </span>
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80 p-0" align="end">
+                      <div className="p-3 border-b bg-muted/30">
+                        <h4 className="font-semibold text-sm mb-1">Card Field Visibility</h4>
+                        <p className="text-xs text-muted-foreground mb-2">Select up to {MAX_CARD_FIELDS} fields to display on cards</p>
+                        <div className="relative">
+                          <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                          <Input
+                            placeholder="Search fields..."
+                            value={cardFieldSearchQuery}
+                            onChange={(e) => setCardFieldSearchQuery(e.target.value)}
+                            className="h-8 pl-8 text-sm"
+                          />
+                        </div>
+                      </div>
+                      
+                      {/* Field List */}
+                      <ScrollArea className="h-64">
+                        <div className="p-2 space-y-1">
+                          {(config.allColumns as any[])
+                            .filter(col => col.accessorKey && col.header.toLowerCase().includes(cardFieldSearchQuery.toLowerCase()))
+                            .map((col) => {
+                              const key = col.accessorKey as string;
+                              const isVisible = cardFieldVisibility[key] ?? defaultVisibleCardFields[type]?.includes(key) ?? false;
+                              const currentVisibleCount = getVisibleCardFieldCount();
+                              const wouldExceedMax = !isVisible && currentVisibleCount >= MAX_CARD_FIELDS;
+                              
+                              return (
+                                <div
+                                  key={key}
+                                  className={cn(
+                                    "flex items-center gap-2 px-2 py-1.5 hover:bg-muted/50 rounded cursor-pointer",
+                                    wouldExceedMax && "opacity-50"
+                                  )}
+                                  onClick={() => toggleCardFieldVisibility(key)}
+                                >
+                                  <Checkbox
+                                    checked={isVisible}
+                                    onCheckedChange={() => toggleCardFieldVisibility(key)}
+                                    className="h-4 w-4"
+                                    disabled={wouldExceedMax}
+                                  />
+                                  <span className="text-sm flex-1">{col.header}</span>
+                                  {isVisible ? (
+                                    <Eye className="h-3.5 w-3.5 text-muted-foreground" />
+                                  ) : (
+                                    <EyeOff className="h-3.5 w-3.5 text-muted-foreground/50" />
+                                  )}
+                                </div>
+                              );
+                            })}
+                        </div>
+                      </ScrollArea>
+                      
+                      {/* Footer Actions */}
+                      <div className="p-2 border-t bg-muted/20 flex justify-between">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs gap-1"
+                          onClick={() => {
+                            initializeDefaultCardFieldVisibility();
+                            toast({
+                              title: "Reset Complete",
+                              description: "Card fields reset to default visibility",
+                            });
+                          }}
+                        >
+                          <RotateCcw className="h-3 w-3" />
+                          Reset to Default
+                        </Button>
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={() => setIsCardFieldSettingsOpen(false)}
+                        >
+                          Done
+                        </Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </>
               )}
               
               {/* Column Visibility Settings - Only show in Table view */}
@@ -1515,16 +1690,24 @@ export default function DashboardPage({ type }: DashboardPageProps) {
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {currentData.map((item: any) => (
-              <DataCard
-                key={item.id} 
-                item={item} 
-                titleKey={config.titleKey as any}
-                statusKey={config.statusKey as any}
-                fields={config.cardFields as any}
-                onClick={handleItemClick}
-              />
-            ))}
+            {currentData.map((item: any) => {
+              // Filter card fields based on visibility settings
+              const visibleCardFields = (config.allColumns as any[])
+                .filter(col => col.accessorKey && (cardFieldVisibility[col.accessorKey] ?? defaultVisibleCardFields[type]?.includes(col.accessorKey)))
+                .slice(0, MAX_CARD_FIELDS)
+                .map(col => ({ label: col.header, key: col.accessorKey }));
+              
+              return (
+                <DataCard
+                  key={item.id} 
+                  item={item} 
+                  titleKey={config.titleKey as any}
+                  statusKey={config.statusKey as any}
+                  fields={visibleCardFields as any}
+                  onClick={handleItemClick}
+                />
+              );
+            })}
           </div>
         )}
 
