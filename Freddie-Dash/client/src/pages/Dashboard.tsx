@@ -878,6 +878,8 @@ export default function DashboardPage({ type }: DashboardPageProps) {
       name: selectedItem.name,
       lastModifiedBy: user.name,
       lastModifiedDate: timestamp,
+      // For FAST module: reset version to 1 and mark as latest
+      ...(type === 'fast' ? { version: 1, isLatestVersion: true } : {}),
     };
     
     // Add to the top of the list
