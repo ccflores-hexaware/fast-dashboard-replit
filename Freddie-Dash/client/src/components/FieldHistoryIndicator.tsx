@@ -34,7 +34,7 @@ export function FieldHistoryIndicator({ fieldKey, fieldLabel, history }: FieldHi
           <h4 className="font-semibold text-sm">Change History</h4>
           <p className="text-xs text-muted-foreground mt-0.5">{fieldLabel}</p>
         </div>
-        <ScrollArea className="max-h-64">
+        <div className="max-h-64 overflow-y-auto">
           <div className="p-2">
             {history.map((change, index) => (
               <div
@@ -61,7 +61,7 @@ export function FieldHistoryIndicator({ fieldKey, fieldLabel, history }: FieldHi
               </div>
             ))}
           </div>
-        </ScrollArea>
+        </div>
         <div className="px-4 py-2 border-t bg-muted/30">
           <p className="text-xs text-muted-foreground text-center">
             {history.length} change{history.length > 1 ? 's' : ''} recorded
