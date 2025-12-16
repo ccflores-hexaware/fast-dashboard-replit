@@ -52,7 +52,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { format, parse, isValid } from 'date-fns';
+import { format, parse, isValid, subDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek, subMonths, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/lib/userContext";
 import * as XLSX from 'xlsx';
@@ -91,6 +91,9 @@ export default function DashboardPage({ type }: DashboardPageProps) {
   const [isCardFieldSettingsOpen, setIsCardFieldSettingsOpen] = useState(false);
   const [dateFieldErrors, setDateFieldErrors] = useState<Record<string, string | null>>({});
   const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [versionDateRange, setVersionDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined });
+  const [versionDatePreset, setVersionDatePreset] = useState<string>('all');
+  const [isVersionDateOpen, setIsVersionDateOpen] = useState(false);
 
   // Maximum number of fields visible on cards
   const MAX_CARD_FIELDS = 7;
@@ -509,6 +512,49 @@ export default function DashboardPage({ type }: DashboardPageProps) {
 
     return () => clearTimeout(debounceTimer);
   }, [editFormData.id, isEditing, selectedItem, dataMap, type]);
+
+  // Date range preset options for version history filter
+  const dateRangePresets = [
+    { label: 'All Time', value: 'all' },
+    { label: 'Today', value: 'today' },
+    { label: 'Yesterday', value: 'yesterday' },
+    { label: 'Last 7 Days', value: 'last7days' },
+    { label: 'Last 30 Days', value: 'last30days' },
+    { label: 'This Month', value: 'thisMonth' },
+    { label: 'Last Month', value: 'lastMonth' },
+    { label: 'Custom Range', value: 'custom' },
+  ];
+
+  const getDateRangeFromPreset = (preset: string): { from: Date | undefined; to: Date | undefined } => {
+    const today = new Date();
+    switch (preset) {
+      case 'today':
+        return { from: startOfDay(today), to: endOfDay(today) };
+      case 'yesterday':
+        const yesterday = subDays(today, 1);
+        return { from: startOfDay(yesterday), to: endOfDay(yesterday) };
+      case 'last7days':
+        return { from: startOfDay(subDays(today, 6)), to: endOfDay(today) };
+      case 'last30days':
+        return { from: startOfDay(subDays(today, 29)), to: endOfDay(today) };
+      case 'thisMonth':
+        return { from: startOfMonth(today), to: endOfMonth(today) };
+      case 'lastMonth':
+        const lastMonth = subMonths(today, 1);
+        return { from: startOfMonth(lastMonth), to: endOfMonth(lastMonth) };
+      case 'all':
+      default:
+        return { from: undefined, to: undefined };
+    }
+  };
+
+  const handleDatePresetChange = (preset: string) => {
+    setVersionDatePreset(preset);
+    if (preset !== 'custom') {
+      setVersionDateRange(getDateRangeFromPreset(preset));
+    }
+    setCurrentPage(1);
+  };
 
   const handleItemClick = (item: any) => {
     setSelectedItem(item);
@@ -1370,7 +1416,31 @@ export default function DashboardPage({ type }: DashboardPageProps) {
        matchesVersionFilter = item.isLatestVersion === true;
     }
 
-    return matchesSearch && matchesStatus && matchesColumnFilters && matchesHistory && matchesVersionFilter;
+    // Version Date Range Filter - for FAST module when version history is shown
+    let matchesVersionDateRange = true;
+    if (type === 'fast' && showVersionHistory && versionDateRange.from && versionDateRange.to) {
+       const itemDateStr = item.lastModifiedDate;
+       if (itemDateStr) {
+         // Parse the date from format "MMM d, yyyy HH:mm" or similar
+         const dateFormats = ['MMM d, yyyy HH:mm', 'MMM d, yyyy', 'yyyy-MM-dd', 'MM/dd/yyyy'];
+         let itemDate: Date | null = null;
+         for (const fmt of dateFormats) {
+           const parsed = parse(itemDateStr, fmt, new Date());
+           if (isValid(parsed)) {
+             itemDate = parsed;
+             break;
+           }
+         }
+         if (itemDate) {
+           matchesVersionDateRange = isWithinInterval(itemDate, { 
+             start: startOfDay(versionDateRange.from), 
+             end: endOfDay(versionDateRange.to) 
+           });
+         }
+       }
+    }
+
+    return matchesSearch && matchesStatus && matchesColumnFilters && matchesHistory && matchesVersionFilter && matchesVersionDateRange;
   }).sort((a: any, b: any) => {
     if (!sortConfig.key) return 0;
     
@@ -1950,6 +2020,10 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                     checked={showVersionHistory}
                     onCheckedChange={(checked) => {
                       setShowVersionHistory(checked as boolean);
+                      if (!checked) {
+                        setVersionDatePreset('all');
+                        setVersionDateRange({ from: undefined, to: undefined });
+                      }
                       setCurrentPage(1);
                     }}
                     className="h-4 w-4"
@@ -1961,6 +2035,90 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                     Show Version History
                   </Label>
                 </div>
+              )}
+              
+              {/* Date Range Filter - Only visible when Show Version History is checked */}
+              {type === 'fast' && showVersionHistory && (
+                <Popover open={isVersionDateOpen} onOpenChange={setIsVersionDateOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "h-9 justify-start text-left font-normal gap-2",
+                        !versionDateRange.from && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="h-4 w-4" />
+                      <span className="hidden sm:inline">
+                        {versionDatePreset === 'all' 
+                          ? 'All Time'
+                          : versionDatePreset === 'custom' && versionDateRange.from
+                            ? versionDateRange.to
+                              ? `${format(versionDateRange.from, 'MMM d')} - ${format(versionDateRange.to, 'MMM d, yyyy')}`
+                              : format(versionDateRange.from, 'MMM d, yyyy')
+                            : dateRangePresets.find(p => p.value === versionDatePreset)?.label || 'Select date range'
+                        }
+                      </span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <div className="flex">
+                      {/* Presets sidebar */}
+                      <div className="border-r p-2 space-y-1">
+                        {dateRangePresets.map((preset) => (
+                          <Button
+                            key={preset.value}
+                            variant={versionDatePreset === preset.value ? "default" : "ghost"}
+                            size="sm"
+                            className="w-full justify-start text-xs h-8"
+                            onClick={() => {
+                              handleDatePresetChange(preset.value);
+                              if (preset.value !== 'custom') {
+                                setIsVersionDateOpen(false);
+                              }
+                            }}
+                          >
+                            {preset.label}
+                          </Button>
+                        ))}
+                      </div>
+                      {/* Calendar for custom range */}
+                      {versionDatePreset === 'custom' && (
+                        <div className="p-2">
+                          <Calendar
+                            mode="range"
+                            selected={{ from: versionDateRange.from, to: versionDateRange.to }}
+                            onSelect={(range) => {
+                              setVersionDateRange({ from: range?.from, to: range?.to });
+                              if (range?.from && range?.to) {
+                                setCurrentPage(1);
+                              }
+                            }}
+                            numberOfMonths={1}
+                          />
+                          <div className="flex justify-end gap-2 pt-2 border-t">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setVersionDateRange({ from: undefined, to: undefined });
+                              }}
+                            >
+                              Clear
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => setIsVersionDateOpen(false)}
+                              disabled={!versionDateRange.from || !versionDateRange.to}
+                            >
+                              Apply
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
               )}
               
               <ViewToggle view={view} setView={handleViewChange} />
