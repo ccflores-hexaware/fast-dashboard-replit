@@ -8,7 +8,7 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Filter, Check, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Filter, Check, ArrowUpDown, ArrowUp, ArrowDown, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Popover,
@@ -247,8 +247,12 @@ export function DataTable<T extends { id: string }>({
         <TableBody>
           {data.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
-                No Records Found
+              <TableCell colSpan={columns.length} className="h-48">
+                <div className="flex flex-col items-center justify-center text-muted-foreground">
+                  <Search className="h-12 w-12 mb-4 opacity-50" />
+                  <p className="text-lg font-medium">No Records Found</p>
+                  <p className="text-sm">Try adjusting your filters or search criteria</p>
+                </div>
               </TableCell>
             </TableRow>
           ) : (
