@@ -79,7 +79,7 @@ export function DataCard<T extends { id: string; version?: number; isLatestVersi
               >
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent onClick={(e) => e.stopPropagation()}>
+              <SelectContent onClick={(e) => e.stopPropagation()} className="max-h-48 overflow-y-auto">
                 {sortedVersions.map((v) => {
                   const ver = v.version || 1;
                   const isLatest = v.isLatestVersion;
