@@ -32,7 +32,11 @@ Preferred communication style: Simple, everyday language.
 - **Column Visibility**: Configurable column visibility with presets and localStorage persistence (Table view only)
 - **Card Field Visibility**: Configurable card field display with 7-field maximum limit and localStorage persistence (Card view only)
 - **Bidirectional Fake Asset Sync**: "Mark as Fake Asset" toggle syncs between FAST and Fake Asset List pages
-- **Attribute-Level Versioning**: FAST module shows inline clock icons next to fields with change history; clicking reveals a popover with previous values, who made changes, and timestamps
+- **Asset-Level Versioning**: FAST module supports full version history with automatic snapshots:
+  - Each edit creates a new version and preserves the previous version as a read-only snapshot
+  - "Show Version History" checkbox toggles between showing only latest versions (default) or all historical versions
+  - Historical versions are read-only; only the latest version can be edited
+  - Version numbers increment automatically on each save
 - **Responsive Layout**: Mobile-first design with consistent navigation header
 
 ### Project Structure

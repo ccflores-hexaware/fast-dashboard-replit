@@ -556,6 +556,18 @@ export default function DashboardPage({ type }: DashboardPageProps) {
   };
 
   const handleEditClick = (item?: any) => {
+    const itemToEdit = item || selectedItem;
+    
+    // For FAST module: Prevent editing historical versions
+    if (type === 'fast' && itemToEdit && itemToEdit.isLatestVersion === false) {
+      toast({
+        title: "Cannot Edit Historical Version",
+        description: "Historical versions are read-only. Please edit the latest version of this asset.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     // If an item is provided (from the action column), set it as selected first
     if (item) {
       setSelectedItem(item);
@@ -679,6 +691,13 @@ export default function DashboardPage({ type }: DashboardPageProps) {
 
       // Insert new row at the top
       const newItem = { ...dataToSave };
+      
+      // For FAST module: Initialize version fields for new items
+      if (type === 'fast') {
+        newItem.version = 1;
+        newItem.isLatestVersion = true;
+      }
+      
       const updatedList = [newItem, ...currentList];
 
       setDataMap(prev => ({
@@ -700,9 +719,13 @@ export default function DashboardPage({ type }: DashboardPageProps) {
 
     } else {
       // UPDATE EXISTING ITEM
-      // If ID changed, check for conflict with OTHER items
+      // If ID changed, check for conflict with OTHER items (only check latest versions)
       if (dataToSave.id !== selectedItem.id) {
-          const idExists = currentList.some(item => item.id === dataToSave.id && item.id !== selectedItem.id);
+          const idExists = currentList.some(item => 
+            item.id === dataToSave.id && 
+            item.id !== selectedItem.id && 
+            (type !== 'fast' || item.isLatestVersion === true)
+          );
           if (idExists) {
             toast({
               title: "Error: Duplicate ID",
@@ -713,23 +736,61 @@ export default function DashboardPage({ type }: DashboardPageProps) {
           }
       }
 
-      // Replace existing item
-      const otherItems = currentList.filter(item => item.id !== selectedItem.id);
-      const updatedList = [{ ...dataToSave }, ...otherItems];
+      // For FAST module: Create a version snapshot before saving
+      if (type === 'fast') {
+        // Get the current version number from the selected item
+        const currentVersion = selectedItem.version || 1;
+        const newVersion = currentVersion + 1;
+        
+        // Create snapshot of old version (mark as not latest)
+        const oldVersionSnapshot = {
+          ...selectedItem,
+          isLatestVersion: false,
+        };
+        
+        // Update the new data with incremented version
+        dataToSave.version = newVersion;
+        dataToSave.isLatestVersion = true;
+        
+        // Keep all items except the current latest version of this asset
+        // Then add the old snapshot and the new version
+        const otherItems = currentList.filter(item => 
+          !(item.id === selectedItem.id && item.version === selectedItem.version)
+        );
+        const updatedList = [{ ...dataToSave }, oldVersionSnapshot, ...otherItems];
 
-      setDataMap(prev => ({
-        ...prev,
-        [type]: updatedList
-      }));
+        setDataMap(prev => ({
+          ...prev,
+          [type]: updatedList
+        }));
 
-      setSelectedItem(dataToSave);
-      setIsEditing(false);
-      
-      toast({
-        title: "Changes saved",
-        description: `${dataToSave.id} has been successfully updated.`,
-        variant: "success"
-      });
+        setSelectedItem(dataToSave);
+        setIsEditing(false);
+        
+        toast({
+          title: "Changes saved",
+          description: `${dataToSave.id} has been updated to version ${newVersion}. Previous version preserved in history.`,
+          variant: "success"
+        });
+      } else {
+        // For other modules: Replace existing item (original behavior)
+        const otherItems = currentList.filter(item => item.id !== selectedItem.id);
+        const updatedList = [{ ...dataToSave }, ...otherItems];
+
+        setDataMap(prev => ({
+          ...prev,
+          [type]: updatedList
+        }));
+
+        setSelectedItem(dataToSave);
+        setIsEditing(false);
+        
+        toast({
+          title: "Changes saved",
+          description: `${dataToSave.id} has been successfully updated.`,
+          variant: "success"
+        });
+      }
     }
   };
 
