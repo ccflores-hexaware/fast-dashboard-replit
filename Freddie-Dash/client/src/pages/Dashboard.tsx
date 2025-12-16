@@ -7,7 +7,7 @@ import { Pagination } from '@/components/Pagination';
 import { mockAssets, mockTPI, mockBTO, mockCMDB, mockFAST } from '@/lib/mockData';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Download, Plus, Save, X, Pencil, Search, Check, ChevronsUpDown, Calendar as CalendarIcon, Copy, AlertTriangle, ArrowRight } from 'lucide-react';
+import { Download, Plus, Save, X, Pencil, Search, Check, ChevronsUpDown, Calendar as CalendarIcon, Copy, AlertTriangle, ArrowRight, Settings2, RotateCcw, Eye, EyeOff } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { FilterMenu } from '@/components/FilterMenu';
@@ -85,6 +85,185 @@ export default function DashboardPage({ type }: DashboardPageProps) {
   const [assetIdError, setAssetIdError] = useState<string | null>(null);
   const [assetIdAvailable, setAssetIdAvailable] = useState<boolean>(false);
   const [selectedCardVersions, setSelectedCardVersions] = useState<Record<string, number>>({});
+  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({});
+  const [columnSearchQuery, setColumnSearchQuery] = useState('');
+  const [isColumnSettingsOpen, setIsColumnSettingsOpen] = useState(false);
+
+  // Default visible columns per module type - optimized for typical user personas
+  const defaultVisibleColumns: Record<string, string[]> = {
+    fast: [
+      'id', 'name', 'version', 'kalmAssignee', 'onboardingStatus', 'onboardingDisposition',
+      'airDisposition', 'maintenanceDisposition', 'cmdbStatus', 'assetType', 'technology',
+      'connectorStatus', 'enrollmentStatus', 'evidenceStatus', 'lastModifiedBy', 'lastModifiedDate'
+    ],
+    assets: [
+      'id', 'name', 'cmdbStatus', 'type', 'btoAlignment', 'itOwner', 'businessOwner',
+      'division', 'hosted', 'sox', 'missionCritical', 'businessCritical', 'version',
+      'lastModifiedBy', 'lastModifiedDate'
+    ],
+    tpi: [
+      'id', 'name', 'cmdbStatus', 'assetType', 'btoAlignment', 'applicationTypeFinancial',
+      'itOwnerManagedBy', 'businessOwnerOwnedBy', 'connectorStatus', 'onboardingStatus',
+      'disposition', 'assetTier', 'foundational'
+    ],
+    bto: [
+      'id', 'higherLevelBTO', 'bto', 'division', 'owner', 'deadline', 'status', 'progress'
+    ],
+    cmdb: [
+      'id', 'configItem', 'status', 'environment', 'owner', 'version'
+    ]
+  };
+
+  // Column visibility presets
+  const columnPresets: Record<string, { name: string; columns: string[] | 'all' | 'default' }[]> = {
+    fast: [
+      { name: 'Default', columns: 'default' },
+      { name: 'All Columns', columns: 'all' },
+      { name: 'Onboarding Focus', columns: ['id', 'name', 'onboardingStatus', 'onboardingDisposition', 'kalmAssignee', 'yearOnboarded', 'monthOnboarded', 'onboardingSchedule'] },
+      { name: 'Maintenance Focus', columns: ['id', 'name', 'maintenanceDisposition', 'maintenanceSLAExpiration', 'miStatus', 'miSchedule', 'miL2Assignee', 'miDueDate'] },
+      { name: 'Attestation Focus', columns: ['id', 'name', 'attestationKickedOff', 'attestationComplete', 'aiStatus', 'aiL2Assignee', 'aiAttestationDueDate', 'aiLastCandAAttestation'] },
+      { name: 'Connector Focus', columns: ['id', 'name', 'connectorStatus', 'connectorPattern', 'nameOfConnector', 'automationTeam', 'reliesOnCAFederation'] },
+    ],
+    assets: [
+      { name: 'Default', columns: 'default' },
+      { name: 'All Columns', columns: 'all' },
+      { name: 'Ownership View', columns: ['id', 'name', 'itOwner', 'businessOwner', 'businessOwnerSME', 'supportedBy', 'supportSME', 'architect'] },
+      { name: 'Compliance View', columns: ['id', 'name', 'sox', 'sppi', 'ppiClassification', 'missionCritical', 'businessCritical', 'customerFacing'] },
+    ],
+    tpi: [
+      { name: 'Default', columns: 'default' },
+      { name: 'All Columns', columns: 'all' },
+      { name: 'Status Overview', columns: ['id', 'name', 'cmdbStatus', 'connectorStatus', 'onboardingStatus', 'disposition'] },
+    ],
+    bto: [
+      { name: 'Default', columns: 'default' },
+      { name: 'All Columns', columns: 'all' },
+    ],
+    cmdb: [
+      { name: 'Default', columns: 'default' },
+      { name: 'All Columns', columns: 'all' },
+    ]
+  };
+
+  // Helper to get all column keys for a module type
+  const getAllColumnKeysForType = (moduleType: string): string[] => {
+    const columnKeysByType: Record<string, string[]> = {
+      fast: ['id', 'name', 'version', 'kalmAssignee', 'onboardingStatus', 'onboardingDisposition', 'airDisposition', 
+        'maintenanceDisposition', 'lastConnectorDeliveryDate', 'maintenanceSLAExpiration', 'technology', 'cmdbStatus', 
+        'cmdbBeingRetired', 'cmdbLegalHold', 'ticketsOpened', 'assetType', 'yearOnboarded', 'monthOnboarded', 
+        'assetPOCs', 'onboardingSchedule', 'entitlementsMissing', 'membersMissing', 'cisMissing', 'reliesOnCAFederation',
+        'connectorPattern', 'automationTeam', 'nameOfConnector', 'connectorStatus', 'enrollmentStatus', 'evidenceStatus',
+        'miSchedule', 'miLastAIRUpload', 'miDaysSince', 'miDueDate', 'miOnboardingChangeDate', 'miL2Assignee', 'miStatus',
+        'attestationKickedOff', 'attestationComplete', 'aiLastCandAAttestation', 'keychainAttestationKickoffDate',
+        'aiDaysSince', 'aiAttestationDueDate', 'aiOnboardingChangeDate', 'aiL2Assignee', 'aiStatus', 'theGap', 
+        'comments', 'lastModifiedBy', 'lastModifiedDate'],
+      assets: ['id', 'name', 'cmdbStatus', 'type', 'btoAlignment', 'applicationTypeFinancial', 'architect',
+        'assessmentCategory', 'blockFundingName', 'blockFundingOwner', 'businessCritical', 'businessOwner',
+        'businessOwnerSME', 'cotsOrInHouse', 'customerFacing', 'deploymentLifecyclePhase', 'deploymentLifecycleStartDate',
+        'description', 'division', 'foundational', 'hosted', 'isSaas', 'itOwner', 'maintenanceWindow', 'missionCritical',
+        'operationalHours', 'ppiClassification', 'sox', 'sppi', 'supportSME', 'supportedBy', 'supporting', 'version',
+        'lastModifiedBy', 'lastModifiedDate'],
+      tpi: ['id', 'name', 'cmdbStatus', 'assetType', 'affinityGroup', 'appApprModernDelivery', 'applicationTypeFinancial',
+        'architect', 'assetIdInFAST', 'assetIdInSchedule', 'assetIdInWeeklyStatusReport', 'assetTier', 'blockFunding',
+        'btoAlignment', 'businessOwnerCommsCheck', 'businessOwnerOwnedBy', 'businessOwnerSME', 'cashPaymentSystems',
+        'cmdbBeingRetired', 'cmdbLegalHold', 'concatinatedBTOandDivision', 'connectorStatus', 'cotsOrInHouseBuilt',
+        'customerFacing', 'default', 'description', 'disposition', 'externalFacing', 'financialImpact4hrOutage',
+        'foundational', 'highLevelBTO', 'hosted', 'infoSecCritical', 'informationClassification', 'isSaas',
+        'itOwnerCommsCheck', 'itOwnerManagedBy', 'keyChainOnboardingStatus', 'maintenanceWindow', 'mdAssetDesignation',
+        'multiFactorAuthentication', 'nfr9', 'nfr10', 'nonDefaultTier1', 'nonDefaultTier2', 'nonDefaultTier3',
+        'nonDefaultTier4', 'onboardingStatus', 'operationalHours', 'owningInternalOrg', 'ppiClassification',
+        'privilegedAccess', 'spof', 'sppi', 'supportSME', 'supportedBy', 'supportedByCommsCheck', 'version'],
+      bto: ['id', 'higherLevelBTO', 'bto', 'division', 'concatValue', 'owner', 'deadline', 'status', 'progress'],
+      cmdb: ['id', 'configItem', 'version', 'environment', 'status', 'owner', 'lastUpdated']
+    };
+    return columnKeysByType[moduleType] || [];
+  };
+
+  // Load saved column visibility from localStorage
+  useEffect(() => {
+    const savedVisibility = localStorage.getItem(`columnVisibility_${type}`);
+    if (savedVisibility) {
+      try {
+        const parsed = JSON.parse(savedVisibility);
+        // Validate parsed data has explicit true/false values
+        if (Object.keys(parsed).length > 0) {
+          setColumnVisibility(parsed);
+        } else {
+          initializeDefaultVisibility();
+        }
+      } catch {
+        initializeDefaultVisibility();
+      }
+    } else {
+      initializeDefaultVisibility();
+    }
+  }, [type]);
+
+  const initializeDefaultVisibility = (allCols?: any[]) => {
+    const defaults = defaultVisibleColumns[type] || [];
+    const visibility: Record<string, boolean> = {};
+    
+    // Get all column keys for this module type
+    const allColumnKeys = allCols 
+      ? allCols.filter(c => c.accessorKey).map(c => c.accessorKey as string)
+      : getAllColumnKeysForType(type);
+    
+    // Set all columns explicitly - true if in defaults, false otherwise
+    allColumnKeys.forEach((key: string) => {
+      visibility[key] = defaults.includes(key);
+    });
+    
+    setColumnVisibility(visibility);
+  };
+
+  // Save column visibility to localStorage when it changes
+  useEffect(() => {
+    if (Object.keys(columnVisibility).length > 0) {
+      localStorage.setItem(`columnVisibility_${type}`, JSON.stringify(columnVisibility));
+    }
+  }, [columnVisibility, type]);
+
+  const toggleColumnVisibility = (columnKey: string) => {
+    setColumnVisibility(prev => ({
+      ...prev,
+      [columnKey]: !prev[columnKey]
+    }));
+  };
+
+  const applyPreset = (preset: { name: string; columns: string[] | 'all' | 'default' }, allColumns: any[]) => {
+    const newVisibility: Record<string, boolean> = {};
+    
+    if (preset.columns === 'all') {
+      allColumns.forEach(col => {
+        if (col.accessorKey) {
+          newVisibility[col.accessorKey] = true;
+        }
+      });
+    } else if (preset.columns === 'default') {
+      const defaults = defaultVisibleColumns[type] || [];
+      allColumns.forEach(col => {
+        if (col.accessorKey) {
+          newVisibility[col.accessorKey] = defaults.includes(col.accessorKey as string);
+        }
+      });
+    } else {
+      allColumns.forEach(col => {
+        if (col.accessorKey) {
+          newVisibility[col.accessorKey] = (preset.columns as string[]).includes(col.accessorKey as string);
+        }
+      });
+    }
+    
+    setColumnVisibility(newVisibility);
+    toast({
+      title: "Preset Applied",
+      description: `Column visibility set to "${preset.name}"`,
+    });
+  };
+
+  const getVisibleColumnCount = (allColumns: any[]) => {
+    return allColumns.filter(col => col.accessorKey && columnVisibility[col.accessorKey]).length;
+  };
 
   // State to hold data so it can be edited
   const [dataMap, setDataMap] = useState({
@@ -905,9 +1084,27 @@ export default function DashboardPage({ type }: DashboardPageProps) {
   
   // Apply column limit for "View" role (Test User)
   // Show only first 20 columns in table and card popup
-  const config = {
+  const baseConfig = {
     ...rawConfig,
     columns: (!isAdmin && rawConfig.columns.length > 20) ? rawConfig.columns.slice(0, 20) : rawConfig.columns
+  };
+
+  // Filter columns based on visibility settings
+  const visibleColumns = baseConfig.columns.filter((col: any) => {
+    if (!col.accessorKey) return true; // Always show columns without accessorKey (like action columns)
+    const key = col.accessorKey as string;
+    // Check if visibility is explicitly set, otherwise check if it's in defaults
+    if (columnVisibility[key] !== undefined) {
+      return columnVisibility[key];
+    }
+    // If not set, check if it's in the default list
+    return defaultVisibleColumns[type]?.includes(key) ?? true;
+  });
+
+  const config = {
+    ...baseConfig,
+    columns: visibleColumns,
+    allColumns: baseConfig.columns, // Keep all columns for the settings dropdown
   };
 
   // Get unique statuses for the current view
@@ -1269,6 +1466,110 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                   onFiltersChange={setColumnFilters}
                 />
               )}
+              
+              {/* Column Visibility Settings */}
+              <Popover open={isColumnSettingsOpen} onOpenChange={setIsColumnSettingsOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-9 gap-2">
+                    <Settings2 className="h-4 w-4" />
+                    <span className="hidden sm:inline">Columns</span>
+                    <span className="bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded-full">
+                      {getVisibleColumnCount(config.allColumns as any)}/{(config.allColumns as any[]).length}
+                    </span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-0" align="end">
+                  <div className="p-3 border-b bg-muted/30">
+                    <h4 className="font-semibold text-sm mb-2">Column Visibility</h4>
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                      <Input
+                        placeholder="Search columns..."
+                        value={columnSearchQuery}
+                        onChange={(e) => setColumnSearchQuery(e.target.value)}
+                        className="h-8 pl-8 text-sm"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Presets */}
+                  <div className="p-2 border-b bg-muted/20">
+                    <div className="text-xs font-medium text-muted-foreground mb-1.5 px-1">Quick Presets</div>
+                    <div className="flex flex-wrap gap-1">
+                      {(columnPresets[type] || []).map((preset) => (
+                        <Button
+                          key={preset.name}
+                          variant="outline"
+                          size="sm"
+                          className="h-6 text-xs px-2"
+                          onClick={() => applyPreset(preset, config.allColumns as any[])}
+                        >
+                          {preset.name}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Column List */}
+                  <ScrollArea className="h-64">
+                    <div className="p-2 space-y-1">
+                      {(config.allColumns as any[])
+                        .filter(col => col.accessorKey && col.header.toLowerCase().includes(columnSearchQuery.toLowerCase()))
+                        .map((col) => {
+                          const key = col.accessorKey as string;
+                          const isVisible = columnVisibility[key] ?? defaultVisibleColumns[type]?.includes(key) ?? true;
+                          return (
+                            <div
+                              key={key}
+                              className="flex items-center gap-2 px-2 py-1.5 hover:bg-muted/50 rounded cursor-pointer"
+                              onClick={() => toggleColumnVisibility(key)}
+                            >
+                              <Checkbox
+                                checked={isVisible}
+                                onCheckedChange={() => toggleColumnVisibility(key)}
+                                className="h-4 w-4"
+                              />
+                              <span className="text-sm flex-1">{col.header}</span>
+                              {isVisible ? (
+                                <Eye className="h-3.5 w-3.5 text-muted-foreground" />
+                              ) : (
+                                <EyeOff className="h-3.5 w-3.5 text-muted-foreground/50" />
+                              )}
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </ScrollArea>
+                  
+                  {/* Footer Actions */}
+                  <div className="p-2 border-t bg-muted/20 flex justify-between">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs gap-1"
+                      onClick={() => {
+                        initializeDefaultVisibility(config.allColumns);
+                        toast({
+                          title: "Reset Complete",
+                          description: "Columns reset to default visibility",
+                        });
+                      }}
+                    >
+                      <RotateCcw className="h-3 w-3" />
+                      Reset to Default
+                    </Button>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => setIsColumnSettingsOpen(false)}
+                    >
+                      Done
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+              
               <ViewToggle view={view} setView={handleViewChange} />
             </div>
           </div>
