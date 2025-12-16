@@ -1395,15 +1395,41 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     return 0;
   });
 
-  // Pagination Logic
-  const totalPages = Math.ceil(filteredData.length / pageSize);
+  // Pagination Logic - For FAST with version history in card view, paginate by unique asset
+  const shouldPaginateByAsset = type === 'fast' && showVersionHistory && view === 'card';
   
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
+  let currentData: any[];
+  let totalPages: number;
+  let paginationTotalItems: number;
   
-  const currentData = filteredData.slice(startIndex, endIndex);
-  
-  const paginationTotalItems = filteredData.length;
+  if (shouldPaginateByAsset) {
+    // Group data by asset ID first
+    const assetMap = new Map<string, any[]>();
+    filteredData.forEach((item: any) => {
+      const existing = assetMap.get(item.id) || [];
+      existing.push(item);
+      assetMap.set(item.id, existing);
+    });
+    
+    const uniqueAssetIds = Array.from(assetMap.keys());
+    paginationTotalItems = uniqueAssetIds.length;
+    totalPages = Math.ceil(paginationTotalItems / pageSize);
+    
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const paginatedAssetIds = uniqueAssetIds.slice(startIndex, endIndex);
+    
+    // Collect all versions for the paginated assets
+    currentData = paginatedAssetIds.flatMap(assetId => assetMap.get(assetId) || []);
+  } else {
+    // Standard pagination by record count
+    paginationTotalItems = filteredData.length;
+    totalPages = Math.ceil(paginationTotalItems / pageSize);
+    
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    currentData = filteredData.slice(startIndex, endIndex);
+  }
 
   const renderDetailRow = (label: string, value: any) => {
     return (
