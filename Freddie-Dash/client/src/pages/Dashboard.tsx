@@ -340,7 +340,14 @@ export default function DashboardPage({ type }: DashboardPageProps) {
   };
 
   const getVisibleCardFieldCount = () => {
-    return Object.entries(cardFieldVisibility).filter(([_, v]) => v).length;
+    // Count fields that are explicitly visible or in defaults (when not explicitly set)
+    const allFieldKeys = getAllColumnKeysForType(type);
+    return allFieldKeys.filter(key => {
+      if (key in cardFieldVisibility) {
+        return cardFieldVisibility[key];
+      }
+      return defaultVisibleCardFields[type]?.includes(key) ?? false;
+    }).length;
   };
 
   // State to hold data so it can be edited
@@ -1503,7 +1510,10 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                             .filter(col => col.accessorKey && col.header.toLowerCase().includes(cardFieldSearchQuery.toLowerCase()))
                             .map((col) => {
                               const key = col.accessorKey as string;
-                              const isVisible = cardFieldVisibility[key] ?? defaultVisibleCardFields[type]?.includes(key) ?? false;
+                              // Check if visibility is explicitly set, otherwise use defaults
+                              const isVisible = (key in cardFieldVisibility) 
+                                ? cardFieldVisibility[key] 
+                                : (defaultVisibleCardFields[type]?.includes(key) ?? false);
                               const currentVisibleCount = getVisibleCardFieldCount();
                               const wouldExceedMax = !isVisible && currentVisibleCount >= MAX_CARD_FIELDS;
                               
@@ -1693,7 +1703,16 @@ export default function DashboardPage({ type }: DashboardPageProps) {
             {currentData.map((item: any) => {
               // Filter card fields based on visibility settings
               const visibleCardFields = (config.allColumns as any[])
-                .filter(col => col.accessorKey && (cardFieldVisibility[col.accessorKey] ?? defaultVisibleCardFields[type]?.includes(col.accessorKey)))
+                .filter(col => {
+                  if (!col.accessorKey) return false;
+                  const key = col.accessorKey as string;
+                  // If cardFieldVisibility has the key explicitly set, use that value
+                  if (key in cardFieldVisibility) {
+                    return cardFieldVisibility[key];
+                  }
+                  // Otherwise fall back to defaults
+                  return defaultVisibleCardFields[type]?.includes(key) ?? false;
+                })
                 .slice(0, MAX_CARD_FIELDS)
                 .map(col => ({ label: col.header, key: col.accessorKey }));
               
