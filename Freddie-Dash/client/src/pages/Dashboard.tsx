@@ -2126,6 +2126,9 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                               }
                             }}
                             numberOfMonths={1}
+                            captionLayout="dropdown"
+                            fromYear={2020}
+                            toYear={2030}
                           />
                           <div className="flex justify-end gap-2 pt-2 border-t">
                             <Button
