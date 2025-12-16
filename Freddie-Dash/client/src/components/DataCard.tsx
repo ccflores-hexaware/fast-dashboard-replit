@@ -2,8 +2,15 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from './DataTable';
-import { ArrowRight, History, Star, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowRight, History, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface DataCardProps<T> {
   item: T;
@@ -16,8 +23,6 @@ interface DataCardProps<T> {
   allVersions?: T[];
 }
 
-const MAX_VISIBLE_VERSIONS = 6;
-
 export function DataCard<T extends { id: string; version?: number; isLatestVersion?: boolean }>({ 
   item, 
   titleKey, 
@@ -29,7 +34,6 @@ export function DataCard<T extends { id: string; version?: number; isLatestVersi
   allVersions = []
 }: DataCardProps<T>) {
   const [selectedVersion, setSelectedVersion] = useState<number | null>(null);
-  const [showAllVersions, setShowAllVersions] = useState(false);
   
   const sortedVersions = allVersions.length > 0 
     ? [...allVersions].sort((a, b) => (b.version || 1) - (a.version || 1))
@@ -42,10 +46,6 @@ export function DataCard<T extends { id: string; version?: number; isLatestVersi
   const currentVersion = displayItem.version || 1;
   const latestVersion = sortedVersions.length > 0 ? sortedVersions[0].version || 1 : item.version || 1;
   const isViewingLatest = selectedVersion === null || selectedVersion === latestVersion;
-  
-  const hasMoreVersions = sortedVersions.length > MAX_VISIBLE_VERSIONS;
-  const visibleVersions = showAllVersions ? sortedVersions : sortedVersions.slice(0, MAX_VISIBLE_VERSIONS);
-  const hiddenCount = sortedVersions.length - MAX_VISIBLE_VERSIONS;
   
   return (
     <Card 
@@ -63,53 +63,44 @@ export function DataCard<T extends { id: string; version?: number; isLatestVersi
       }}
     >
       {showVersion && sortedVersions.length > 0 && (
-        <div className="px-4 pt-3 pb-1 border-b bg-muted/30">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-xs font-medium text-muted-foreground mr-1">Versions:</span>
-            {visibleVersions.map((v) => {
-              const ver = v.version || 1;
-              const isSelected = selectedVersion === ver || (selectedVersion === null && v.isLatestVersion);
-              const isLatest = v.isLatestVersion;
-              return (
-                <button
-                  key={ver}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedVersion(ver);
-                  }}
-                  className={cn(
-                    "px-2 py-0.5 rounded text-xs font-bold transition-all",
-                    isSelected
-                      ? isLatest
-                        ? "bg-green-500 text-white shadow-sm"
-                        : "bg-primary text-white shadow-sm"
-                      : isLatest
-                        ? "bg-green-100 text-green-700 hover:bg-green-200"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                  )}
-                >
-                  v{ver}{isLatest && '*'}
-                </button>
-              );
-            })}
-            {hasMoreVersions && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowAllVersions(!showAllVersions);
-                }}
-                className="px-2 py-0.5 rounded text-xs font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 transition-all flex items-center gap-0.5"
+        <div className="px-4 pt-3 pb-2 border-b bg-muted/30">
+          <div className="flex items-center gap-2">
+            <History className="h-4 w-4 text-muted-foreground" />
+            <span className="text-xs font-medium text-muted-foreground">Version:</span>
+            <Select
+              value={selectedVersion?.toString() || latestVersion.toString()}
+              onValueChange={(value) => {
+                setSelectedVersion(parseInt(value));
+              }}
+            >
+              <SelectTrigger 
+                className="h-7 w-auto min-w-[100px] text-xs"
+                onClick={(e) => e.stopPropagation()}
               >
-                {showAllVersions ? (
-                  <>Less <ChevronUp className="h-3 w-3" /></>
-                ) : (
-                  <>+{hiddenCount} more <ChevronDown className="h-3 w-3" /></>
-                )}
-              </button>
-            )}
-          </div>
-          <div className="text-xs text-muted-foreground mt-1">
-            Viewing: v{currentVersion}
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent onClick={(e) => e.stopPropagation()}>
+                {sortedVersions.map((v) => {
+                  const ver = v.version || 1;
+                  const isLatest = v.isLatestVersion;
+                  return (
+                    <SelectItem key={ver} value={ver.toString()} className="text-xs">
+                      <span className="flex items-center gap-2">
+                        v{ver}
+                        {isLatest && (
+                          <Badge variant="outline" className="h-4 text-[10px] px-1 bg-green-50 text-green-700 border-green-300">
+                            Latest
+                          </Badge>
+                        )}
+                      </span>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+            <span className="text-xs text-muted-foreground">
+              ({sortedVersions.length} total)
+            </span>
           </div>
         </div>
       )}
