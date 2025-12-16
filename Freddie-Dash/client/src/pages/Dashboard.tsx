@@ -1467,7 +1467,8 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                 />
               )}
               
-              {/* Column Visibility Settings */}
+              {/* Column Visibility Settings - Only show in Table view */}
+              {view === 'table' && (
               <Popover open={isColumnSettingsOpen} onOpenChange={setIsColumnSettingsOpen}>
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="sm" className="h-9 gap-2">
@@ -1569,6 +1570,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                   </div>
                 </PopoverContent>
               </Popover>
+              )}
               
               <ViewToggle view={view} setView={handleViewChange} />
             </div>
