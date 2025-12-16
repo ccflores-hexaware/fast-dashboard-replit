@@ -30,6 +30,7 @@ Preferred communication style: Simple, everyday language.
 - **View Toggle Pattern**: Users can switch between table and card views for data display
 - **Column Filtering**: Excel-style multi-select filters on table columns
 - **Column Visibility**: Configurable column visibility with presets and localStorage persistence (Table view only)
+- **Card Field Visibility**: Configurable card field display with 7-field maximum limit and localStorage persistence (Card view only)
 - **Bidirectional Fake Asset Sync**: "Mark as Fake Asset" toggle syncs between FAST and Fake Asset List pages
 - **Responsive Layout**: Mobile-first design with consistent navigation header
 
