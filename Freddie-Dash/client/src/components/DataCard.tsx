@@ -55,7 +55,7 @@ export function DataCard<T extends { id: string; version?: number; isLatestVersi
         }
       }}
     >
-      {showVersion && sortedVersions.length > 1 && (
+      {showVersion && sortedVersions.length > 0 && (
         <div className="px-4 pt-3 pb-1 border-b bg-muted/30">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs font-medium text-muted-foreground">Versions:</span>
@@ -92,33 +92,9 @@ export function DataCard<T extends { id: string; version?: number; isLatestVersi
         </div>
       )}
       
-      {showVersion && sortedVersions.length <= 1 && (
-        <div className="absolute -top-0 -right-0">
-          <div className={cn(
-            "flex items-center gap-1 px-3 py-1.5 rounded-bl-lg rounded-tr-sm text-xs font-bold shadow-sm",
-            isLatestVersion 
-              ? "bg-green-500 text-white" 
-              : "bg-slate-200 text-slate-600"
-          )}>
-            {isLatestVersion ? (
-              <>
-                <Star className="h-3 w-3 fill-current" />
-                <span>v{currentVersion} Latest</span>
-              </>
-            ) : (
-              <>
-                <History className="h-3 w-3" />
-                <span>v{currentVersion}</span>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-      
       <CardHeader className={cn(
         "pb-2 flex flex-row items-start justify-between space-y-0", 
-        showVersion && sortedVersions.length <= 1 && "pt-8",
-        showVersion && sortedVersions.length > 1 && "pt-2"
+        showVersion && sortedVersions.length > 0 && "pt-2"
       )}>
         <CardTitle className="text-lg font-bold text-primary truncate pr-4">
           {String(displayItem[titleKey])}
