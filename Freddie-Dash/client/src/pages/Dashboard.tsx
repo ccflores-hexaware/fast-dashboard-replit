@@ -1452,6 +1452,37 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     if (aValue === null || aValue === undefined) return 1;
     if (bValue === null || bValue === undefined) return -1;
 
+    // Date column sorting - parse dates for proper chronological comparison
+    const dateColumns = ['lastModifiedDate', 'lastConnectorDeliveryDate', 'maintenanceSLAExpiration', 
+      'miLastAIRUpload', 'miDueDate', 'miOnboardingChangeDate', 'aiLastCandAAttestation', 
+      'keychainAttestationKickoffDate', 'aiAttestationDueDate', 'aiOnboardingChangeDate', 'lastUpdated'];
+    
+    if (dateColumns.includes(sortConfig.key) && typeof aValue === 'string' && typeof bValue === 'string') {
+      const dateFormats = ['MMM d, yyyy HH:mm', 'MMM d, yyyy', 'yyyy-MM-dd', 'MM/dd/yyyy'];
+      let aDate: Date | null = null;
+      let bDate: Date | null = null;
+      
+      for (const fmt of dateFormats) {
+        if (!aDate) {
+          const parsed = parse(aValue, fmt, new Date());
+          if (isValid(parsed)) aDate = parsed;
+        }
+        if (!bDate) {
+          const parsed = parse(bValue, fmt, new Date());
+          if (isValid(parsed)) bDate = parsed;
+        }
+        if (aDate && bDate) break;
+      }
+      
+      if (aDate && bDate) {
+        const aTime = aDate.getTime();
+        const bTime = bDate.getTime();
+        if (aTime < bTime) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aTime > bTime) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      }
+    }
+
     // String comparison (case insensitive)
     if (typeof aValue === 'string' && typeof bValue === 'string') {
       return sortConfig.direction === 'asc' 
