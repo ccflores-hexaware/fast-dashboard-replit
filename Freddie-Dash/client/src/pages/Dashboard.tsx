@@ -2173,6 +2173,12 @@ export default function DashboardPage({ type }: DashboardPageProps) {
             sortConfig={sortConfig}
             onSort={handleSort}
           />
+        ) : currentData.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+            <Search className="h-12 w-12 mb-4 opacity-50" />
+            <p className="text-lg font-medium">No Records Found</p>
+            <p className="text-sm">Try adjusting your filters or search criteria</p>
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {(() => {
