@@ -1957,33 +1957,72 @@ export default function DashboardPage({ type }: DashboardPageProps) {
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {currentData.map((item: any) => {
-              // Filter card fields based on visibility settings
-              const visibleCardFields = (config.allColumns as any[])
-                .filter(col => {
-                  if (!col.accessorKey) return false;
-                  const key = col.accessorKey as string;
-                  // If cardFieldVisibility has the key explicitly set, use that value
-                  if (key in cardFieldVisibility) {
-                    return cardFieldVisibility[key];
-                  }
-                  // Otherwise fall back to defaults
-                  return defaultVisibleCardFields[type]?.includes(key) ?? false;
-                })
-                .slice(0, MAX_CARD_FIELDS)
-                .map(col => ({ label: col.header, key: col.accessorKey }));
+            {(() => {
+              // For FAST with version history, group by asset ID and show one card per asset with version selector
+              if (type === 'fast' && showVersionHistory) {
+                const assetGroups = new Map<string, any[]>();
+                currentData.forEach((item: any) => {
+                  const existing = assetGroups.get(item.id) || [];
+                  existing.push(item);
+                  assetGroups.set(item.id, existing);
+                });
+                
+                return Array.from(assetGroups.entries()).map(([assetId, versions]) => {
+                  const latestVersion = versions.find(v => v.isLatestVersion) || versions[0];
+                  const visibleCardFields = (config.allColumns as any[])
+                    .filter(col => {
+                      if (!col.accessorKey) return false;
+                      const key = col.accessorKey as string;
+                      if (key in cardFieldVisibility) {
+                        return cardFieldVisibility[key];
+                      }
+                      return defaultVisibleCardFields[type]?.includes(key) ?? false;
+                    })
+                    .slice(0, MAX_CARD_FIELDS)
+                    .map(col => ({ label: col.header, key: col.accessorKey }));
+                  
+                  return (
+                    <DataCard
+                      key={assetId}
+                      item={latestVersion}
+                      titleKey={config.titleKey as any}
+                      statusKey={config.statusKey as any}
+                      fields={visibleCardFields as any}
+                      onClick={handleItemClick}
+                      showVersion={true}
+                      isLatestVersion={true}
+                      allVersions={versions}
+                    />
+                  );
+                });
+              }
               
-              return (
-                <DataCard
-                  key={item.id} 
-                  item={item} 
-                  titleKey={config.titleKey as any}
-                  statusKey={config.statusKey as any}
-                  fields={visibleCardFields as any}
-                  onClick={handleItemClick}
-                />
-              );
-            })}
+              // Default card rendering for other modules or when version history is off
+              return currentData.map((item: any) => {
+                const visibleCardFields = (config.allColumns as any[])
+                  .filter(col => {
+                    if (!col.accessorKey) return false;
+                    const key = col.accessorKey as string;
+                    if (key in cardFieldVisibility) {
+                      return cardFieldVisibility[key];
+                    }
+                    return defaultVisibleCardFields[type]?.includes(key) ?? false;
+                  })
+                  .slice(0, MAX_CARD_FIELDS)
+                  .map(col => ({ label: col.header, key: col.accessorKey }));
+                
+                return (
+                  <DataCard
+                    key={item.id} 
+                    item={item} 
+                    titleKey={config.titleKey as any}
+                    statusKey={config.statusKey as any}
+                    fields={visibleCardFields as any}
+                    onClick={handleItemClick}
+                  />
+                );
+              });
+            })()}
           </div>
         )}
 

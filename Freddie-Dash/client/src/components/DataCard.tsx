@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from './DataTable';
@@ -13,18 +13,32 @@ interface DataCardProps<T> {
   onClick?: (item: T) => void;
   showVersion?: boolean;
   isLatestVersion?: boolean;
+  allVersions?: T[];
 }
 
-export function DataCard<T extends { id: string; version?: number }>({ 
+export function DataCard<T extends { id: string; version?: number; isLatestVersion?: boolean }>({ 
   item, 
   titleKey, 
   statusKey, 
   fields, 
   onClick,
   showVersion = false,
-  isLatestVersion = false
+  isLatestVersion = false,
+  allVersions = []
 }: DataCardProps<T>) {
-  const version = item.version || 1;
+  const [selectedVersion, setSelectedVersion] = useState<number | null>(null);
+  
+  const sortedVersions = allVersions.length > 0 
+    ? [...allVersions].sort((a, b) => (b.version || 1) - (a.version || 1))
+    : [];
+  
+  const displayItem = selectedVersion !== null 
+    ? sortedVersions.find(v => v.version === selectedVersion) || item
+    : item;
+  
+  const currentVersion = displayItem.version || 1;
+  const latestVersion = sortedVersions.length > 0 ? sortedVersions[0].version || 1 : item.version || 1;
+  const isViewingLatest = selectedVersion === null || selectedVersion === latestVersion;
   
   return (
     <Card 
@@ -33,15 +47,52 @@ export function DataCard<T extends { id: string; version?: number }>({
         isLatestVersion && showVersion ? "border-t-green-500 ring-2 ring-green-200" : "border-t-primary",
         !isLatestVersion && showVersion && "opacity-80 hover:opacity-100"
       )}
-      onClick={() => onClick && onClick(item)}
+      onClick={() => onClick && onClick(displayItem)}
       tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
-          onClick && onClick(item);
+          onClick && onClick(displayItem);
         }
       }}
     >
-      {showVersion && (
+      {showVersion && sortedVersions.length > 1 && (
+        <div className="px-4 pt-3 pb-1 border-b bg-muted/30">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-medium text-muted-foreground">Versions:</span>
+            {sortedVersions.map((v) => {
+              const ver = v.version || 1;
+              const isSelected = selectedVersion === ver || (selectedVersion === null && v.isLatestVersion);
+              const isLatest = v.isLatestVersion;
+              return (
+                <button
+                  key={ver}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedVersion(ver);
+                  }}
+                  className={cn(
+                    "px-2 py-0.5 rounded text-xs font-bold transition-all",
+                    isSelected
+                      ? isLatest
+                        ? "bg-green-500 text-white shadow-sm"
+                        : "bg-primary text-white shadow-sm"
+                      : isLatest
+                        ? "bg-green-100 text-green-700 hover:bg-green-200"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  )}
+                >
+                  v{ver}{isLatest && '*'}
+                </button>
+              );
+            })}
+          </div>
+          <div className="text-xs text-muted-foreground mt-1">
+            Viewing: v{currentVersion}
+          </div>
+        </div>
+      )}
+      
+      {showVersion && sortedVersions.length <= 1 && (
         <div className="absolute -top-0 -right-0">
           <div className={cn(
             "flex items-center gap-1 px-3 py-1.5 rounded-bl-lg rounded-tr-sm text-xs font-bold shadow-sm",
@@ -52,32 +103,37 @@ export function DataCard<T extends { id: string; version?: number }>({
             {isLatestVersion ? (
               <>
                 <Star className="h-3 w-3 fill-current" />
-                <span>v{version} Latest</span>
+                <span>v{currentVersion} Latest</span>
               </>
             ) : (
               <>
                 <History className="h-3 w-3" />
-                <span>v{version}</span>
+                <span>v{currentVersion}</span>
               </>
             )}
           </div>
         </div>
       )}
-      <CardHeader className={cn("pb-2 flex flex-row items-start justify-between space-y-0", showVersion && "pt-8")}>
+      
+      <CardHeader className={cn(
+        "pb-2 flex flex-row items-start justify-between space-y-0", 
+        showVersion && sortedVersions.length <= 1 && "pt-8",
+        showVersion && sortedVersions.length > 1 && "pt-2"
+      )}>
         <CardTitle className="text-lg font-bold text-primary truncate pr-4">
-          {String(item[titleKey])}
+          {String(displayItem[titleKey])}
         </CardTitle>
-        {statusKey && <StatusBadge status={String(item[statusKey])} />}
+        {statusKey && <StatusBadge status={String(displayItem[statusKey])} />}
       </CardHeader>
       <CardContent className="pt-2">
         <dl className="space-y-2 text-sm">
           {fields.map((field) => (
-            <div key={`${item.id}-${String(field.key)}`} className="flex justify-between">
+            <div key={`${displayItem.id}-${String(field.key)}-${currentVersion}`} className="flex justify-between">
               <dt className="text-muted-foreground font-medium">{field.label}:</dt>
               <dd className="text-right font-semibold text-foreground">
                 {field.format 
-                  ? field.format(item[field.key]) 
-                  : String(item[field.key])
+                  ? field.format(displayItem[field.key]) 
+                  : String(displayItem[field.key] ?? '')
                 }
               </dd>
             </div>
