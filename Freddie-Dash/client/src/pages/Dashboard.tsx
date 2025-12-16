@@ -52,7 +52,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { format } from 'date-fns';
+import { format, parse, isValid } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/lib/userContext";
 import * as XLSX from 'xlsx';
@@ -91,6 +91,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
   const [cardFieldVisibility, setCardFieldVisibility] = useState<Record<string, boolean>>({});
   const [cardFieldSearchQuery, setCardFieldSearchQuery] = useState('');
   const [isCardFieldSettingsOpen, setIsCardFieldSettingsOpen] = useState(false);
+  const [dateFieldErrors, setDateFieldErrors] = useState<Record<string, string | null>>({});
 
   // Maximum number of fields visible on cards
   const MAX_CARD_FIELDS = 7;
@@ -183,6 +184,57 @@ export default function DashboardPage({ type }: DashboardPageProps) {
       cmdb: ['id', 'configItem', 'version', 'environment', 'status', 'owner', 'lastUpdated']
     };
     return columnKeysByType[moduleType] || [];
+  };
+
+  // Date field validation helper
+  const validateDateInput = (value: string): { isValid: boolean; error: string | null } => {
+    if (!value || value.trim() === '') {
+      return { isValid: true, error: null }; // Empty is allowed
+    }
+    
+    // Try parsing common date formats
+    const formats = ['yyyy-MM-dd', 'MM/dd/yyyy', 'M/d/yyyy', 'MM-dd-yyyy', 'yyyy/MM/dd'];
+    for (const fmt of formats) {
+      const parsed = parse(value, fmt, new Date());
+      if (isValid(parsed)) {
+        return { isValid: true, error: null };
+      }
+    }
+    
+    return { isValid: false, error: 'Invalid date format. Use YYYY-MM-DD or MM/DD/YYYY' };
+  };
+
+  const handleDateBlur = (key: string, value: string) => {
+    const { isValid: valid, error } = validateDateInput(value);
+    setDateFieldErrors(prev => ({ ...prev, [key]: error }));
+    
+    // If valid and has a value, normalize to YYYY-MM-DD format
+    if (valid && value && value.trim() !== '') {
+      const formats = ['yyyy-MM-dd', 'MM/dd/yyyy', 'M/d/yyyy', 'MM-dd-yyyy', 'yyyy/MM/dd'];
+      for (const fmt of formats) {
+        const parsed = parse(value, fmt, new Date());
+        if (isValid(parsed)) {
+          const normalized = format(parsed, 'yyyy-MM-dd');
+          if (normalized !== value) {
+            handleInputChange(key, normalized);
+          }
+          break;
+        }
+      }
+    }
+  };
+
+  const handleDateSelect = (key: string, date: Date | undefined) => {
+    if (date) {
+      const formatted = format(date, 'yyyy-MM-dd');
+      handleInputChange(key, formatted);
+      setDateFieldErrors(prev => ({ ...prev, [key]: null }));
+    }
+  };
+
+  const isDateField = (key: string): boolean => {
+    const dateKeywords = ['date', 'Date', 'deadline', 'Deadline', 'expiration', 'Expiration'];
+    return dateKeywords.some(keyword => key.toLowerCase().includes(keyword.toLowerCase()));
   };
 
   // Load saved column visibility from localStorage
@@ -1382,6 +1434,65 @@ export default function DashboardPage({ type }: DashboardPageProps) {
               ))}
             </SelectContent>
           </Select>
+        </div>
+      );
+    }
+
+    // If field is a date field and not disabled, render date input with calendar picker
+    if (isDateField(key) && !shouldDisable) {
+      const dateError = dateFieldErrors[key];
+      const currentValue = value || '';
+      
+      // Try to parse current value as a date for the calendar
+      let selectedDate: Date | undefined = undefined;
+      if (currentValue) {
+        const formats = ['yyyy-MM-dd', 'MM/dd/yyyy', 'M/d/yyyy', 'MM-dd-yyyy', 'yyyy/MM/dd'];
+        for (const fmt of formats) {
+          const parsed = parse(currentValue, fmt, new Date());
+          if (isValid(parsed)) {
+            selectedDate = parsed;
+            break;
+          }
+        }
+      }
+
+      return (
+        <div className="flex flex-col space-y-2 py-3">
+          {labelWithHistory}
+          <div className="flex gap-2">
+            <Input 
+              id={key} 
+              value={currentValue}
+              placeholder="YYYY-MM-DD"
+              onChange={(e) => handleInputChange(key, e.target.value)}
+              onBlur={(e) => handleDateBlur(key, e.target.value)}
+              className={cn(
+                "font-semibold flex-1",
+                dateError && "border-red-500 focus-visible:ring-red-500"
+              )}
+            />
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="icon" className="shrink-0">
+                  <CalendarIcon className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => handleDateSelect(key, date)}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+          {dateError && (
+            <p className="text-sm text-red-500 flex items-center gap-1">
+              <AlertTriangle className="h-3.5 w-3.5" />
+              {dateError}
+            </p>
+          )}
         </div>
       );
     }
