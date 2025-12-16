@@ -1284,9 +1284,14 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     );
   };
 
-  const renderEditRow = (key: string, value: any, isDisabled: boolean = false, headerLabel?: string) => {
+  const renderEditRow = (key: string, value: any, isDisabled: boolean = false, headerLabel?: string, itemId?: string) => {
     // Use header label if provided, otherwise format key for display (camelCase to Title Case)
     const label = headerLabel || key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+    
+    // Get field history for FAST module
+    const history = type === 'fast' && itemId 
+      ? fieldVersionHistory[itemId]?.[key] 
+      : undefined;
     
     // Determine if we should show a fallback for undefined values in edit mode
     // Typically for editable fields we want empty string, but for read-only audit fields we might want '-'
@@ -1297,11 +1302,25 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     // Check if this field has enum options from the config
     const enumOptions = (rawConfig as any).enumFields?.[key] as string[] | undefined;
 
+    // Label with optional history indicator
+    const labelWithHistory = (
+      <div className="flex items-center">
+        <Label htmlFor={key} className="text-sm font-medium text-muted-foreground">{label}</Label>
+        {type === 'fast' && history && history.length > 0 && (
+          <FieldHistoryIndicator 
+            fieldKey={key} 
+            fieldLabel={label} 
+            history={history} 
+          />
+        )}
+      </div>
+    );
+
     // If field has enum options and is not disabled, render a Select dropdown
     if (enumOptions && !shouldDisable) {
       return (
         <div className="flex flex-col space-y-2 py-3">
-          <Label htmlFor={key} className="text-sm font-medium text-muted-foreground">{label}</Label>
+          {labelWithHistory}
           <Select
             value={value || ''}
             onValueChange={(newValue) => handleInputChange(key, newValue)}
@@ -1328,7 +1347,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
 
     return (
       <div className="flex flex-col space-y-2 py-3">
-        <Label htmlFor={key} className="text-sm font-medium text-muted-foreground">{label}</Label>
+        {labelWithHistory}
         <Input 
           id={key} 
           value={displayValue} 
@@ -1847,14 +1866,14 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                            if (type === 'fast' && !isFieldEditable) {
                              return (
                                <React.Fragment key={key}>
-                                 {renderEditRow(key, editFormData[key] !== undefined ? editFormData[key] : '', true, col.header)}
+                                 {renderEditRow(key, editFormData[key] !== undefined ? editFormData[key] : '', true, col.header, selectedItem?.id)}
                                </React.Fragment>
                              );
                            }
 
                            return (
                              <React.Fragment key={key}>
-                               {renderEditRow(key, editFormData[key] !== undefined ? editFormData[key] : '', false, col.header)}
+                               {renderEditRow(key, editFormData[key] !== undefined ? editFormData[key] : '', false, col.header, selectedItem?.id)}
                              </React.Fragment>
                            );
                         })}
