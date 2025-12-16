@@ -29,6 +29,8 @@ Preferred communication style: Simple, everyday language.
 - **Role-Based Access Control**: User context provides `isAdmin` flag to conditionally render edit controls
 - **View Toggle Pattern**: Users can switch between table and card views for data display
 - **Column Filtering**: Excel-style multi-select filters on table columns
+- **Column Visibility**: Configurable column visibility with presets and localStorage persistence (Table view only)
+- **Bidirectional Fake Asset Sync**: "Mark as Fake Asset" toggle syncs between FAST and Fake Asset List pages
 - **Responsive Layout**: Mobile-first design with consistent navigation header
 
 ### Project Structure

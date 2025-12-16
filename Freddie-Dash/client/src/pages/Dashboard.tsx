@@ -81,10 +81,8 @@ export default function DashboardPage({ type }: DashboardPageProps) {
   const [tempHistoryDate, setTempHistoryDate] = useState<Date | undefined>(undefined);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isDuplicateConfirmOpen, setIsDuplicateConfirmOpen] = useState(false);
-  const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [assetIdError, setAssetIdError] = useState<string | null>(null);
   const [assetIdAvailable, setAssetIdAvailable] = useState<boolean>(false);
-  const [selectedCardVersions, setSelectedCardVersions] = useState<Record<string, number>>({});
   const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({});
   const [columnSearchQuery, setColumnSearchQuery] = useState('');
   const [isColumnSettingsOpen, setIsColumnSettingsOpen] = useState(false);
@@ -92,7 +90,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
   // Default visible columns per module type - optimized for typical user personas
   const defaultVisibleColumns: Record<string, string[]> = {
     fast: [
-      'id', 'name', 'version', 'kalmAssignee', 'onboardingStatus', 'onboardingDisposition',
+      'id', 'name', 'kalmAssignee', 'onboardingStatus', 'onboardingDisposition',
       'airDisposition', 'maintenanceDisposition', 'cmdbStatus', 'assetType', 'technology',
       'connectorStatus', 'enrollmentStatus', 'evidenceStatus', 'lastModifiedBy', 'lastModifiedDate'
     ],
@@ -148,7 +146,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
   // Helper to get all column keys for a module type
   const getAllColumnKeysForType = (moduleType: string): string[] => {
     const columnKeysByType: Record<string, string[]> = {
-      fast: ['id', 'name', 'version', 'kalmAssignee', 'onboardingStatus', 'onboardingDisposition', 'airDisposition', 
+      fast: ['id', 'name', 'kalmAssignee', 'onboardingStatus', 'onboardingDisposition', 'airDisposition', 
         'maintenanceDisposition', 'lastConnectorDeliveryDate', 'maintenanceSLAExpiration', 'technology', 'cmdbStatus', 
         'cmdbBeingRetired', 'cmdbLegalHold', 'ticketsOpened', 'assetType', 'yearOnboarded', 'monthOnboarded', 
         'assetPOCs', 'onboardingSchedule', 'entitlementsMissing', 'membersMissing', 'cisMissing', 'reliesOnCAFederation',
@@ -528,53 +526,23 @@ export default function DashboardPage({ type }: DashboardPageProps) {
           }
       }
 
-      // For FAST: Create new version (always increment from max version for this asset ID)
-      if (type === 'fast') {
-        // Find the maximum version number for this asset ID across all versions
-        const assetId = dataToSave.id;
-        const allVersionsOfAsset = currentList.filter((item: any) => item.id === assetId);
-        const maxVersion = allVersionsOfAsset.length > 0 
-          ? Math.max(...allVersionsOfAsset.map((item: any) => item.version || 1))
-          : 0;
-        const newVersion = maxVersion + 1;
-        dataToSave.version = newVersion;
-        
-        // Add new version to the top, keep all existing items (including old versions)
-        const updatedList = [{ ...dataToSave }, ...currentList];
-        
-        setDataMap(prev => ({
-          ...prev,
-          [type]: updatedList
-        }));
-        
-        setSelectedItem(dataToSave);
-        setIsEditing(false);
-        
-        const editedFromVersion = selectedItem.version || 1;
-        toast({
-          title: "New Version Created",
-          description: `${dataToSave.id} version ${newVersion} created (based on version ${editedFromVersion}).`,
-          variant: "success"
-        });
-      } else {
-        // For other types: Replace existing item
-        const otherItems = currentList.filter(item => item.id !== selectedItem.id);
-        const updatedList = [{ ...dataToSave }, ...otherItems];
+      // Replace existing item
+      const otherItems = currentList.filter(item => item.id !== selectedItem.id);
+      const updatedList = [{ ...dataToSave }, ...otherItems];
 
-        setDataMap(prev => ({
-          ...prev,
-          [type]: updatedList
-        }));
+      setDataMap(prev => ({
+        ...prev,
+        [type]: updatedList
+      }));
 
-        setSelectedItem(dataToSave);
-        setIsEditing(false);
-        
-        toast({
-          title: "Changes saved",
-          description: `${dataToSave.id} has been successfully updated.`,
-          variant: "success"
-        });
-      }
+      setSelectedItem(dataToSave);
+      setIsEditing(false);
+      
+      toast({
+        title: "Changes saved",
+        description: `${dataToSave.id} has been successfully updated.`,
+        variant: "success"
+      });
     }
   };
 
@@ -954,7 +922,6 @@ export default function DashboardPage({ type }: DashboardPageProps) {
               )
             },
             { header: 'Name', accessorKey: 'name', cell: (item: any) => <span className="font-semibold text-primary">{item.name}</span> },
-            ...(showVersionHistory ? [{ header: 'Version', accessorKey: 'version' }] : []),
             { header: 'KALM Assignee', accessorKey: 'kalmAssignee' },
             { header: 'Onboarding Status', accessorKey: 'onboardingStatus' },
             { header: 'Onboarding Disposition', accessorKey: 'onboardingDisposition' },
@@ -1143,14 +1110,6 @@ export default function DashboardPage({ type }: DashboardPageProps) {
       });
     }
 
-    // Version History Filter (FAST only - show only latest version when checkbox is unchecked)
-    let matchesVersionFilter = true;
-    if (type === 'fast' && !showVersionHistory) {
-      const allFastData = dataMap.fast as any[];
-      const maxVersion = Math.max(...allFastData.filter((a: any) => a.id === item.id).map((a: any) => a.version || 1));
-      matchesVersionFilter = (item.version || 1) === maxVersion;
-    }
-
     // History Date Filter
     let matchesHistory = true;
     if (type === 'cmdb' && historyDate) {
@@ -1158,7 +1117,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
        matchesHistory = item.lastUpdated === dateStr;
     }
 
-    return matchesSearch && matchesStatus && matchesColumnFilters && matchesVersionFilter && matchesHistory;
+    return matchesSearch && matchesStatus && matchesColumnFilters && matchesHistory;
   }).sort((a: any, b: any) => {
     if (!sortConfig.key) return 0;
     
@@ -1183,28 +1142,15 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     return 0;
   });
 
-  // Pagination Logic - handle grouped view for FAST History in card view
-  const isGroupedCardView = type === 'fast' && showVersionHistory && view === 'card';
-  
-  // For grouped card view, get unique Asset IDs for pagination
-  const uniqueAssetIds = isGroupedCardView 
-    ? [...new Set(filteredData.map((item: any) => item.id))]
-    : [];
-  
-  const paginationBase = isGroupedCardView ? uniqueAssetIds.length : filteredData.length;
-  const totalPages = Math.ceil(paginationBase / pageSize);
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredData.length / pageSize);
   
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = startIndex + pageSize;
   
-  // For grouped view, paginate by unique Asset IDs, then get all versions for those IDs
-  const currentData = isGroupedCardView
-    ? filteredData.filter((item: any) => 
-        uniqueAssetIds.slice(startIndex, endIndex).includes(item.id)
-      )
-    : filteredData.slice(startIndex, endIndex);
+  const currentData = filteredData.slice(startIndex, endIndex);
   
-  const paginationTotalItems = isGroupedCardView ? uniqueAssetIds.length : filteredData.length;
+  const paginationTotalItems = filteredData.length;
 
   const renderDetailRow = (label: string, value: any) => (
     <div className="flex flex-col space-y-1 py-3 border-b border-border/50 last:border-0">
@@ -1443,21 +1389,6 @@ export default function DashboardPage({ type }: DashboardPageProps) {
               </div>
             </div>
             <div className="flex gap-2 shrink-0 items-center">
-              {type === 'fast' && (
-                <div className="flex items-center gap-2 mr-4">
-                  <Checkbox
-                    id="showVersionHistory"
-                    checked={showVersionHistory}
-                    onCheckedChange={(checked) => {
-                      setShowVersionHistory(checked === true);
-                      setCurrentPage(1);
-                    }}
-                  />
-                  <Label htmlFor="showVersionHistory" className="text-sm font-medium cursor-pointer whitespace-nowrap">
-                    FAST History
-                  </Label>
-                </div>
-              )}
               {view === 'card' && (
                 <FilterMenu 
                   columns={config.columns as any}
@@ -1591,127 +1522,18 @@ export default function DashboardPage({ type }: DashboardPageProps) {
             onSort={handleSort}
           />
         ) : (
-          type === 'fast' && showVersionHistory ? (
-            // Compact grouped view for FAST History with version tabs
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {(() => {
-                // Group items by Asset ID
-                const groupedByAssetId = currentData.reduce((acc: Record<string, any[]>, item: any) => {
-                  const assetId = item.id;
-                  if (!acc[assetId]) {
-                    acc[assetId] = [];
-                  }
-                  acc[assetId].push(item);
-                  return acc;
-                }, {});
-
-                // Sort versions within each group (latest first)
-                Object.keys(groupedByAssetId).forEach(assetId => {
-                  groupedByAssetId[assetId].sort((a: any, b: any) => (b.version || 1) - (a.version || 1));
-                });
-
-                return Object.entries(groupedByAssetId).map(([assetId, versions]: [string, any[]]) => {
-                  const latestVersion = Math.max(...versions.map((v: any) => v.version || 1));
-                  const selectedVersion = selectedCardVersions[assetId] || latestVersion;
-                  const displayItem = versions.find((v: any) => (v.version || 1) === selectedVersion) || versions[0];
-                  
-                  return (
-                    <Card 
-                      key={assetId}
-                      className="hover:shadow-md transition-all cursor-pointer border-t-4 border-t-primary relative overflow-hidden"
-                    >
-                      {/* Version pills at top */}
-                      <div className="flex items-center gap-1.5 px-3 pt-2 pb-2 border-b bg-slate-50 overflow-x-auto scrollbar-thin">
-                        <span className="text-xs text-slate-500 shrink-0">v:</span>
-                        {versions.map((v: any) => {
-                          const ver = v.version || 1;
-                          const isLatest = ver === latestVersion;
-                          const isSelected = ver === selectedVersion;
-                          return (
-                            <button
-                              key={`${assetId}-v${ver}`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedCardVersions(prev => ({
-                                  ...prev,
-                                  [assetId]: ver
-                                }));
-                              }}
-                              className={cn(
-                                "px-1.5 py-0.5 rounded text-xs font-medium transition-all shrink-0",
-                                isSelected
-                                  ? "bg-primary text-white ring-2 ring-primary/30"
-                                  : isLatest 
-                                    ? "bg-green-100 text-green-700 hover:bg-green-200" 
-                                    : "bg-slate-200 text-slate-600 hover:bg-slate-300"
-                              )}
-                            >
-                              {ver}{isLatest ? '*' : ''}
-                            </button>
-                          );
-                        })}
-                      </div>
-                      <CardHeader 
-                        className="pb-2 pt-3 cursor-pointer" 
-                        onClick={() => handleItemClick(displayItem)}
-                      >
-                        <div className="flex justify-between items-start">
-                          <CardTitle className="text-lg font-bold text-primary truncate pr-4">
-                            {displayItem?.name || 'Unknown'}
-                          </CardTitle>
-                          {config.statusKey && <StatusBadge status={displayItem?.[config.statusKey as string]} />}
-                        </div>
-                        <p className="text-xs text-slate-500 mt-1">
-                          Viewing v{selectedVersion}{selectedVersion === latestVersion ? ' (Latest)' : ''}
-                        </p>
-                      </CardHeader>
-                      <CardContent className="pt-0" onClick={() => handleItemClick(displayItem)}>
-                        <dl className="space-y-1.5 text-sm">
-                          <div className="flex justify-between">
-                            <dt className="text-muted-foreground font-medium">Asset ID:</dt>
-                            <dd className="text-right font-semibold text-foreground">{assetId}</dd>
-                          </div>
-                          {(config.cardFields as any[]).slice(1, 4).map((field: any) => (
-                            <div key={`${assetId}-${field.key}-${selectedVersion}`} className="flex justify-between">
-                              <dt className="text-muted-foreground font-medium">{field.label}:</dt>
-                              <dd className="text-right font-semibold text-foreground">
-                                {String(displayItem?.[field.key] || 'N/A')}
-                              </dd>
-                            </div>
-                          ))}
-                        </dl>
-                      </CardContent>
-                      <CardFooter className="pt-2 pb-4" onClick={() => handleItemClick(displayItem)}>
-                        <div className="w-full flex justify-end text-primary text-sm font-semibold group">
-                          <span className="flex items-center group-hover:underline">
-                            View Details <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                          </span>
-                        </div>
-                      </CardFooter>
-                    </Card>
-                  );
-                });
-              })()}
-            </div>
-          ) : (
-            // Standard grid view
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {currentData.map((item: any) => {
-                const cardKey = item.version ? `${item.id}-v${item.version}` : item.id;
-                
-                return (
-                  <DataCard
-                    key={cardKey} 
-                    item={item} 
-                    titleKey={config.titleKey as any}
-                    statusKey={config.statusKey as any}
-                    fields={config.cardFields as any}
-                    onClick={handleItemClick}
-                  />
-                );
-              })}
-            </div>
-          )
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {currentData.map((item: any) => (
+              <DataCard
+                key={item.id} 
+                item={item} 
+                titleKey={config.titleKey as any}
+                statusKey={config.statusKey as any}
+                fields={config.cardFields as any}
+                onClick={handleItemClick}
+              />
+            ))}
+          </div>
         )}
 
         {/* Pagination */}
