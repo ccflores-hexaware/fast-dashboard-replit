@@ -849,8 +849,26 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     
     const currentList = dataMap[type] as any[];
     
-    // Generate new ID as <Asset ID>-COPY
-    const newId = `${selectedItem.id}-COPY`;
+    // Get the base ID (strip any existing -COPY suffix)
+    const baseId = selectedItem.id.replace(/-COPY\d*$/, '');
+    
+    // Find all existing copies with this base ID
+    const copyPattern = new RegExp(`^${baseId}-COPY(\\d+)?$`);
+    const existingCopies = currentList.filter(item => copyPattern.test(item.id));
+    
+    // Find the highest copy number
+    let maxCopyNum = 0;
+    existingCopies.forEach(item => {
+      const match = item.id.match(/-COPY(\d+)?$/);
+      if (match) {
+        const num = match[1] ? parseInt(match[1]) : 1;
+        if (num > maxCopyNum) maxCopyNum = num;
+      }
+    });
+    
+    // Generate new ID with incremented copy number
+    const newCopyNum = maxCopyNum + 1;
+    const newId = `${baseId}-COPY${newCopyNum}`;
     
     // Create duplicate with new ID and audit trail
     const timestamp = format(new Date(), 'MMM d, yyyy HH:mm');
