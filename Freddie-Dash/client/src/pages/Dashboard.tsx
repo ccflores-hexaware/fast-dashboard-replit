@@ -1563,8 +1563,8 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                 <div className="flex flex-col space-y-1 pb-6 pt-2">
                    {!isEditing ? (
                      <>
-                        {/* Read-Only View */}
-                        {config.columns.map((col: any) => {
+                        {/* Read-Only View - Show all columns regardless of visibility settings */}
+                        {(config.allColumns as any[] || config.columns).map((col: any) => {
                            const key = col.accessorKey;
                            if (!key) return null;
                            if (['id', 'status', config.titleKey].includes(key)) return null;
@@ -1581,10 +1581,10 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                      </>
                    ) : (
                      <>
-                        {/* Edit View - Render fields based on column order */}
+                        {/* Edit View - Show all columns regardless of visibility settings */}
                         {/* Manual Status field removed to respect column order */}
 
-                        {config.columns.map((col: any) => {
+                        {(config.allColumns as any[] || config.columns).map((col: any) => {
                            if (!col.accessorKey) return null;
                            const key = col.accessorKey;
                            
