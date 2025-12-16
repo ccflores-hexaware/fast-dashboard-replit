@@ -131,6 +131,24 @@ const randomDate = (startYear: number, endYear: number) => {
     return date.toISOString().split('T')[0];
 };
 
+const formatDateConsistent = (date: Date): string => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const month = months[date.getMonth()];
+    const day = date.getDate();
+    const year = date.getFullYear();
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${month} ${day}, ${year} ${hours}:${minutes}`;
+};
+
+const randomDateTime = (startYear: number, endYear: number): string => {
+    const start = new Date(startYear, 0, 1);
+    const end = new Date(endYear, 11, 31);
+    const date = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+    date.setHours(Math.floor(Math.random() * 24), Math.floor(Math.random() * 60));
+    return formatDateConsistent(date);
+};
+
 // Generators to create large datasets
 const generateAssets = (count: number): Asset[] => {
   const assetNames = ['Harmony', 'Vertex', 'Apex', 'Nexus', 'Spectrum', 'Canvas', 'Portal', 'Bridge', 'Gateway', 'Core', 'Foundation', 'Summit', 'Beacon', 'Horizon', 'Orbit', 'Pulse', 'Vector', 'Matrix', 'Zenith', 'Echo'];
@@ -443,7 +461,7 @@ const generateFAST = (count: number): FAST[] => {
         comments: pick(['On track', 'Needs attention', 'Escalated', 'Waiting for approval', 'Under review', '']),
         status: cmdbStatus,
         lastModifiedBy: pick(assignees),
-        lastModifiedDate: `${modifiedYear}-${(Math.floor(Math.random() * 12) + 1).toString().padStart(2, '0')}-${(Math.floor(Math.random() * 28) + 1).toString().padStart(2, '0')}`,
+        lastModifiedDate: randomDateTime(modifiedYear, modifiedYear),
         isFakeAsset: false
       });
     }
