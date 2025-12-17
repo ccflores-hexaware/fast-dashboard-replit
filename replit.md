@@ -53,6 +53,8 @@ server/               # Express backend
   vite.ts             # Vite dev server integration
 shared/               # Shared types and schemas
   schema.ts           # Drizzle database schema and Zod types
+docs/                 # Documentation
+  FAST_Module_Documentation.md  # Comprehensive FAST module feature documentation
 ```
 
 ## External Dependencies
