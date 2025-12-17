@@ -41,6 +41,8 @@ interface DataTableProps<T> {
   onColumnFiltersChange: (filters: Record<string, string[]>) => void;
   sortConfig?: { key: string | null; direction: 'asc' | 'desc' };
   onSort?: (key: string) => void;
+  emptyStateTitle?: string;
+  emptyStateMessage?: string;
 }
 
 export function DataTable<T extends { id: string }>({ 
@@ -51,7 +53,9 @@ export function DataTable<T extends { id: string }>({
   columnFilters,
   onColumnFiltersChange,
   sortConfig,
-  onSort
+  onSort,
+  emptyStateTitle = "No Records Found",
+  emptyStateMessage = "Try adjusting your filters or search criteria"
 }: DataTableProps<T>) {
 
   const tableRef = useRef<HTMLTableElement>(null);
@@ -250,8 +254,8 @@ export function DataTable<T extends { id: string }>({
               <TableCell colSpan={columns.length} className="h-48">
                 <div className="flex flex-col items-center justify-center text-muted-foreground">
                   <Search className="h-12 w-12 mb-4 opacity-50" />
-                  <p className="text-lg font-medium">No Records Found</p>
-                  <p className="text-sm">Try adjusting your filters or search criteria</p>
+                  <p className="text-lg font-medium">{emptyStateTitle}</p>
+                  <p className="text-sm">{emptyStateMessage}</p>
                 </div>
               </TableCell>
             </TableRow>
