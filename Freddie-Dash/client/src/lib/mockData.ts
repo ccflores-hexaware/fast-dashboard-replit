@@ -169,7 +169,7 @@ const generateAssets = (count: number): Asset[] => {
     
     return {
       name: name,
-      id: `AST-${idNum}`,
+      id: `FAL-${idNum}`,
       btoAlignment: `BTO-${Math.floor(Math.random() * 500) + 100}`,
       version: `${Math.floor(Math.random() * 5)}.${Math.floor(Math.random() * 9)}.${Math.floor(Math.random() * 9)}`,
       cmdbStatus: cmdbStatus,
@@ -467,7 +467,7 @@ const generateFAST = (count: number): FAST[] => {
         status: cmdbStatus,
         lastModifiedBy: pick(assignees),
         lastModifiedDate: randomDateTime(modifiedYear, modifiedYear),
-        isFakeAsset: false
+        isFakeAsset: isLatest && i < 25 ? true : false
       });
     }
   }
@@ -475,8 +475,59 @@ const generateFAST = (count: number): FAST[] => {
   return allRecords;
 };
 
-export const mockAssets: Asset[] = generateAssets(1000);
 export const mockTPI: TPI[] = generateTPI(1000);
 export const mockBTO: BTO[] = generateBTO(60);
 export const mockCMDB: CMDB[] = generateCMDB(100);
 export const mockFAST: FAST[] = generateFAST(500);
+
+const generateLinkedAssets = (): Asset[] => {
+  const owners = ['Sarah Jenkins', 'Mike Ross', 'Jessica Pearson', 'Louis Litt', 'Harvey Specter', 'Donna Paulsen'];
+  const divisions = ['Single-Family', 'Multifamily', 'Capital Markets', 'Investments'];
+  
+  const fakeFastAssets = mockFAST.filter(f => f.isFakeAsset && f.isLatestVersion);
+  
+  return fakeFastAssets.map(fast => ({
+    id: fast.id,
+    name: fast.name,
+    btoAlignment: '',
+    version: String(fast.version),
+    cmdbStatus: fast.cmdbStatus,
+    deploymentLifecyclePhase: '',
+    applicationTypeFinancial: '',
+    itOwner: '',
+    businessOwner: '',
+    businessOwnerSME: '',
+    supportedBy: '',
+    supportSME: '',
+    architect: '',
+    division: pick(divisions),
+    blockFundingName: '',
+    blockFundingOwner: '',
+    assessmentCategory: '',
+    deploymentLifecycleStartDate: '',
+    type: fast.assetType,
+    hosted: '',
+    sox: '',
+    customerFacing: '',
+    sppi: '',
+    ppiClassification: '',
+    foundational: '',
+    missionCritical: '',
+    businessCritical: '',
+    supporting: '',
+    cotsOrInHouse: '',
+    isSaas: '',
+    maintenanceWindow: '',
+    operationalHours: '',
+    description: fast.comments || '',
+    status: fast.status,
+    isFakeAsset: true,
+    parentFastId: fast.id,
+    lastModifiedBy: pick(owners),
+    lastModifiedDate: fast.lastModifiedDate,
+  }));
+};
+
+const independentAssets = generateAssets(50);
+const linkedAssets = generateLinkedAssets();
+export const mockAssets: Asset[] = [...linkedAssets, ...independentAssets];
