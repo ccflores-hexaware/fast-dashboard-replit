@@ -87,11 +87,14 @@ The FAST module includes comprehensive asset-level versioning:
 
 ### 7. Fake Asset Management
 
-- **Mark as Fake Asset**: Toggle to flag assets as fake/test data
+- **Mark as Fake Asset**: Permanently flag assets as fake/test data
+  - **One-Way Action**: Once marked as fake, assets cannot be unmarked (permanent)
+  - **Confirmation Required**: Warning dialog appears before marking, explaining the action is irreversible
+  - **Button Hidden After Marking**: The "Mark Fake" button is hidden for assets already marked as fake
 - **Bidirectional Sync**: When an asset is marked as fake in FAST:
   - Automatically adds to the "Fake Asset List" module
-  - When unmarked, removes from Fake Asset List
-- **Visual Indicator**: Fake assets can be identified and filtered
+  - Since marking is permanent, assets remain in Fake Asset List
+- **Duplicated Assets**: When duplicating a fake asset, the copy inherits the fake status (also permanent)
 
 ### 8. Export to Excel
 
@@ -123,7 +126,7 @@ The FAST module includes comprehensive asset-level versioning:
 - Can add new assets
 - Can edit existing assets
 - Can duplicate assets
-- Can mark/unmark fake assets
+- Can mark assets as fake (permanent, one-way action)
 - Access to all column visibility presets
 
 #### Viewer Role

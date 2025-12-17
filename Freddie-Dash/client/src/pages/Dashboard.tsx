@@ -81,6 +81,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
   const [tempHistoryDate, setTempHistoryDate] = useState<Date | undefined>(undefined);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isDuplicateConfirmOpen, setIsDuplicateConfirmOpen] = useState(false);
+  const [isFakeAssetConfirmOpen, setIsFakeAssetConfirmOpen] = useState(false);
   const [assetIdError, setAssetIdError] = useState<string | null>(null);
   const [assetIdAvailable, setAssetIdAvailable] = useState<boolean>(false);
   const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({});
@@ -902,17 +903,21 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     });
   };
 
-  const handleToggleFakeAsset = () => {
+  const handleMarkFakeClick = () => {
+    if (!selectedItem || selectedItem.isFakeAsset) return;
+    setIsFakeAssetConfirmOpen(true);
+  };
+
+  const handleConfirmMarkFake = () => {
     if (!selectedItem) return;
     
     const currentList = dataMap[type] as any[];
     const timestamp = format(new Date(), 'MMM d, yyyy HH:mm');
-    const newFakeStatus = !selectedItem.isFakeAsset;
     
-    // Toggle the fake asset flag
+    // Mark as fake (one-way, permanent action)
     const updatedItem = {
       ...selectedItem,
-      isFakeAsset: newFakeStatus,
+      isFakeAsset: true,
       lastModifiedBy: user.name,
       lastModifiedDate: timestamp,
     };
@@ -925,19 +930,14 @@ export default function DashboardPage({ type }: DashboardPageProps) {
       return item;
     });
     
-    // Bidirectional sync between FAST and Fake Asset List
+    // Sync to Fake Asset List
     let updatedAssetsList = [...dataMap.assets];
     
     if (type === 'fast') {
-      if (newFakeStatus) {
-        // Adding to Fake Asset List - check if already exists
-        const existsInAssets = updatedAssetsList.some(item => item.id === selectedItem.id);
-        if (!existsInAssets) {
-          updatedAssetsList = [updatedItem, ...updatedAssetsList];
-        }
-      } else {
-        // Removing from Fake Asset List
-        updatedAssetsList = updatedAssetsList.filter(item => item.id !== selectedItem.id);
+      // Adding to Fake Asset List - check if already exists
+      const existsInAssets = updatedAssetsList.some(item => item.id === selectedItem.id);
+      if (!existsInAssets) {
+        updatedAssetsList = [updatedItem, ...updatedAssetsList];
       }
     }
     
@@ -953,14 +953,13 @@ export default function DashboardPage({ type }: DashboardPageProps) {
       setEditFormData(updatedItem);
     }
     
-    const syncInfo = type === 'fast' 
-      ? (newFakeStatus ? ' and added to Fake Asset List' : ' and removed from Fake Asset List')
-      : '';
+    // Close confirmation dialog
+    setIsFakeAssetConfirmOpen(false);
+    
+    const syncInfo = type === 'fast' ? ' and added to Fake Asset List' : '';
     toast({
-      title: newFakeStatus ? "Asset Marked as Fake" : "Fake Asset Status Removed",
-      description: newFakeStatus 
-        ? `${selectedItem.id} has been marked as a Fake Asset${syncInfo}.`
-        : `${selectedItem.id} is no longer marked as a Fake Asset${syncInfo}.`,
+      title: "Asset Marked as Fake",
+      description: `${selectedItem.id} has been permanently marked as a Fake Asset${syncInfo}.`,
       variant: "success"
     });
   };
@@ -2371,12 +2370,14 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                          <Button variant="secondary" onClick={handleDuplicateClick}>
                            <Copy className="w-4 h-4 mr-2" /> Duplicate
                          </Button>
-                         <Button 
-                           variant={selectedItem?.isFakeAsset ? "outline" : "destructive"}
-                           onClick={handleToggleFakeAsset}
-                         >
-                           <AlertTriangle className="w-4 h-4 mr-2" /> {selectedItem?.isFakeAsset ? 'Unmark Fake' : 'Mark Fake'}
-                         </Button>
+                         {!selectedItem?.isFakeAsset && (
+                           <Button 
+                             variant="destructive"
+                             onClick={handleMarkFakeClick}
+                           >
+                             <AlertTriangle className="w-4 h-4 mr-2" /> Mark Fake
+                           </Button>
+                         )}
                        </>
                      )}
                      <Button onClick={handleSave} className="bg-primary hover:bg-primary/90">
@@ -2395,12 +2396,14 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                          <Button variant="secondary" onClick={handleDuplicateClick}>
                            <Copy className="w-4 h-4 mr-2" /> Duplicate
                          </Button>
-                         <Button 
-                           variant={selectedItem?.isFakeAsset ? "outline" : "destructive"}
-                           onClick={handleToggleFakeAsset}
-                         >
-                           <AlertTriangle className="w-4 h-4 mr-2" /> {selectedItem?.isFakeAsset ? 'Unmark Fake' : 'Mark Fake'}
-                         </Button>
+                         {!selectedItem?.isFakeAsset && (
+                           <Button 
+                             variant="destructive"
+                             onClick={handleMarkFakeClick}
+                           >
+                             <AlertTriangle className="w-4 h-4 mr-2" /> Mark Fake
+                           </Button>
+                         )}
                        </>
                      )}
                      {type !== 'tpi' && type !== 'bto' && type !== 'cmdb' && isAdmin && (
@@ -2429,6 +2432,31 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                 <Copy className="w-4 h-4 mr-2" /> Yes, Duplicate
               </Button>
               <Button variant="outline" onClick={() => setIsDuplicateConfirmOpen(false)} className="w-full">
+                Cancel
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Mark Fake Asset Confirmation Dialog */}
+        <Dialog open={isFakeAssetConfirmOpen} onOpenChange={setIsFakeAssetConfirmOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-destructive">
+                <AlertTriangle className="w-5 h-5" /> Mark as Fake Asset
+              </DialogTitle>
+              <DialogDescription className="pt-2">
+                <span className="font-semibold text-foreground">Warning: This action is permanent and cannot be undone.</span>
+                <br /><br />
+                Are you sure you want to mark "{selectedItem?.name}" ({selectedItem?.id}) as a Fake Asset? 
+                Once marked, this asset will be added to the Fake Asset List and cannot be unmarked.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex gap-3 pt-4">
+              <Button variant="destructive" onClick={handleConfirmMarkFake} className="w-full">
+                <AlertTriangle className="w-4 h-4 mr-2" /> Yes, Mark as Fake
+              </Button>
+              <Button variant="outline" onClick={() => setIsFakeAssetConfirmOpen(false)} className="w-full">
                 Cancel
               </Button>
             </div>
