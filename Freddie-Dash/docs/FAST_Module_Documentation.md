@@ -92,14 +92,15 @@ The FAST module includes comprehensive asset-level versioning:
   - **Confirmation Required**: Warning dialog appears before marking, explaining the action is irreversible
   - **Button Hidden After Marking**: The "Mark Fake" button is hidden for assets already marked as fake
 - **Sync to Fake Asset List**: When an asset is marked as fake in FAST:
-  - Automatically adds to the "Fake Asset List" module
-  - The Fake Asset List uses FAST-compatible fields for display
-  - Since marking is permanent, assets remain in Fake Asset List
+  - Automatically creates a new record in the Fake Asset List module
+  - Maps available FAST fields to Asset fields (ID, Name, CMDB Status, etc.)
+  - User can edit the new Fake Asset List record to fill in additional Asset-specific fields
+  - Since marking is permanent, records remain in Fake Asset List
 - **Duplicated Assets**: When duplicating a fake asset, the copy inherits the fake status (also permanent)
 - **Fake Asset List Module**:
-  - Read-only list showing all assets marked as fake from FAST
-  - No "Add New" button - assets can only be added by marking them in FAST
-  - Empty state shows helpful message guiding users to mark assets in FAST
+  - Separate table with its own column structure (parent-child relationship with FAST)
+  - Has "Add New" button for creating records directly
+  - Admins can edit records to fill in additional details not available in FAST
 
 ### 8. Export to Excel
 

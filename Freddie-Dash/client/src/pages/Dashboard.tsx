@@ -455,9 +455,8 @@ export default function DashboardPage({ type }: DashboardPageProps) {
   };
 
   // State to hold data so it can be edited
-  // Fake Asset List (assets) starts empty - it gets populated when FAST assets are marked as fake
   const [dataMap, setDataMap] = useState({
-    assets: [] as any[],
+    assets: mockAssets,
     tpi: mockTPI,
     bto: mockBTO,
     cmdb: mockCMDB,
@@ -931,14 +930,54 @@ export default function DashboardPage({ type }: DashboardPageProps) {
       return item;
     });
     
-    // Sync to Fake Asset List
+    // Sync to Fake Asset List - create a new Asset record from FAST data
     let updatedAssetsList = [...dataMap.assets];
     
     if (type === 'fast') {
-      // Adding to Fake Asset List - check if already exists
+      // Check if already exists in Fake Asset List
       const existsInAssets = updatedAssetsList.some(item => item.id === selectedItem.id);
       if (!existsInAssets) {
-        updatedAssetsList = [updatedItem, ...updatedAssetsList];
+        // Map FAST fields to Asset fields (create a new Asset record)
+        const newAssetRecord = {
+          id: selectedItem.id,
+          name: selectedItem.name,
+          cmdbStatus: selectedItem.cmdbStatus || '',
+          type: selectedItem.assetType || '',
+          btoAlignment: '',
+          version: String(selectedItem.version) || '1.0.0',
+          deploymentLifecyclePhase: '',
+          applicationTypeFinancial: '',
+          itOwner: '',
+          businessOwner: '',
+          businessOwnerSME: '',
+          supportedBy: '',
+          supportSME: '',
+          architect: '',
+          division: '',
+          blockFundingName: '',
+          blockFundingOwner: '',
+          assessmentCategory: '',
+          deploymentLifecycleStartDate: '',
+          hosted: '',
+          sox: '',
+          customerFacing: '',
+          sppi: '',
+          ppiClassification: '',
+          foundational: '',
+          missionCritical: '',
+          businessCritical: '',
+          supporting: '',
+          cotsOrInHouse: '',
+          isSaas: '',
+          maintenanceWindow: selectedItem.maintenanceWindow || '',
+          operationalHours: '',
+          description: selectedItem.comments || '',
+          status: selectedItem.status || 'Active',
+          lastModifiedBy: user.name,
+          lastModifiedDate: timestamp,
+          isFakeAsset: true,
+        };
+        updatedAssetsList = [newAssetRecord, ...updatedAssetsList];
       }
     }
     
@@ -960,7 +999,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     const syncInfo = type === 'fast' ? ' and added to Fake Asset List' : '';
     toast({
       title: "Asset Marked as Fake",
-      description: `${selectedItem.id} has been permanently marked as a Fake Asset${syncInfo}.`,
+      description: `${selectedItem.id} has been permanently marked as a Fake Asset${syncInfo}. You can edit additional details in the Fake Asset List.`,
       variant: "success"
     });
   };
@@ -992,7 +1031,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
       case 'assets':
         return {
           title: 'Fake Asset List',
-          description: 'Assets marked as fake from the FAST module. This list is read-only.',
+          description: 'Track IT asset lifecycle, ownership, and operational compliance.',
           data: currentData,
           columns: [
             { 
@@ -1002,7 +1041,11 @@ export default function DashboardPage({ type }: DashboardPageProps) {
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleItemClick(item);
+                    if (isAdmin) {
+                      handleEditClick(item);
+                    } else {
+                      handleItemClick(item);
+                    }
                   }}
                   className="text-primary hover:underline font-bold underline decoration-2 underline-offset-2 hover:text-primary/80 transition-colors"
                 >
@@ -1011,31 +1054,72 @@ export default function DashboardPage({ type }: DashboardPageProps) {
               )
             },
             { header: 'Name', accessorKey: 'name', cell: (item: any) => <span className="font-semibold text-primary">{item.name}</span> },
-            { header: 'KALM Assignee', accessorKey: 'kalmAssignee' },
-            { header: 'Onboarding Status', accessorKey: 'onboardingStatus' },
-            { header: 'Onboarding Disposition', accessorKey: 'onboardingDisposition' },
-            { header: 'AIR Disposition', accessorKey: 'airDisposition' },
-            { header: 'Technology', accessorKey: 'technology' },
             { header: 'CMDB Status', accessorKey: 'cmdbStatus' },
-            { header: 'Asset Type', accessorKey: 'assetType' },
-            { header: 'Connector Status', accessorKey: 'connectorStatus' },
-            { header: 'Year Onboarded', accessorKey: 'yearOnboarded' },
-            { header: 'Month Onboarded', accessorKey: 'monthOnboarded' },
+            { header: 'Asset Type', accessorKey: 'type' },
+            { header: 'BTO Alignment', accessorKey: 'btoAlignment' },
+            { header: 'Application Type Financial', accessorKey: 'applicationTypeFinancial' },
+            { header: 'Architect', accessorKey: 'architect' },
+            { header: 'Assessment Category', accessorKey: 'assessmentCategory' },
+            { header: 'Block Funding Name', accessorKey: 'blockFundingName' },
+            { header: 'Block Funding Owner', accessorKey: 'blockFundingOwner' },
+            { header: 'Business Critical', accessorKey: 'businessCritical' },
+            { header: 'Business Owner', accessorKey: 'businessOwner' },
+            { header: 'Business Owner SME', accessorKey: 'businessOwnerSME' },
+            { header: 'COTS or In House Built', accessorKey: 'cotsOrInHouse' },
+            { header: 'Customer Facing', accessorKey: 'customerFacing' },
+            { header: 'Deployment Lifecycle Phase', accessorKey: 'deploymentLifecyclePhase' },
+            { header: 'Deployment Lifecycle Start Date', accessorKey: 'deploymentLifecycleStartDate' },
+            { header: 'Description', accessorKey: 'description' },
+            { header: 'Division', accessorKey: 'division' },
+            { header: 'Foundational', accessorKey: 'foundational' },
+            { header: 'Hosted', accessorKey: 'hosted' },
+            { header: 'Is SAAS', accessorKey: 'isSaas' },
+            { header: 'IT Owner', accessorKey: 'itOwner' },
+            { header: 'Maintenance Window', accessorKey: 'maintenanceWindow' },
+            { header: 'Mission Critical', accessorKey: 'missionCritical' },
+            { header: 'Operational Hours', accessorKey: 'operationalHours' },
+            { header: 'PPI Classification', accessorKey: 'ppiClassification' },
+            { header: 'SOX', accessorKey: 'sox' },
+            { header: 'SPPI', accessorKey: 'sppi' },
+            { header: 'Support SME', accessorKey: 'supportSME' },
+            { header: 'Supported By', accessorKey: 'supportedBy' },
+            { header: 'Supporting', accessorKey: 'supporting' },
+            { header: 'Version', accessorKey: 'version' },
             { header: 'Last Modified By', accessorKey: 'lastModifiedBy' },
             { header: 'Last Modified Date', accessorKey: 'lastModifiedDate' },
           ],
           cardFields: [
             { label: 'Asset ID', key: 'id' },
-            { label: 'KALM Assignee', key: 'kalmAssignee' },
-            { label: 'Onboarding Status', key: 'onboardingStatus' },
-            { label: 'Technology', key: 'technology' },
+            { label: 'Asset Type', key: 'type' },
             { label: 'CMDB Status', key: 'cmdbStatus' },
-            { label: 'Asset Type', key: 'assetType' },
-            { label: 'Connector Status', key: 'connectorStatus' },
+            { label: 'IT Owner', key: 'itOwner' },
+            { label: 'Business Owner', key: 'businessOwner' },
+            { label: 'Division', key: 'division' },
+            { label: 'Hosted', key: 'hosted' },
           ],
           titleKey: 'name',
-          statusKey: 'onboardingStatus',
-          enumFields: {} as Record<string, string[]>,
+          statusKey: 'status',
+          enumFields: {
+            cmdbStatus: ['Active', 'Retired', 'Provisioning', 'Maintenance', 'Decommissioned'],
+            deploymentLifecyclePhase: ['Analysis', 'Design', 'Development', 'Testing', 'Staging', 'Production', 'Decommission'],
+            applicationTypeFinancial: ['Financial', 'Non-Financial'],
+            type: ['Application', 'Microservice', 'Database', 'Infrastructure', 'Platform', 'SaaS'],
+            hosted: ['On-Premise', 'AWS Cloud', 'Azure Cloud', 'Hybrid', 'Vendor Cloud'],
+            sox: ['Yes', 'No'],
+            customerFacing: ['Yes', 'No'],
+            sppi: ['Yes', 'No'],
+            ppiClassification: ['Public', 'Internal Use', 'Confidential', 'Restricted'],
+            foundational: ['Yes', 'No'],
+            missionCritical: ['Yes', 'No'],
+            businessCritical: ['Yes', 'No'],
+            supporting: ['Yes', 'No'],
+            cotsOrInHouse: ['COTS', 'In-House', 'Hybrid'],
+            isSaas: ['Yes', 'No'],
+            maintenanceWindow: ['Sundays 00:00-04:00', 'Weekends', 'Quarterly', 'Ad-hoc', 'Patch Tuesday'],
+            operationalHours: ['24/7', 'Business Hours', 'Extended Business Hours', 'Weekdays Only'],
+            assessmentCategory: ['Mission Critical', 'Business Critical', 'Business Operational', 'Administrative'],
+            supportedBy: ['Internal IT', 'Vendor Managed', 'Hybrid Team', 'Offshore Partner'],
+          } as Record<string, string[]>,
         };
       case 'tpi':
         return {
@@ -1716,8 +1800,8 @@ export default function DashboardPage({ type }: DashboardPageProps) {
              <Button onClick={handleExportToExcel} className="bg-[#89c24b] text-white hover:bg-[#89c24b]/90 shadow-sm">
                 <Download className="mr-2 h-4 w-4" /> Export to Excel
              </Button>
-             {/* Add New Button only for FAST module and Admin */}
-             {type === 'fast' && isAdmin && (
+             {/* Add New Button for FAST and Fake Asset List (Admin only) */}
+             {(type === 'fast' || type === 'assets') && isAdmin && (
                <Button onClick={handleAddNew} className="bg-primary text-white hover:bg-primary/90 shadow-sm">
                   <Plus className="mr-2 h-4 w-4" /> Add New
                </Button>
@@ -2147,14 +2231,12 @@ export default function DashboardPage({ type }: DashboardPageProps) {
             onColumnFiltersChange={setColumnFilters}
             sortConfig={sortConfig}
             onSort={handleSort}
-            emptyStateTitle={type === 'assets' ? "No Fake Assets" : "No Records Found"}
-            emptyStateMessage={type === 'assets' ? "Mark assets as fake in the FAST module to see them here" : "Try adjusting your filters or search criteria"}
           />
         ) : currentData.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
             <Search className="h-12 w-12 mb-4 opacity-50" />
-            <p className="text-lg font-medium">{type === 'assets' ? "No Fake Assets" : "No Records Found"}</p>
-            <p className="text-sm">{type === 'assets' ? "Mark assets as fake in the FAST module to see them here" : "Try adjusting your filters or search criteria"}</p>
+            <p className="text-lg font-medium">No Records Found</p>
+            <p className="text-sm">Try adjusting your filters or search criteria</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
