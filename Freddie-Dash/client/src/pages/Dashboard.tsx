@@ -922,9 +922,9 @@ export default function DashboardPage({ type }: DashboardPageProps) {
       lastModifiedDate: timestamp,
     };
     
-    // Update the list by matching the asset ID
+    // Update the list by matching the asset ID AND version (for FAST with version history)
     const updatedList = currentList.map(item => {
-      if (item.id === selectedItem.id) {
+      if (item.id === selectedItem.id && item.version === selectedItem.version) {
         return updatedItem;
       }
       return item;
