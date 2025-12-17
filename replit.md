@@ -55,6 +55,7 @@ shared/               # Shared types and schemas
   schema.ts           # Drizzle database schema and Zod types
 docs/                 # Documentation
   FAST_Module_Documentation.md  # Comprehensive FAST module feature documentation
+  Libraries_and_Dependencies.md # Complete list of all libraries used
 ```
 
 ## External Dependencies
