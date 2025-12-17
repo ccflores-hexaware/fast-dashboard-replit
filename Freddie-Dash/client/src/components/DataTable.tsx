@@ -261,7 +261,9 @@ export function DataTable<T extends { id: string }>({
             </TableRow>
           ) : (
             data.map((item, rowIndex) => {
-              const rowKey = (item as any).version ? `${item.id}-v${(item as any).version}` : item.id;
+              const rowKey = (item as any).version !== undefined 
+                ? `${item.id}-v${(item as any).version}-${rowIndex}` 
+                : `${item.id}-${rowIndex}`;
               return (
             <TableRow 
               key={rowKey} 
