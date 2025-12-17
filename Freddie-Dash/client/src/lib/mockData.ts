@@ -33,7 +33,12 @@ export interface Asset {
   operationalHours: string;
   description: string;
   // keeping status for compatibility with existing components if needed, or we alias it
-  status: string; 
+  status: string;
+  // Fields for FAST sync
+  isFakeAsset?: boolean;
+  parentFastId?: string;
+  lastModifiedBy?: string;
+  lastModifiedDate?: string;
 }
 
 export interface TPI {

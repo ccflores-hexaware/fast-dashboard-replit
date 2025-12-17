@@ -934,17 +934,14 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     let updatedAssetsList = [...dataMap.assets];
     
     if (type === 'fast') {
-      // Generate a unique ID for the Fake Asset List record
-      // Use FAST ID with -FAKE suffix to link back to parent FAST record
-      const fakeAssetId = `${selectedItem.id}-FAKE`;
-      
       // Check if this FAST asset was already synced to Fake Asset List
-      const existsInAssets = updatedAssetsList.some(item => item.id === fakeAssetId);
+      // Use same ID as FAST - parentFastId serves as foreign key reference
+      const existsInAssets = updatedAssetsList.some(item => item.parentFastId === selectedItem.id);
       if (!existsInAssets) {
         // Map FAST fields to Asset fields (create a new Asset record)
         const newAssetRecord = {
-          id: fakeAssetId,
-          name: `${selectedItem.name} (from FAST)`,
+          id: selectedItem.id,
+          name: selectedItem.name,
           cmdbStatus: selectedItem.cmdbStatus || '',
           type: selectedItem.assetType || '',
           btoAlignment: '',
