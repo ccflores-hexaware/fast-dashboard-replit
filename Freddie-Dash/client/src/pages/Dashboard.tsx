@@ -879,16 +879,66 @@ export default function DashboardPage({ type }: DashboardPageProps) {
       name: selectedItem.name,
       lastModifiedBy: user.name,
       lastModifiedDate: timestamp,
-      // For FAST module: reset version to 1 and mark as latest
-      ...(type === 'fast' ? { version: 1, isLatestVersion: true } : {}),
+      // For FAST module: reset version to 1, mark as latest, and auto-mark as fake
+      ...(type === 'fast' ? { version: 1, isLatestVersion: true, isFakeAsset: true } : {}),
     };
     
     // Add to the top of the list
     const updatedList = [duplicatedItem, ...currentList];
     
+    // For FAST duplicates: also sync to Fake Asset List
+    let updatedAssetsList = [...dataMap.assets];
+    if (type === 'fast') {
+      const existsInAssets = updatedAssetsList.some(item => item.parentFastId === newId);
+      if (!existsInAssets) {
+        const newAssetRecord = {
+          id: newId,
+          name: duplicatedItem.name,
+          cmdbStatus: duplicatedItem.cmdbStatus || '',
+          type: duplicatedItem.assetType || '',
+          btoAlignment: '',
+          version: String(duplicatedItem.version) || '1',
+          deploymentLifecyclePhase: '',
+          applicationTypeFinancial: '',
+          itOwner: '',
+          businessOwner: '',
+          businessOwnerSME: '',
+          supportedBy: '',
+          supportSME: '',
+          architect: '',
+          division: '',
+          blockFundingName: '',
+          blockFundingOwner: '',
+          assessmentCategory: '',
+          deploymentLifecycleStartDate: '',
+          hosted: '',
+          sox: '',
+          customerFacing: '',
+          sppi: '',
+          ppiClassification: '',
+          foundational: '',
+          missionCritical: '',
+          businessCritical: '',
+          supporting: '',
+          cotsOrInHouse: '',
+          isSaas: '',
+          maintenanceWindow: duplicatedItem.maintenanceWindow || '',
+          operationalHours: '',
+          description: duplicatedItem.comments || '',
+          status: duplicatedItem.status || 'Active',
+          lastModifiedBy: user.name,
+          lastModifiedDate: timestamp,
+          isFakeAsset: true,
+          parentFastId: newId,
+        };
+        updatedAssetsList = [newAssetRecord, ...updatedAssetsList];
+      }
+    }
+    
     setDataMap(prev => ({
       ...prev,
-      [type]: updatedList
+      [type]: updatedList,
+      ...(type === 'fast' ? { assets: updatedAssetsList } : {})
     }));
     
     // Close confirmation dialog and main dialog
@@ -896,9 +946,10 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     setIsDialogOpen(false);
     
     // Show success message
+    const syncInfo = type === 'fast' ? ' and added to Fake Asset List' : '';
     toast({
       title: "Asset Duplicated",
-      description: `${selectedItem.id} has been duplicated as ${newId}.`,
+      description: `${selectedItem.id} has been duplicated as ${newId}${syncInfo}.`,
       variant: "success"
     });
   };
