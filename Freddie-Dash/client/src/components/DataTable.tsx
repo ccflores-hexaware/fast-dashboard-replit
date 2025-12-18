@@ -64,6 +64,7 @@ export function DataTable<T extends { id: string }>({
   const [isScrolled, setIsScrolled] = useState(false);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [versionPages, setVersionPages] = useState<Record<string, number>>({});
+  const [versionPageInputs, setVersionPageInputs] = useState<Record<string, string>>({});
   
   const VERSIONS_PER_PAGE = 10;
 
@@ -83,11 +84,36 @@ export function DataTable<T extends { id: string }>({
     return versionPages[assetId] || 1;
   };
   
+  const getVersionPageInput = (assetId: string) => {
+    return versionPageInputs[assetId] ?? String(getVersionPage(assetId));
+  };
+  
+  const setVersionPageInput = (assetId: string, value: string) => {
+    setVersionPageInputs(prev => ({
+      ...prev,
+      [assetId]: value
+    }));
+  };
+  
   const setVersionPage = (assetId: string, page: number) => {
     setVersionPages(prev => ({
       ...prev,
       [assetId]: page
     }));
+    setVersionPageInputs(prev => ({
+      ...prev,
+      [assetId]: String(page)
+    }));
+  };
+  
+  const handleVersionPageSubmit = (assetId: string, totalPages: number) => {
+    const inputValue = getVersionPageInput(assetId);
+    const pageNum = parseInt(inputValue);
+    if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= totalPages) {
+      setVersionPage(assetId, pageNum);
+    } else {
+      setVersionPageInput(assetId, String(getVersionPage(assetId)));
+    }
   };
 
   const groupedData = useMemo(() => {
@@ -461,9 +487,31 @@ export function DataTable<T extends { id: string }>({
                                   >
                                     «
                                   </button>
-                                  <span className="text-sm font-medium px-2">
-                                    Page {currentPage} of {totalPages}
-                                  </span>
+                                  <div className="flex items-center gap-1 text-sm">
+                                    <span className="text-muted-foreground">Page</span>
+                                    <input
+                                      type="text"
+                                      value={getVersionPageInput(assetId)}
+                                      onChange={(e) => {
+                                        e.stopPropagation();
+                                        setVersionPageInput(assetId, e.target.value);
+                                      }}
+                                      onBlur={(e) => {
+                                        e.stopPropagation();
+                                        handleVersionPageSubmit(assetId, totalPages);
+                                      }}
+                                      onKeyDown={(e) => {
+                                        e.stopPropagation();
+                                        if (e.key === 'Enter') {
+                                          handleVersionPageSubmit(assetId, totalPages);
+                                        }
+                                      }}
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="w-10 h-6 px-1 text-center text-sm border border-border rounded bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+                                      aria-label="Go to page"
+                                    />
+                                    <span className="text-muted-foreground">of {totalPages}</span>
+                                  </div>
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
