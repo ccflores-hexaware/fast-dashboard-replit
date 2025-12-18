@@ -65,8 +65,10 @@ export function DataTable<T extends { id: string }>({
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [versionPages, setVersionPages] = useState<Record<string, number>>({});
   const [versionPageInputs, setVersionPageInputs] = useState<Record<string, string>>({});
+  const [versionPageSizes, setVersionPageSizes] = useState<Record<string, number>>({});
   
-  const VERSIONS_PER_PAGE = 10;
+  const DEFAULT_VERSIONS_PER_PAGE = 5;
+  const VERSION_PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 
   const toggleRowExpansion = (id: string) => {
     setExpandedRows(prev => {
@@ -114,6 +116,18 @@ export function DataTable<T extends { id: string }>({
     } else {
       setVersionPageInput(assetId, String(getVersionPage(assetId)));
     }
+  };
+  
+  const getVersionPageSize = (assetId: string) => {
+    return versionPageSizes[assetId] || DEFAULT_VERSIONS_PER_PAGE;
+  };
+  
+  const setVersionPageSize = (assetId: string, size: number) => {
+    setVersionPageSizes(prev => ({
+      ...prev,
+      [assetId]: size
+    }));
+    setVersionPage(assetId, 1);
   };
 
   const groupedData = useMemo(() => {
@@ -403,10 +417,11 @@ export function DataTable<T extends { id: string }>({
                   </TableRow>
                   {isExpanded && (() => {
                     const childVersions = versions.slice(1);
+                    const pageSize = getVersionPageSize(assetId);
                     const currentPage = getVersionPage(assetId);
-                    const totalPages = Math.ceil(childVersions.length / VERSIONS_PER_PAGE);
-                    const startIndex = (currentPage - 1) * VERSIONS_PER_PAGE;
-                    const endIndex = startIndex + VERSIONS_PER_PAGE;
+                    const totalPages = Math.ceil(childVersions.length / pageSize);
+                    const startIndex = (currentPage - 1) * pageSize;
+                    const endIndex = startIndex + pageSize;
                     const paginatedVersions = childVersions.slice(startIndex, endIndex);
                     
                     return (
@@ -456,7 +471,7 @@ export function DataTable<T extends { id: string }>({
                             </TableRow>
                           );
                         })}
-                        {totalPages > 1 && (
+                        {childVersions.length > 0 && (
                           <TableRow key={`${assetId}-pagination`} className="bg-muted/5 border-b border-border">
                             <TableCell 
                               colSpan={columns.length}
@@ -464,77 +479,96 @@ export function DataTable<T extends { id: string }>({
                             >
                               <div className="flex items-center gap-3 pl-7">
                                 <span className="text-xs text-muted-foreground">└</span>
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    onClick={(e) => {
+                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                  <span>Show</span>
+                                  <select
+                                    value={pageSize}
+                                    onChange={(e) => {
                                       e.stopPropagation();
-                                      setVersionPage(assetId, 1);
+                                      setVersionPageSize(assetId, Number(e.target.value));
                                     }}
-                                    disabled={currentPage === 1}
-                                    className="px-2 py-1 text-xs rounded border border-border hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"
-                                    title="First page"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="h-6 px-1 text-xs border border-border rounded bg-background focus:outline-none focus:ring-1 focus:ring-primary"
                                   >
-                                    ««
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setVersionPage(assetId, currentPage - 1);
-                                    }}
-                                    disabled={currentPage === 1}
-                                    className="px-2 py-1 text-xs rounded border border-border hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"
-                                    title="Previous page"
-                                  >
-                                    «
-                                  </button>
-                                  <div className="flex items-center gap-1 text-sm">
-                                    <span className="text-muted-foreground">Page</span>
-                                    <input
-                                      type="text"
-                                      value={getVersionPageInput(assetId)}
-                                      onChange={(e) => {
-                                        e.stopPropagation();
-                                        setVersionPageInput(assetId, e.target.value);
-                                      }}
-                                      onBlur={(e) => {
-                                        e.stopPropagation();
-                                        handleVersionPageSubmit(assetId, totalPages);
-                                      }}
-                                      onKeyDown={(e) => {
-                                        e.stopPropagation();
-                                        if (e.key === 'Enter') {
-                                          handleVersionPageSubmit(assetId, totalPages);
-                                        }
-                                      }}
-                                      onClick={(e) => e.stopPropagation()}
-                                      className="w-10 h-6 px-1 text-center text-sm border border-border rounded bg-background focus:outline-none focus:ring-1 focus:ring-primary"
-                                      aria-label="Go to page"
-                                    />
-                                    <span className="text-muted-foreground">of {totalPages}</span>
-                                  </div>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setVersionPage(assetId, currentPage + 1);
-                                    }}
-                                    disabled={currentPage === totalPages}
-                                    className="px-2 py-1 text-xs rounded border border-border hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"
-                                    title="Next page"
-                                  >
-                                    »
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setVersionPage(assetId, totalPages);
-                                    }}
-                                    disabled={currentPage === totalPages}
-                                    className="px-2 py-1 text-xs rounded border border-border hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"
-                                    title="Last page"
-                                  >
-                                    »»
-                                  </button>
+                                    {VERSION_PAGE_SIZE_OPTIONS.map(size => (
+                                      <option key={size} value={size}>{size}</option>
+                                    ))}
+                                  </select>
+                                  <span>per page</span>
                                 </div>
+                                {totalPages > 1 && (
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setVersionPage(assetId, 1);
+                                      }}
+                                      disabled={currentPage === 1}
+                                      className="px-2 py-1 text-xs rounded border border-border hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"
+                                      title="First page"
+                                    >
+                                      ««
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setVersionPage(assetId, currentPage - 1);
+                                      }}
+                                      disabled={currentPage === 1}
+                                      className="px-2 py-1 text-xs rounded border border-border hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"
+                                      title="Previous page"
+                                    >
+                                      «
+                                    </button>
+                                    <div className="flex items-center gap-1 text-sm">
+                                      <span className="text-muted-foreground">Page</span>
+                                      <input
+                                        type="text"
+                                        value={getVersionPageInput(assetId)}
+                                        onChange={(e) => {
+                                          e.stopPropagation();
+                                          setVersionPageInput(assetId, e.target.value);
+                                        }}
+                                        onBlur={(e) => {
+                                          e.stopPropagation();
+                                          handleVersionPageSubmit(assetId, totalPages);
+                                        }}
+                                        onKeyDown={(e) => {
+                                          e.stopPropagation();
+                                          if (e.key === 'Enter') {
+                                            handleVersionPageSubmit(assetId, totalPages);
+                                          }
+                                        }}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="w-10 h-6 px-1 text-center text-sm border border-border rounded bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+                                        aria-label="Go to page"
+                                      />
+                                      <span className="text-muted-foreground">of {totalPages}</span>
+                                    </div>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setVersionPage(assetId, currentPage + 1);
+                                      }}
+                                      disabled={currentPage === totalPages}
+                                      className="px-2 py-1 text-xs rounded border border-border hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"
+                                      title="Next page"
+                                    >
+                                      »
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setVersionPage(assetId, totalPages);
+                                      }}
+                                      disabled={currentPage === totalPages}
+                                      className="px-2 py-1 text-xs rounded border border-border hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"
+                                      title="Last page"
+                                    >
+                                      »»
+                                    </button>
+                                  </div>
+                                )}
                                 <span className="text-xs text-muted-foreground">
                                   ({childVersions.length} historical versions)
                                 </span>
