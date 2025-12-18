@@ -63,10 +63,9 @@ export function DataTable<T extends { id: string }>({
   const tableRef = useRef<HTMLTableElement>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
-  const [visibleVersionsCount, setVisibleVersionsCount] = useState<Record<string, number>>({});
+  const [versionPages, setVersionPages] = useState<Record<string, number>>({});
   
-  const INITIAL_VISIBLE_VERSIONS = 10;
-  const LOAD_MORE_INCREMENT = 20;
+  const VERSIONS_PER_PAGE = 10;
 
   const toggleRowExpansion = (id: string) => {
     setExpandedRows(prev => {
@@ -80,14 +79,14 @@ export function DataTable<T extends { id: string }>({
     });
   };
   
-  const getVisibleVersionsCount = (assetId: string) => {
-    return visibleVersionsCount[assetId] || INITIAL_VISIBLE_VERSIONS;
+  const getVersionPage = (assetId: string) => {
+    return versionPages[assetId] || 1;
   };
   
-  const showMoreVersions = (assetId: string) => {
-    setVisibleVersionsCount(prev => ({
+  const setVersionPage = (assetId: string, page: number) => {
+    setVersionPages(prev => ({
       ...prev,
-      [assetId]: (prev[assetId] || INITIAL_VISIBLE_VERSIONS) + LOAD_MORE_INCREMENT
+      [assetId]: page
     }));
   };
 
@@ -378,13 +377,15 @@ export function DataTable<T extends { id: string }>({
                   </TableRow>
                   {isExpanded && (() => {
                     const childVersions = versions.slice(1);
-                    const visibleCount = getVisibleVersionsCount(assetId);
-                    const visibleVersions = childVersions.slice(0, visibleCount);
-                    const remainingCount = childVersions.length - visibleCount;
+                    const currentPage = getVersionPage(assetId);
+                    const totalPages = Math.ceil(childVersions.length / VERSIONS_PER_PAGE);
+                    const startIndex = (currentPage - 1) * VERSIONS_PER_PAGE;
+                    const endIndex = startIndex + VERSIONS_PER_PAGE;
+                    const paginatedVersions = childVersions.slice(startIndex, endIndex);
                     
                     return (
                       <>
-                        {visibleVersions.map((item, versionIndex) => {
+                        {paginatedVersions.map((item, versionIndex) => {
                           const rowKey = `${assetId}-v${(item as any).version}-child-${versionIndex}`;
                           return (
                             <TableRow 
@@ -429,22 +430,67 @@ export function DataTable<T extends { id: string }>({
                             </TableRow>
                           );
                         })}
-                        {remainingCount > 0 && (
-                          <TableRow key={`${assetId}-show-more`} className="bg-muted/5 border-b border-border">
+                        {totalPages > 1 && (
+                          <TableRow key={`${assetId}-pagination`} className="bg-muted/5 border-b border-border">
                             <TableCell 
                               colSpan={columns.length}
                               className="text-sm px-4 py-2"
                             >
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  showMoreVersions(assetId);
-                                }}
-                                className="flex items-center gap-2 pl-7 text-primary hover:underline font-medium"
-                              >
+                              <div className="flex items-center gap-3 pl-7">
                                 <span className="text-xs text-muted-foreground">└</span>
-                                Show {Math.min(remainingCount, LOAD_MORE_INCREMENT)} more versions ({remainingCount} remaining)
-                              </button>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setVersionPage(assetId, 1);
+                                    }}
+                                    disabled={currentPage === 1}
+                                    className="px-2 py-1 text-xs rounded border border-border hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"
+                                    title="First page"
+                                  >
+                                    ««
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setVersionPage(assetId, currentPage - 1);
+                                    }}
+                                    disabled={currentPage === 1}
+                                    className="px-2 py-1 text-xs rounded border border-border hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"
+                                    title="Previous page"
+                                  >
+                                    «
+                                  </button>
+                                  <span className="text-sm font-medium px-2">
+                                    Page {currentPage} of {totalPages}
+                                  </span>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setVersionPage(assetId, currentPage + 1);
+                                    }}
+                                    disabled={currentPage === totalPages}
+                                    className="px-2 py-1 text-xs rounded border border-border hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"
+                                    title="Next page"
+                                  >
+                                    »
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setVersionPage(assetId, totalPages);
+                                    }}
+                                    disabled={currentPage === totalPages}
+                                    className="px-2 py-1 text-xs rounded border border-border hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"
+                                    title="Last page"
+                                  >
+                                    »»
+                                  </button>
+                                </div>
+                                <span className="text-xs text-muted-foreground">
+                                  ({childVersions.length} historical versions)
+                                </span>
+                              </div>
                             </TableCell>
                           </TableRow>
                         )}
