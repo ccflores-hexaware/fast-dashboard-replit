@@ -1460,8 +1460,9 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     if (!col.accessorKey) return true; // Always show columns without accessorKey (like action columns)
     const key = col.accessorKey as string;
     
-    // Hide Version column when Show Version History is not checked (FAST module only)
-    if (key === 'version' && type === 'fast' && !showVersionHistory) {
+    // Hide Version column when Show Version History is checked (FAST module only)
+    // Version info is already shown in the expandable row badges
+    if (key === 'version' && type === 'fast' && showVersionHistory) {
       return false;
     }
     
