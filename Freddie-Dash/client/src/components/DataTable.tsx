@@ -63,6 +63,10 @@ export function DataTable<T extends { id: string }>({
   const tableRef = useRef<HTMLTableElement>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [visibleVersionsCount, setVisibleVersionsCount] = useState<Record<string, number>>({});
+  
+  const INITIAL_VISIBLE_VERSIONS = 10;
+  const LOAD_MORE_INCREMENT = 20;
 
   const toggleRowExpansion = (id: string) => {
     setExpandedRows(prev => {
@@ -74,6 +78,17 @@ export function DataTable<T extends { id: string }>({
       }
       return newSet;
     });
+  };
+  
+  const getVisibleVersionsCount = (assetId: string) => {
+    return visibleVersionsCount[assetId] || INITIAL_VISIBLE_VERSIONS;
+  };
+  
+  const showMoreVersions = (assetId: string) => {
+    setVisibleVersionsCount(prev => ({
+      ...prev,
+      [assetId]: (prev[assetId] || INITIAL_VISIBLE_VERSIONS) + LOAD_MORE_INCREMENT
+    }));
   };
 
   const groupedData = useMemo(() => {
@@ -361,51 +376,81 @@ export function DataTable<T extends { id: string }>({
                       </TableCell>
                     ))}
                   </TableRow>
-                  {isExpanded && versions.slice(1).map((item, versionIndex) => {
-                    const rowKey = `${assetId}-v${(item as any).version}-child-${versionIndex}`;
+                  {isExpanded && (() => {
+                    const childVersions = versions.slice(1);
+                    const visibleCount = getVisibleVersionsCount(assetId);
+                    const visibleVersions = childVersions.slice(0, visibleCount);
+                    const remainingCount = childVersions.length - visibleCount;
+                    
                     return (
-                      <TableRow 
-                        key={rowKey}
-                        className={cn(
-                          "hover:bg-muted/30 transition-colors border-b border-border bg-muted/10",
-                          onRowClick && "cursor-pointer"
-                        )}
-                        onClick={() => onRowClick && onRowClick(item)}
-                      >
-                        {columns.map((col, index) => (
-                          <TableCell 
-                            key={`${rowKey}-${String(col.accessorKey || index)}`} 
-                            className={cn(
-                              "text-sm border-r border-border last:border-r-0 px-4 py-3 whitespace-nowrap text-muted-foreground",
-                              index === 0 && "sticky left-0 z-20 bg-slate-50"
-                            )}
-                          >
-                            {index === 0 ? (
-                              <div className="flex items-center gap-2 pl-7">
+                      <>
+                        {visibleVersions.map((item, versionIndex) => {
+                          const rowKey = `${assetId}-v${(item as any).version}-child-${versionIndex}`;
+                          return (
+                            <TableRow 
+                              key={rowKey}
+                              className={cn(
+                                "hover:bg-muted/30 transition-colors border-b border-border bg-muted/10",
+                                onRowClick && "cursor-pointer"
+                              )}
+                              onClick={() => onRowClick && onRowClick(item)}
+                            >
+                              {columns.map((col, index) => (
+                                <TableCell 
+                                  key={`${rowKey}-${String(col.accessorKey || index)}`} 
+                                  className={cn(
+                                    "text-sm border-r border-border last:border-r-0 px-4 py-3 whitespace-nowrap text-muted-foreground",
+                                    index === 0 && "sticky left-0 z-20 bg-slate-50"
+                                  )}
+                                >
+                                  {index === 0 ? (
+                                    <div className="flex items-center gap-2 pl-7">
+                                      <span className="text-xs text-muted-foreground">└</span>
+                                      <span>
+                                        {col.cell ? col.cell(item) : (col.accessorKey ? (
+                                          (item[col.accessorKey] === undefined || item[col.accessorKey] === null || item[col.accessorKey] === 'undefined') 
+                                            ? '-' 
+                                            : String(item[col.accessorKey])
+                                        ) : null)}
+                                      </span>
+                                      <Badge variant="secondary" className="ml-1 text-xs px-1.5 py-0 h-5 font-normal bg-muted">
+                                        v{(item as any).version}
+                                      </Badge>
+                                    </div>
+                                  ) : (
+                                    col.cell ? col.cell(item) : (col.accessorKey ? (
+                                      (item[col.accessorKey] === undefined || item[col.accessorKey] === null || item[col.accessorKey] === 'undefined') 
+                                        ? '-' 
+                                        : String(item[col.accessorKey])
+                                    ) : null)
+                                  )}
+                                </TableCell>
+                              ))}
+                            </TableRow>
+                          );
+                        })}
+                        {remainingCount > 0 && (
+                          <TableRow key={`${assetId}-show-more`} className="bg-muted/5 border-b border-border">
+                            <TableCell 
+                              colSpan={columns.length}
+                              className="text-sm px-4 py-2"
+                            >
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  showMoreVersions(assetId);
+                                }}
+                                className="flex items-center gap-2 pl-7 text-primary hover:underline font-medium"
+                              >
                                 <span className="text-xs text-muted-foreground">└</span>
-                                <span>
-                                  {col.cell ? col.cell(item) : (col.accessorKey ? (
-                                    (item[col.accessorKey] === undefined || item[col.accessorKey] === null || item[col.accessorKey] === 'undefined') 
-                                      ? '-' 
-                                      : String(item[col.accessorKey])
-                                  ) : null)}
-                                </span>
-                                <Badge variant="secondary" className="ml-1 text-xs px-1.5 py-0 h-5 font-normal bg-muted">
-                                  v{(item as any).version}
-                                </Badge>
-                              </div>
-                            ) : (
-                              col.cell ? col.cell(item) : (col.accessorKey ? (
-                                (item[col.accessorKey] === undefined || item[col.accessorKey] === null || item[col.accessorKey] === 'undefined') 
-                                  ? '-' 
-                                  : String(item[col.accessorKey])
-                              ) : null)
-                            )}
-                          </TableCell>
-                        ))}
-                      </TableRow>
+                                Show {Math.min(remainingCount, LOAD_MORE_INCREMENT)} more versions ({remainingCount} remaining)
+                              </button>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </>
                     );
-                  })}
+                  })()}
                 </React.Fragment>
               );
             })
