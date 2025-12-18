@@ -1320,7 +1320,6 @@ export default function DashboardPage({ type }: DashboardPageProps) {
               )
             },
             { header: 'Name', accessorKey: 'name', cell: (item: any) => <span className="font-semibold text-primary">{item.name}</span> },
-            { header: 'Version', accessorKey: 'version' },
             { header: 'KALM Assignee', accessorKey: 'kalmAssignee' },
             { header: 'Onboarding Status', accessorKey: 'onboardingStatus' },
             { header: 'Onboarding Disposition', accessorKey: 'onboardingDisposition' },
@@ -1459,12 +1458,6 @@ export default function DashboardPage({ type }: DashboardPageProps) {
   const visibleColumns = baseConfig.columns.filter((col: any) => {
     if (!col.accessorKey) return true; // Always show columns without accessorKey (like action columns)
     const key = col.accessorKey as string;
-    
-    // Hide Version column when Show Version History is checked (FAST module only)
-    // Version info is already shown in the expandable row badges
-    if (key === 'version' && type === 'fast' && showVersionHistory) {
-      return false;
-    }
     
     // Check if visibility is explicitly set, otherwise check if it's in defaults
     if (columnVisibility[key] !== undefined) {
