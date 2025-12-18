@@ -1608,8 +1608,8 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     return 0;
   });
 
-  // Pagination Logic - For FAST with version history in card view, paginate by unique asset
-  const shouldPaginateByAsset = type === 'fast' && showVersionHistory && view === 'card';
+  // Pagination Logic - For FAST with version history, paginate by unique asset (both table and card view)
+  const shouldPaginateByAsset = type === 'fast' && showVersionHistory;
   
   let currentData: any[];
   let totalPages: number;
@@ -2284,6 +2284,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
             onColumnFiltersChange={setColumnFilters}
             sortConfig={sortConfig}
             onSort={handleSort}
+            expandableVersions={type === 'fast' && showVersionHistory}
           />
         ) : currentData.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">

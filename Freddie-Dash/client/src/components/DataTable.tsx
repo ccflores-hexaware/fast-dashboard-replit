@@ -8,7 +8,7 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Filter, Check, ArrowUpDown, ArrowUp, ArrowDown, Search } from "lucide-react";
+import { Filter, Check, ArrowUpDown, ArrowUp, ArrowDown, Search, ChevronRight, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Popover,
@@ -43,6 +43,7 @@ interface DataTableProps<T> {
   onSort?: (key: string) => void;
   emptyStateTitle?: string;
   emptyStateMessage?: string;
+  expandableVersions?: boolean;
 }
 
 export function DataTable<T extends { id: string }>({ 
@@ -55,11 +56,46 @@ export function DataTable<T extends { id: string }>({
   sortConfig,
   onSort,
   emptyStateTitle = "No Records Found",
-  emptyStateMessage = "Try adjusting your filters or search criteria"
+  emptyStateMessage = "Try adjusting your filters or search criteria",
+  expandableVersions = false
 }: DataTableProps<T>) {
 
   const tableRef = useRef<HTMLTableElement>(null);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+
+  const toggleRowExpansion = (id: string) => {
+    setExpandedRows(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const groupedData = useMemo(() => {
+    if (!expandableVersions) return null;
+    
+    const groups = new Map<string, T[]>();
+    data.forEach(item => {
+      const existing = groups.get(item.id) || [];
+      existing.push(item);
+      groups.set(item.id, existing);
+    });
+    
+    groups.forEach((versions, id) => {
+      versions.sort((a, b) => {
+        const versionA = (a as any).version || 0;
+        const versionB = (b as any).version || 0;
+        return versionB - versionA;
+      });
+    });
+    
+    return groups;
+  }, [data, expandableVersions]);
 
   useEffect(() => {
     const table = tableRef.current;
@@ -259,6 +295,120 @@ export function DataTable<T extends { id: string }>({
                 </div>
               </TableCell>
             </TableRow>
+          ) : expandableVersions && groupedData ? (
+            Array.from(groupedData.entries()).map(([assetId, versions]) => {
+              const latestVersion = versions[0];
+              const hasMultipleVersions = versions.length > 1;
+              const isExpanded = expandedRows.has(assetId);
+              
+              return (
+                <React.Fragment key={assetId}>
+                  <TableRow 
+                    className={cn(
+                      "hover:bg-muted/30 transition-colors border-b border-border",
+                      onRowClick && "cursor-pointer",
+                      hasMultipleVersions && "font-medium"
+                    )}
+                    onClick={() => onRowClick && onRowClick(latestVersion)}
+                  >
+                    {columns.map((col, index) => (
+                      <TableCell 
+                        key={`${assetId}-${String(col.accessorKey || index)}`} 
+                        className={cn(
+                          "text-sm border-r border-border last:border-r-0 px-4 py-3 whitespace-nowrap",
+                          index === 0 && "sticky left-0 z-20 bg-slate-100"
+                        )}
+                      >
+                        {index === 0 ? (
+                          <div className="flex items-center gap-2">
+                            {hasMultipleVersions && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleRowExpansion(assetId);
+                                }}
+                                className="p-0.5 hover:bg-muted rounded transition-colors"
+                                aria-label={isExpanded ? "Collapse versions" : "Expand versions"}
+                              >
+                                {isExpanded ? (
+                                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                ) : (
+                                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                )}
+                              </button>
+                            )}
+                            {!hasMultipleVersions && <span className="w-5" />}
+                            <span>
+                              {col.cell ? col.cell(latestVersion) : (col.accessorKey ? (
+                                (latestVersion[col.accessorKey] === undefined || latestVersion[col.accessorKey] === null || latestVersion[col.accessorKey] === 'undefined') 
+                                  ? '-' 
+                                  : String(latestVersion[col.accessorKey])
+                              ) : null)}
+                            </span>
+                            {hasMultipleVersions && (
+                              <Badge variant="outline" className="ml-1 text-xs px-1.5 py-0 h-5 font-normal">
+                                {versions.length} versions
+                              </Badge>
+                            )}
+                          </div>
+                        ) : (
+                          col.cell ? col.cell(latestVersion) : (col.accessorKey ? (
+                            (latestVersion[col.accessorKey] === undefined || latestVersion[col.accessorKey] === null || latestVersion[col.accessorKey] === 'undefined') 
+                              ? '-' 
+                              : String(latestVersion[col.accessorKey])
+                          ) : null)
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                  {isExpanded && versions.slice(1).map((item, versionIndex) => {
+                    const rowKey = `${assetId}-v${(item as any).version}-child-${versionIndex}`;
+                    return (
+                      <TableRow 
+                        key={rowKey}
+                        className={cn(
+                          "hover:bg-muted/30 transition-colors border-b border-border bg-muted/10",
+                          onRowClick && "cursor-pointer"
+                        )}
+                        onClick={() => onRowClick && onRowClick(item)}
+                      >
+                        {columns.map((col, index) => (
+                          <TableCell 
+                            key={`${rowKey}-${String(col.accessorKey || index)}`} 
+                            className={cn(
+                              "text-sm border-r border-border last:border-r-0 px-4 py-3 whitespace-nowrap text-muted-foreground",
+                              index === 0 && "sticky left-0 z-20 bg-slate-50"
+                            )}
+                          >
+                            {index === 0 ? (
+                              <div className="flex items-center gap-2 pl-7">
+                                <span className="text-xs text-muted-foreground">└</span>
+                                <span>
+                                  {col.cell ? col.cell(item) : (col.accessorKey ? (
+                                    (item[col.accessorKey] === undefined || item[col.accessorKey] === null || item[col.accessorKey] === 'undefined') 
+                                      ? '-' 
+                                      : String(item[col.accessorKey])
+                                  ) : null)}
+                                </span>
+                                <Badge variant="secondary" className="ml-1 text-xs px-1.5 py-0 h-5 font-normal bg-muted">
+                                  v{(item as any).version}
+                                </Badge>
+                              </div>
+                            ) : (
+                              col.cell ? col.cell(item) : (col.accessorKey ? (
+                                (item[col.accessorKey] === undefined || item[col.accessorKey] === null || item[col.accessorKey] === 'undefined') 
+                                  ? '-' 
+                                  : String(item[col.accessorKey])
+                              ) : null)
+                            )}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    );
+                  })}
+                </React.Fragment>
+              );
+            })
           ) : (
             data.map((item, rowIndex) => {
               const rowKey = (item as any).version !== undefined 
