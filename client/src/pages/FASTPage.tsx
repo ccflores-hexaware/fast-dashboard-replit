@@ -645,7 +645,7 @@ export default function FASTPage() {
         </div>
 
         <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-1">
             <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
               <PopoverTrigger asChild>
                 <Button variant="outline" role="combobox" className="w-[140px] justify-between">
