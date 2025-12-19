@@ -498,25 +498,26 @@ export default function FASTPage() {
 
     let updatedList: any[];
     if (selectedItem) {
+      // Create snapshot of old version (mark as not latest)
       const oldVersion = { ...selectedItem, isLatestVersion: false };
       const newVersion = { 
         ...updatedItem, 
         version: (selectedItem.version || 1) + 1, 
         isLatestVersion: true 
       };
-      updatedList = data.map((item: any) => {
-        if (item.id === selectedItem.id && item.version === selectedItem.version) {
-          return oldVersion;
-        }
-        return item;
-      });
-      updatedList.push(newVersion);
+      // Keep all items except the current latest version of this asset
+      // Then add the new version at the top, followed by old snapshot
+      const otherItems = data.filter((item: any) => 
+        !(item.id === selectedItem.id && item.version === selectedItem.version)
+      );
+      updatedList = [newVersion, oldVersion, ...otherItems];
       setSelectedItem(newVersion);
       setEditFormData(newVersion);
     } else {
+      // Insert new row at the top
       updatedItem.version = 1;
       updatedItem.isLatestVersion = true;
-      updatedList = [...data, updatedItem];
+      updatedList = [updatedItem, ...data];
       setSelectedItem(updatedItem);
       setEditFormData(updatedItem);
     }

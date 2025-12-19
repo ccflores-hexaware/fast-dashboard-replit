@@ -295,9 +295,12 @@ export default function FakeAssetsPage() {
     const updatedItem = { ...editFormData, lastModifiedBy: user?.name || 'Unknown User', lastModifiedDate: format(new Date(), 'MMM d, yyyy HH:mm') };
     let updatedList: any[];
     if (selectedItem) {
-      updatedList = data.map((item: any) => item.id === selectedItem.id ? updatedItem : item);
+      // Move updated item to top of list
+      const otherItems = data.filter((item: any) => item.id !== selectedItem.id);
+      updatedList = [updatedItem, ...otherItems];
     } else {
-      updatedList = [...data, updatedItem];
+      // Insert new row at the top
+      updatedList = [updatedItem, ...data];
     }
     setData(updatedList);
     setSelectedItem(updatedItem);
