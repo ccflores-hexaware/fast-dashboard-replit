@@ -898,14 +898,19 @@ export default function FASTPage() {
                               id={key}
                               value={String(value || '')}
                               onChange={(e) => {
+                                if (key === 'id' && selectedItem) return;
                                 setEditFormData((prev: any) => ({ ...prev, [key]: e.target.value }));
                                 if (key === 'id') validateAssetId(e.target.value);
                               }}
-                              className={key === 'id' && assetIdError ? 'border-red-500' : ''}
+                              disabled={key === 'id' && !!selectedItem}
+                              className={cn(
+                                key === 'id' && assetIdError ? 'border-red-500' : '',
+                                key === 'id' && selectedItem ? 'bg-muted cursor-not-allowed' : ''
+                              )}
                             />
                           )}
-                          {key === 'id' && assetIdError && <p className="text-red-500 text-xs">{assetIdError}</p>}
-                          {key === 'id' && assetIdAvailable && <p className="text-green-500 text-xs flex items-center gap-1"><Check className="h-3 w-3" /> Available</p>}
+                          {key === 'id' && !selectedItem && assetIdError && <p className="text-red-500 text-xs">{assetIdError}</p>}
+                          {key === 'id' && !selectedItem && assetIdAvailable && <p className="text-green-500 text-xs flex items-center gap-1"><Check className="h-3 w-3" /> Available</p>}
                         </div>
                       );
                     })
