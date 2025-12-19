@@ -223,26 +223,19 @@ export default function FASTPage() {
       header: 'Asset ID', 
       accessorKey: 'id',
       cell: (item: any) => (
-        <div className="flex items-center gap-2">
-          <button 
-            onClick={(e) => {
-              e.stopPropagation();
-              if (isAdmin && item.isLatestVersion) {
-                handleEditClick(item);
-              } else {
-                handleItemClick(item);
-              }
-            }}
-            className="text-primary hover:underline font-bold underline decoration-2 underline-offset-2 hover:text-primary/80 transition-colors"
-          >
-            {item.id}
-          </button>
-          {showVersionHistory && item._versionCount && item._versionCount > 1 && (
-            <span className="px-1.5 py-0.5 text-xs bg-muted text-muted-foreground rounded border">
-              {item._versionCount} versions
-            </span>
-          )}
-        </div>
+        <button 
+          onClick={(e) => {
+            e.stopPropagation();
+            if (isAdmin && item.isLatestVersion) {
+              handleEditClick(item);
+            } else {
+              handleItemClick(item);
+            }
+          }}
+          className="text-primary hover:underline font-bold underline decoration-2 underline-offset-2 hover:text-primary/80 transition-colors"
+        >
+          {item.id}
+        </button>
       )
     },
     { header: 'Name', accessorKey: 'name', cell: (item: any) => <span className="font-semibold text-primary">{item.name}</span> },
@@ -301,7 +294,7 @@ export default function FASTPage() {
     { header: 'Comments', accessorKey: 'comments' },
     { header: 'Last Modified By', accessorKey: 'lastModifiedBy' },
     { header: 'Last Modified Date', accessorKey: 'lastModifiedDate' },
-  ], [isAdmin, showVersionHistory]);
+  ], [isAdmin]);
 
   const cardFields = [
     { label: 'Asset ID', key: 'id' },
@@ -365,6 +358,21 @@ export default function FASTPage() {
   // Use asset-level data for pagination when showing version history
   const dataForPagination = showVersionHistory ? groupedAssetData.assets : sortedData;
   const { currentPage, pageSize, setCurrentPage, setPageSize, paginatedData, totalPages, totalItems } = usePagination(dataForPagination);
+
+  // When showing version history, expand paginated data to include all versions for each asset
+  // This is needed for DataTable's expandable version accordion to work
+  const tableData = useMemo(() => {
+    if (!showVersionHistory) {
+      return paginatedData;
+    }
+    // For each paginated asset, include all its versions
+    const expandedData: any[] = [];
+    paginatedData.forEach((asset: any) => {
+      const allVersions = asset._allVersions || [asset];
+      allVersions.forEach((version: any) => expandedData.push(version));
+    });
+    return expandedData;
+  }, [paginatedData, showVersionHistory]);
 
   const visibleColumns = useMemo(() => {
     return columns.filter(col => columnVisibility[col.accessorKey] !== false);
@@ -801,7 +809,7 @@ export default function FASTPage() {
 
         {view === 'table' ? (
           <DataTable
-            data={paginatedData}
+            data={tableData}
             columns={visibleColumns}
             onSort={handleSort}
             sortConfig={sortConfig}
@@ -810,12 +818,10 @@ export default function FASTPage() {
             allData={sortedData}
             expandableVersions={showVersionHistory}
             onRowClick={(item: any) => {
-              if (showVersionHistory) {
-                if (isAdmin && item.isLatestVersion) {
-                  handleEditClick(item);
-                } else {
-                  handleItemClick(item);
-                }
+              if (isAdmin && item.isLatestVersion) {
+                handleEditClick(item);
+              } else {
+                handleItemClick(item);
               }
             }}
           />
