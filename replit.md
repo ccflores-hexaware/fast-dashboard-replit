@@ -52,8 +52,15 @@ Preferred communication style: Simple, everyday language.
         DataCard.tsx      # Card view component
         FilterMenu.tsx    # Column filtering
         Pagination.tsx
+      features/
+        dashboard/
+          DashboardContainer.tsx  # Shared dashboard logic (~1770 lines)
       pages/
-        Dashboard.tsx     # Main dashboard component (~2500 lines)
+        FASTPage.tsx      # FAST module entry point
+        FakeAssetsPage.tsx # Fake Asset List module entry point
+        TPIPage.tsx       # TPI module entry point
+        BTOPage.tsx       # BTO module entry point
+        CMDBPage.tsx      # CMDB module entry point
       lib/                # Utilities, context providers
         userContext.tsx   # User/admin context
         queryClient.ts    # TanStack Query setup
