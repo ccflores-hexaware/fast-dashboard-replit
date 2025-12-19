@@ -1526,15 +1526,12 @@ export function DashboardContainer({ type }: DashboardContainerProps) {
         {view === 'table' ? (
           <DataTable
             data={currentData}
-            columns={visibleColumns as any}
+            columns={visibleColumns}
             onSort={handleSort}
             sortConfig={sortConfig}
             columnFilters={columnFilters}
-            onColumnFiltersChange={(key: string, values: string[]) => {
-              setColumnFilters(prev => ({
-                ...prev,
-                [key]: values
-              }));
+            onColumnFiltersChange={(filters: Record<string, string[]>) => {
+              setColumnFilters(filters);
             }}
             allData={config.data}
             expandableVersions={type === 'fast' && showVersionHistory}
