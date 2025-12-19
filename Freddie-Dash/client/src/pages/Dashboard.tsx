@@ -108,7 +108,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
     ],
     assets: [
       'id', 'name', 'cmdbStatus', 'type', 'btoAlignment', 'itOwner', 'businessOwner',
-      'division', 'hosted', 'sox', 'missionCritical', 'businessCritical', 'version',
+      'division', 'hosted', 'sox', 'missionCritical', 'businessCritical',
       'lastModifiedBy', 'lastModifiedDate'
     ],
     tpi: [
@@ -196,7 +196,7 @@ export default function DashboardPage({ type }: DashboardPageProps) {
         'assessmentCategory', 'blockFundingName', 'blockFundingOwner', 'businessCritical', 'businessOwner',
         'businessOwnerSME', 'cotsOrInHouse', 'customerFacing', 'deploymentLifecyclePhase', 'deploymentLifecycleStartDate',
         'description', 'division', 'foundational', 'hosted', 'isSaas', 'itOwner', 'maintenanceWindow', 'missionCritical',
-        'operationalHours', 'ppiClassification', 'sox', 'sppi', 'supportSME', 'supportedBy', 'supporting', 'version',
+        'operationalHours', 'ppiClassification', 'sox', 'sppi', 'supportSME', 'supportedBy', 'supporting',
         'lastModifiedBy', 'lastModifiedDate'],
       tpi: ['id', 'name', 'cmdbStatus', 'assetType', 'affinityGroup', 'appApprModernDelivery', 'applicationTypeFinancial',
         'architect', 'assetIdInFAST', 'assetIdInSchedule', 'assetIdInWeeklyStatusReport', 'assetTier', 'blockFunding',
@@ -1137,7 +1137,6 @@ export default function DashboardPage({ type }: DashboardPageProps) {
             { header: 'Support SME', accessorKey: 'supportSME' },
             { header: 'Supported By', accessorKey: 'supportedBy' },
             { header: 'Supporting', accessorKey: 'supporting' },
-            { header: 'Version', accessorKey: 'version' },
             { header: 'Last Modified By', accessorKey: 'lastModifiedBy' },
             { header: 'Last Modified Date', accessorKey: 'lastModifiedDate' },
           ],
