@@ -223,19 +223,26 @@ export default function FASTPage() {
       header: 'Asset ID', 
       accessorKey: 'id',
       cell: (item: any) => (
-        <button 
-          onClick={(e) => {
-            e.stopPropagation();
-            if (isAdmin) {
-              handleEditClick(item);
-            } else {
-              handleItemClick(item);
-            }
-          }}
-          className="text-primary hover:underline font-bold underline decoration-2 underline-offset-2 hover:text-primary/80 transition-colors"
-        >
-          {item.id}
-        </button>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              if (isAdmin && item.isLatestVersion) {
+                handleEditClick(item);
+              } else {
+                handleItemClick(item);
+              }
+            }}
+            className="text-primary hover:underline font-bold underline decoration-2 underline-offset-2 hover:text-primary/80 transition-colors"
+          >
+            {item.id}
+          </button>
+          {showVersionHistory && item._versionCount && item._versionCount > 1 && (
+            <span className="px-1.5 py-0.5 text-xs bg-muted text-muted-foreground rounded border">
+              {item._versionCount} versions
+            </span>
+          )}
+        </div>
       )
     },
     { header: 'Name', accessorKey: 'name', cell: (item: any) => <span className="font-semibold text-primary">{item.name}</span> },
@@ -294,7 +301,7 @@ export default function FASTPage() {
     { header: 'Comments', accessorKey: 'comments' },
     { header: 'Last Modified By', accessorKey: 'lastModifiedBy' },
     { header: 'Last Modified Date', accessorKey: 'lastModifiedDate' },
-  ], [isAdmin]);
+  ], [isAdmin, showVersionHistory]);
 
   const cardFields = [
     { label: 'Asset ID', key: 'id' },
@@ -325,7 +332,39 @@ export default function FASTPage() {
 
   const { columnFilters, setColumnFilters, filteredData } = useColumnFilters(searchFilteredData);
   const { sortConfig, handleSort, sortedData } = useSorting(filteredData);
-  const { currentPage, pageSize, setCurrentPage, setPageSize, paginatedData, totalPages, totalItems } = usePagination(sortedData);
+
+  // When FAST History is enabled, group by asset ID for pagination at asset level
+  const groupedAssetData = useMemo(() => {
+    if (!showVersionHistory) {
+      return { assets: sortedData, versionMap: new Map() };
+    }
+    // Group all versions by asset ID, keep only latest version as the display row
+    const versionMap = new Map<string, any[]>();
+    const latestVersions: any[] = [];
+    
+    sortedData.forEach((item: any) => {
+      const assetId = item.id;
+      if (!versionMap.has(assetId)) {
+        versionMap.set(assetId, []);
+      }
+      versionMap.get(assetId)!.push(item);
+    });
+    
+    // For each asset, find the latest version to display as the main row
+    versionMap.forEach((versions, assetId) => {
+      // Sort versions by version number descending
+      versions.sort((a, b) => (b.version || 1) - (a.version || 1));
+      // Add version count to the latest version for display
+      const latestVersion = versions.find(v => v.isLatestVersion) || versions[0];
+      latestVersions.push({ ...latestVersion, _versionCount: versions.length, _allVersions: versions });
+    });
+    
+    return { assets: latestVersions, versionMap };
+  }, [sortedData, showVersionHistory]);
+
+  // Use asset-level data for pagination when showing version history
+  const dataForPagination = showVersionHistory ? groupedAssetData.assets : sortedData;
+  const { currentPage, pageSize, setCurrentPage, setPageSize, paginatedData, totalPages, totalItems } = usePagination(dataForPagination);
 
   const visibleColumns = useMemo(() => {
     return columns.filter(col => columnVisibility[col.accessorKey] !== false);
