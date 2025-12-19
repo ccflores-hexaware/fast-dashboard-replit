@@ -90,6 +90,47 @@ const ENUM_FIELDS: Record<string, string[]> = {
   businessCritical: ['Yes', 'No'],
 };
 
+const FORM_SECTIONS = [
+  {
+    title: 'General Information',
+    fields: ['id', 'name', 'description', 'type', 'cmdbStatus', 'btoAlignment', 'division']
+  },
+  {
+    title: 'Ownership',
+    fields: ['itOwner', 'businessOwner', 'businessOwnerSME', 'supportedBy', 'supportSME', 'architect']
+  },
+  {
+    title: 'Classification',
+    fields: ['applicationTypeFinancial', 'assessmentCategory', 'deploymentLifecyclePhase', 'deploymentLifecycleStartDate', 'hosted', 'cotsOrInHouse', 'isSaas']
+  },
+  {
+    title: 'Compliance',
+    fields: ['sox', 'sppi', 'ppiClassification', 'customerFacing', 'missionCritical', 'businessCritical', 'foundational', 'supporting']
+  },
+  {
+    title: 'Operations',
+    fields: ['operationalHours', 'maintenanceWindow', 'blockFundingName', 'blockFundingOwner']
+  },
+  {
+    title: 'Other',
+    fields: ['lastModifiedBy', 'lastModifiedDate']
+  }
+];
+
+const getEmptyFormData = () => {
+  const emptyData: Record<string, any> = {};
+  FORM_SECTIONS.forEach(section => {
+    section.fields.forEach(field => {
+      if (ENUM_FIELDS[field]) {
+        emptyData[field] = ENUM_FIELDS[field][0] || '';
+      } else {
+        emptyData[field] = '';
+      }
+    });
+  });
+  return emptyData;
+};
+
 export default function FakeAssetsPage() {
   const { toast } = useToast();
   const { isAdmin, user } = useUser();
@@ -253,7 +294,8 @@ export default function FakeAssetsPage() {
   const handleAddNew = () => {
     const newId = `AST-${String(data.length + 1).padStart(4, '0')}`;
     const newItem: any = {
-      id: newId, name: '', status: 'Active', cmdbStatus: 'Active', type: '',
+      ...getEmptyFormData(),
+      id: newId,
       lastModifiedBy: user?.name || 'Unknown User',
       lastModifiedDate: format(new Date(), 'MMM d, yyyy HH:mm'),
     };
@@ -412,32 +454,53 @@ export default function FakeAssetsPage() {
               {selectedItem && !isEditing && <DialogDescription>{selectedItem.id}</DialogDescription>}
             </DialogHeader>
             <ScrollArea className="flex-1 pr-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+              <div className="py-4 space-y-6">
                 {isEditing ? (
-                  Object.entries(editFormData).map(([key, value]) => {
-                    const column = columns.find(c => c.accessorKey === key);
-                    const enumOptions = ENUM_FIELDS[key];
-                    return (
-                      <div key={key} className="space-y-2">
-                        <Label htmlFor={key} className="text-sm font-medium">{column?.header || key}{key === 'id' && <span className="text-red-500 ml-1">*</span>}</Label>
-                        {enumOptions ? (
-                          <Select value={String(value || '')} onValueChange={(val) => setEditFormData((prev: any) => ({ ...prev, [key]: val }))}>
-                            <SelectTrigger><SelectValue placeholder={`Select ${column?.header || key}`} /></SelectTrigger>
-                            <SelectContent>{enumOptions.map(opt => (<SelectItem key={opt} value={opt}>{opt}</SelectItem>))}</SelectContent>
-                          </Select>
-                        ) : (
-                          <Input id={key} value={String(value || '')} onChange={(e) => { if (key === 'id' && selectedItem) return; setEditFormData((prev: any) => ({ ...prev, [key]: e.target.value })); if (key === 'id') validateAssetId(e.target.value); }} disabled={key === 'id' && !!selectedItem} className={cn(key === 'id' && assetIdError ? 'border-red-500' : '', key === 'id' && selectedItem ? 'bg-muted cursor-not-allowed' : '')} />
-                        )}
-                        {key === 'id' && !selectedItem && assetIdError && <p className="text-red-500 text-xs">{assetIdError}</p>}
-                        {key === 'id' && !selectedItem && assetIdAvailable && <p className="text-green-500 text-xs flex items-center gap-1"><Check className="h-3 w-3" /> Available</p>}
+                  FORM_SECTIONS.map((section) => (
+                    <div key={section.title} className="space-y-4">
+                      <h3 className="font-semibold text-sm text-primary border-b pb-2">{section.title}</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {section.fields.map((key) => {
+                          const value = editFormData[key];
+                          const column = columns.find(c => c.accessorKey === key);
+                          const enumOptions = ENUM_FIELDS[key];
+                          return (
+                            <div key={key} className="space-y-2">
+                              <Label htmlFor={key} className="text-sm font-medium">{column?.header || key}{key === 'id' && <span className="text-red-500 ml-1">*</span>}</Label>
+                              {enumOptions ? (
+                                <Select value={String(value || '')} onValueChange={(val) => setEditFormData((prev: any) => ({ ...prev, [key]: val }))}>
+                                  <SelectTrigger><SelectValue placeholder={`Select ${column?.header || key}`} /></SelectTrigger>
+                                  <SelectContent>{enumOptions.map(opt => (<SelectItem key={opt} value={opt}>{opt}</SelectItem>))}</SelectContent>
+                                </Select>
+                              ) : (
+                                <Input id={key} value={String(value || '')} onChange={(e) => { if (key === 'id' && selectedItem) return; setEditFormData((prev: any) => ({ ...prev, [key]: e.target.value })); if (key === 'id') validateAssetId(e.target.value); }} disabled={key === 'id' && !!selectedItem} className={cn(key === 'id' && assetIdError ? 'border-red-500' : '', key === 'id' && selectedItem ? 'bg-muted cursor-not-allowed' : '')} />
+                              )}
+                              {key === 'id' && !selectedItem && assetIdError && <p className="text-red-500 text-xs">{assetIdError}</p>}
+                              {key === 'id' && !selectedItem && assetIdAvailable && <p className="text-green-500 text-xs flex items-center gap-1"><Check className="h-3 w-3" /> Available</p>}
+                            </div>
+                          );
+                        })}
                       </div>
-                    );
-                  })
+                    </div>
+                  ))
                 ) : (
-                  selectedItem && Object.entries(selectedItem).map(([key, value]) => {
-                    const column = columns.find(c => c.accessorKey === key);
-                    return (<div key={key} className="space-y-1"><Label className="text-sm text-muted-foreground">{column?.header || key}</Label><p className="text-sm font-medium">{String(value || '-')}</p></div>);
-                  })
+                  FORM_SECTIONS.map((section) => (
+                    <div key={section.title} className="space-y-4">
+                      <h3 className="font-semibold text-sm text-primary border-b pb-2">{section.title}</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {section.fields.map((key) => {
+                          const value = selectedItem?.[key];
+                          const column = columns.find(c => c.accessorKey === key);
+                          return (
+                            <div key={key} className="space-y-1">
+                              <Label className="text-sm text-muted-foreground">{column?.header || key}</Label>
+                              <p className="text-sm font-medium">{String(value || '-')}</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))
                 )}
               </div>
             </ScrollArea>

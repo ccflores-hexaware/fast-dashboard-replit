@@ -108,6 +108,47 @@ const ENUM_FIELDS: Record<string, string[]> = {
 
 const MAX_CARD_FIELDS = 7;
 
+const FORM_SECTIONS = [
+  {
+    title: 'General Information',
+    fields: ['id', 'name', 'assetType', 'technology', 'kalmAssignee', 'assetPOCs', 'cmdbStatus', 'cmdbBeingRetired', 'cmdbLegalHold', 'ticketsOpened']
+  },
+  {
+    title: 'Onboarding',
+    fields: ['onboardingStatus', 'onboardingDisposition', 'yearOnboarded', 'monthOnboarded', 'onboardingSchedule', 'entitlementsMissing', 'membersMissing', 'cisMissing', 'reliesOnCAFederation']
+  },
+  {
+    title: 'Maintenance',
+    fields: ['maintenanceDisposition', 'lastConnectorDeliveryDate', 'maintenanceSLAExpiration', 'connectorPattern', 'automationTeam', 'nameOfConnector', 'connectorStatus', 'enrollmentStatus', 'evidenceStatus']
+  },
+  {
+    title: 'MI (Managed Inventory)',
+    fields: ['miSchedule', 'miLastAIRUpload', 'miDaysSince', 'miDueDate', 'miOnboardingChangeDate', 'miL2Assignee', 'miStatus']
+  },
+  {
+    title: 'AI (Attestation & Integrity)',
+    fields: ['airDisposition', 'attestationKickedOff', 'attestationComplete', 'aiLastCandAAttestation', 'keychainAttestationKickoffDate', 'aiDaysSince', 'aiAttestationDueDate', 'aiOnboardingChangeDate', 'aiL2Assignee', 'aiStatus']
+  },
+  {
+    title: 'Other',
+    fields: ['theGap', 'comments', 'lastModifiedBy', 'lastModifiedDate']
+  }
+];
+
+const getEmptyFormData = () => {
+  const emptyData: Record<string, any> = {};
+  FORM_SECTIONS.forEach(section => {
+    section.fields.forEach(field => {
+      if (ENUM_FIELDS[field]) {
+        emptyData[field] = ENUM_FIELDS[field][0] || '';
+      } else {
+        emptyData[field] = '';
+      }
+    });
+  });
+  return emptyData;
+};
+
 export default function FASTPage() {
   const { toast } = useToast();
   const { isAdmin, user } = useUser();
@@ -412,21 +453,13 @@ export default function FASTPage() {
   };
 
   const handleAddNew = () => {
-    const newId = `FAST-${String(data.filter(f => f.isLatestVersion).length + 1).padStart(4, '0')}`;
+    const newId = `AST-${String(data.filter(f => f.isLatestVersion).length + 1).padStart(4, '0')}`;
     const newItem: any = {
+      ...getEmptyFormData(),
       id: newId,
-      name: '',
       version: 1,
       isLatestVersion: true,
       isFakeAsset: false,
-      kalmAssignee: '',
-      onboardingStatus: 'Not Started',
-      onboardingDisposition: 'N/A',
-      airDisposition: 'N/A',
-      maintenanceDisposition: 'N/A',
-      cmdbStatus: 'Active',
-      assetType: '',
-      technology: '',
       lastModifiedBy: user?.name || 'Unknown User',
       lastModifiedDate: format(new Date(), 'MMM d, yyyy HH:mm'),
     };
@@ -879,63 +912,75 @@ export default function FASTPage() {
             </DialogHeader>
             
             <ScrollArea className="flex-1 pr-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+              <div className="py-4 space-y-6">
                 {isEditing ? (
-                  Object.entries(editFormData)
-                    .filter(([key]) => !['version', 'isLatestVersion', 'isFakeAsset', 'parentFastId'].includes(key))
-                    .map(([key, value]) => {
-                      const column = columns.find(c => c.accessorKey === key);
-                      const enumOptions = ENUM_FIELDS[key];
-                      return (
-                        <div key={key} className="space-y-2">
-                          <Label htmlFor={key} className="text-sm font-medium">
-                            {column?.header || key}
-                            {key === 'id' && <span className="text-red-500 ml-1">*</span>}
-                          </Label>
-                          {enumOptions ? (
-                            <Select value={String(value || '')} onValueChange={(val) => setEditFormData((prev: any) => ({ ...prev, [key]: val }))}>
-                              <SelectTrigger>
-                                <SelectValue placeholder={`Select ${column?.header || key}`} />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {enumOptions.map(opt => (
-                                  <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          ) : (
-                            <Input
-                              id={key}
-                              value={String(value || '')}
-                              onChange={(e) => {
-                                if (key === 'id' && selectedItem) return;
-                                setEditFormData((prev: any) => ({ ...prev, [key]: e.target.value }));
-                                if (key === 'id') validateAssetId(e.target.value);
-                              }}
-                              disabled={key === 'id' && !!selectedItem}
-                              className={cn(
-                                key === 'id' && assetIdError ? 'border-red-500' : '',
-                                key === 'id' && selectedItem ? 'bg-muted cursor-not-allowed' : ''
+                  FORM_SECTIONS.map((section) => (
+                    <div key={section.title} className="space-y-4">
+                      <h3 className="font-semibold text-sm text-primary border-b pb-2">{section.title}</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {section.fields.map((key) => {
+                          const value = editFormData[key];
+                          const column = columns.find(c => c.accessorKey === key);
+                          const enumOptions = ENUM_FIELDS[key];
+                          return (
+                            <div key={key} className="space-y-2">
+                              <Label htmlFor={key} className="text-sm font-medium">
+                                {column?.header || key}
+                                {key === 'id' && <span className="text-red-500 ml-1">*</span>}
+                              </Label>
+                              {enumOptions ? (
+                                <Select value={String(value || '')} onValueChange={(val) => setEditFormData((prev: any) => ({ ...prev, [key]: val }))}>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder={`Select ${column?.header || key}`} />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {enumOptions.map(opt => (
+                                      <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              ) : (
+                                <Input
+                                  id={key}
+                                  value={String(value || '')}
+                                  onChange={(e) => {
+                                    if (key === 'id' && selectedItem) return;
+                                    setEditFormData((prev: any) => ({ ...prev, [key]: e.target.value }));
+                                    if (key === 'id') validateAssetId(e.target.value);
+                                  }}
+                                  disabled={key === 'id' && !!selectedItem}
+                                  className={cn(
+                                    key === 'id' && assetIdError ? 'border-red-500' : '',
+                                    key === 'id' && selectedItem ? 'bg-muted cursor-not-allowed' : ''
+                                  )}
+                                />
                               )}
-                            />
-                          )}
-                          {key === 'id' && !selectedItem && assetIdError && <p className="text-red-500 text-xs">{assetIdError}</p>}
-                          {key === 'id' && !selectedItem && assetIdAvailable && <p className="text-green-500 text-xs flex items-center gap-1"><Check className="h-3 w-3" /> Available</p>}
-                        </div>
-                      );
-                    })
+                              {key === 'id' && !selectedItem && assetIdError && <p className="text-red-500 text-xs">{assetIdError}</p>}
+                              {key === 'id' && !selectedItem && assetIdAvailable && <p className="text-green-500 text-xs flex items-center gap-1"><Check className="h-3 w-3" /> Available</p>}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))
                 ) : (
-                  selectedItem && Object.entries(selectedItem)
-                    .filter(([key]) => !['version', 'isLatestVersion', 'isFakeAsset', 'parentFastId'].includes(key))
-                    .map(([key, value]) => {
-                      const column = columns.find(c => c.accessorKey === key);
-                      return (
-                        <div key={key} className="space-y-1">
-                          <Label className="text-sm text-muted-foreground">{column?.header || key}</Label>
-                          <p className="text-sm font-medium">{String(value || '-')}</p>
-                        </div>
-                      );
-                    })
+                  FORM_SECTIONS.map((section) => (
+                    <div key={section.title} className="space-y-4">
+                      <h3 className="font-semibold text-sm text-primary border-b pb-2">{section.title}</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {section.fields.map((key) => {
+                          const value = selectedItem?.[key];
+                          const column = columns.find(c => c.accessorKey === key);
+                          return (
+                            <div key={key} className="space-y-1">
+                              <Label className="text-sm text-muted-foreground">{column?.header || key}</Label>
+                              <p className="text-sm font-medium">{String(value || '-')}</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))
                 )}
               </div>
             </ScrollArea>
