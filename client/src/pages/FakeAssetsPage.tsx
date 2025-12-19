@@ -374,13 +374,10 @@ export default function FakeAssetsPage() {
                 </Command>
               </PopoverContent>
             </Popover>
-            <div className="relative flex-1 min-w-[200px]">
+            <div className="relative flex-1 min-w-[200px] max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Search across all fields..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9" />
             </div>
-          </div>
-
-          <div className="flex items-center gap-2 ml-auto flex-wrap">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="gap-2">
