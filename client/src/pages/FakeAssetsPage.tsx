@@ -269,8 +269,11 @@ export default function FakeAssetsPage() {
 
   const validateAssetId = (id: string): boolean => {
     if (!id || id.trim() === '') { setAssetIdError('Asset ID is required'); setAssetIdAvailable(false); return false; }
-    if (!/^AST-\d{4}$/.test(id)) { setAssetIdError('Asset ID must match format: AST-XXXX'); setAssetIdAvailable(false); return false; }
-    if (data.some((item: any) => item.id === id && (!selectedItem || item.id !== selectedItem.id))) {
+    if (selectedItem) {
+      if (id !== selectedItem.id) { setAssetIdError('Asset ID cannot be changed'); setAssetIdAvailable(false); return false; }
+      setAssetIdError(null); setAssetIdAvailable(true); return true;
+    }
+    if (data.some((item: any) => item.id === id)) {
       setAssetIdError('This Asset ID already exists'); setAssetIdAvailable(false); return false;
     }
     setAssetIdError(null); setAssetIdAvailable(true); return true;
@@ -423,10 +426,10 @@ export default function FakeAssetsPage() {
                             <SelectContent>{enumOptions.map(opt => (<SelectItem key={opt} value={opt}>{opt}</SelectItem>))}</SelectContent>
                           </Select>
                         ) : (
-                          <Input id={key} value={String(value || '')} onChange={(e) => { setEditFormData((prev: any) => ({ ...prev, [key]: e.target.value })); if (key === 'id') validateAssetId(e.target.value); }} className={key === 'id' && assetIdError ? 'border-red-500' : ''} />
+                          <Input id={key} value={String(value || '')} onChange={(e) => { if (key === 'id' && selectedItem) return; setEditFormData((prev: any) => ({ ...prev, [key]: e.target.value })); if (key === 'id') validateAssetId(e.target.value); }} disabled={key === 'id' && !!selectedItem} className={cn(key === 'id' && assetIdError ? 'border-red-500' : '', key === 'id' && selectedItem ? 'bg-muted cursor-not-allowed' : '')} />
                         )}
-                        {key === 'id' && assetIdError && <p className="text-red-500 text-xs">{assetIdError}</p>}
-                        {key === 'id' && assetIdAvailable && <p className="text-green-500 text-xs flex items-center gap-1"><Check className="h-3 w-3" /> Available</p>}
+                        {key === 'id' && !selectedItem && assetIdError && <p className="text-red-500 text-xs">{assetIdError}</p>}
+                        {key === 'id' && !selectedItem && assetIdAvailable && <p className="text-green-500 text-xs flex items-center gap-1"><Check className="h-3 w-3" /> Available</p>}
                       </div>
                     );
                   })

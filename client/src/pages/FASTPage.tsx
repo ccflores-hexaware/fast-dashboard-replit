@@ -453,8 +453,13 @@ export default function FASTPage() {
       setAssetIdAvailable(false);
       return false;
     }
-    // When editing an existing item, skip validation since ID is read-only
+    // When editing an existing item, only allow the original ID
     if (selectedItem) {
+      if (id !== selectedItem.id) {
+        setAssetIdError('Asset ID cannot be changed');
+        setAssetIdAvailable(false);
+        return false;
+      }
       setAssetIdError(null);
       setAssetIdAvailable(true);
       return true;
