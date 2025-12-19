@@ -453,12 +453,6 @@ export default function FASTPage() {
       setAssetIdAvailable(false);
       return false;
     }
-    const pattern = /^FAST-\d{4}$/;
-    if (!pattern.test(id)) {
-      setAssetIdError('Asset ID must match format: FAST-XXXX');
-      setAssetIdAvailable(false);
-      return false;
-    }
     const isDuplicate = data.some((item: any) => 
       item.id === id && (!selectedItem || item.id !== selectedItem.id || item.version !== selectedItem.version)
     );
