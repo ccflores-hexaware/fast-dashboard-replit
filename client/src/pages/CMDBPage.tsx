@@ -23,7 +23,7 @@ import { usePagination, useSorting, useColumnFilters, useViewToggle } from '@/ho
 
 const ALL_COLUMN_KEYS = ['id', 'configItem', 'status', 'environment', 'owner', 'version', 'lastUpdated'];
 const DEFAULT_COLUMNS = ['id', 'configItem', 'status', 'environment', 'owner', 'version'];
-const DEFAULT_CARD_FIELDS = ['id', 'version', 'environment', 'owner'];
+const DEFAULT_CARD_FIELDS = ['id', 'version', 'environment', 'owner', 'status', 'lastUpdated'];
 
 const COLUMN_PRESETS = [
   { name: 'Default', columns: 'default' as const },
@@ -65,9 +65,10 @@ export default function CMDBPage() {
     { header: 'Environment', accessorKey: 'environment' },
     { header: 'Owner', accessorKey: 'owner' },
     { header: 'Version', accessorKey: 'version' },
+    { header: 'Last Updated', accessorKey: 'lastUpdated' },
   ], []);
 
-  const cardFields = [{ label: 'CI ID', key: 'id' }, { label: 'Version', key: 'version' }, { label: 'Environment', key: 'environment' }, { label: 'Owner', key: 'owner' }];
+  const cardFields = [{ label: 'CI ID', key: 'id' }, { label: 'Version', key: 'version' }, { label: 'Environment', key: 'environment' }, { label: 'Owner', key: 'owner' }, { label: 'Status', key: 'status' }, { label: 'Last Updated', key: 'lastUpdated' }];
 
   const searchFilteredData = useMemo(() => {
     if (!searchQuery.trim()) return data;

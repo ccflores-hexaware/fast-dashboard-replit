@@ -23,7 +23,7 @@ import { usePagination, useSorting, useColumnFilters, useViewToggle } from '@/ho
 
 const ALL_COLUMN_KEYS = ['id', 'higherLevelBTO', 'bto', 'division', 'concatValue', 'owner', 'deadline', 'status', 'progress'];
 const DEFAULT_COLUMNS = ['id', 'higherLevelBTO', 'bto', 'division', 'owner', 'deadline', 'status', 'progress'];
-const DEFAULT_CARD_FIELDS = ['higherLevelBTO', 'division', 'concatValue'];
+const DEFAULT_CARD_FIELDS = ['id', 'higherLevelBTO', 'division', 'owner', 'status', 'progress'];
 
 const COLUMN_PRESETS = [
   { name: 'Default', columns: 'default' as const },
@@ -59,13 +59,18 @@ export default function BTOPage() {
   useEffect(() => { if (Object.keys(cardFieldVisibility).length > 0) localStorage.setItem('bto-card-field-visibility', JSON.stringify(cardFieldVisibility)); }, [cardFieldVisibility]);
 
   const columns = useMemo(() => [
+    { header: 'ID', accessorKey: 'id' },
     { header: 'Higher Level BTO', accessorKey: 'higherLevelBTO', cell: (item: any) => <span className="font-semibold text-primary">{item.higherLevelBTO}</span> },
     { header: 'BTO', accessorKey: 'bto' },
     { header: 'Division', accessorKey: 'division' },
     { header: 'Concat Value', accessorKey: 'concatValue' },
+    { header: 'Owner', accessorKey: 'owner' },
+    { header: 'Deadline', accessorKey: 'deadline' },
+    { header: 'Status', accessorKey: 'status' },
+    { header: 'Progress', accessorKey: 'progress', cell: (item: any) => <span>{item.progress}%</span> },
   ], []);
 
-  const cardFields = [{ label: 'Higher Level BTO', key: 'higherLevelBTO' }, { label: 'Division', key: 'division' }, { label: 'Concat Value', key: 'concatValue' }];
+  const cardFields = [{ label: 'ID', key: 'id' }, { label: 'Higher Level BTO', key: 'higherLevelBTO' }, { label: 'Division', key: 'division' }, { label: 'Owner', key: 'owner' }, { label: 'Status', key: 'status' }, { label: 'Progress', key: 'progress' }];
 
   const searchFilteredData = useMemo(() => {
     if (!searchQuery.trim()) return data;
