@@ -375,8 +375,12 @@ export default function FASTPage() {
   }, [paginatedData, showVersionHistory]);
 
   const visibleColumns = useMemo(() => {
-    return columns.filter(col => columnVisibility[col.accessorKey] !== false);
-  }, [columns, columnVisibility]);
+    return columns.filter(col => {
+      if (columnVisibility[col.accessorKey] === false) return false;
+      if (col.accessorKey === 'version' && !showVersionHistory) return false;
+      return true;
+    });
+  }, [columns, columnVisibility, showVersionHistory]);
 
   const visibleCardFields = useMemo(() => {
     return cardFields.filter(field => cardFieldVisibility[field.key]);
