@@ -5,7 +5,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import NotFound from "@/pages/not-found";
-import DashboardPage from "@/pages/Dashboard";
+import FASTPage from "@/pages/FASTPage";
+import FakeAssetsPage from "@/pages/FakeAssetsPage";
+import TPIPage from "@/pages/TPIPage";
+import BTOPage from "@/pages/BTOPage";
+import CMDBPage from "@/pages/CMDBPage";
 import { UserProvider } from "@/lib/userContext";
 
 function Router() {
@@ -15,19 +19,19 @@ function Router() {
          <Redirect to="/fast" />
       </Route>
       <Route path="/assets">
-        <DashboardPage type="assets" />
+        <FakeAssetsPage />
       </Route>
       <Route path="/tpi">
-        <DashboardPage type="tpi" />
+        <TPIPage />
       </Route>
       <Route path="/bto">
-        <DashboardPage type="bto" />
+        <BTOPage />
       </Route>
       <Route path="/cmdb">
-        <DashboardPage type="cmdb" />
+        <CMDBPage />
       </Route>
       <Route path="/fast">
-        <DashboardPage type="fast" />
+        <FASTPage />
       </Route>
       <Route component={NotFound} />
     </Switch>
