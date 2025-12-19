@@ -42,39 +42,45 @@ Preferred communication style: Simple, everyday language.
 
 ### Project Structure
 ```
-Freddie-Dash/
-  client/               # React frontend (Vite)
+/
+  client/                 # React frontend (Vite)
     src/
-      components/       # UI components
-        ui/             # shadcn/ui primitives
+      components/         # UI components
+        ui/               # shadcn/ui primitives
         DashboardLayout.tsx
-        DataTable.tsx   # Table view component
-        DataCard.tsx    # Card view component
-        FilterMenu.tsx  # Column filtering
+        DataTable.tsx     # Table view component
+        DataCard.tsx      # Card view component
+        FilterMenu.tsx    # Column filtering
         Pagination.tsx
       pages/
-        Dashboard.tsx   # Main dashboard component (~2500 lines)
-      lib/              # Utilities, context providers
-        userContext.tsx # User/admin context
-        queryClient.ts  # TanStack Query setup
-        mockData.ts     # Sample data generation
-      hooks/            # Custom React hooks
-      App.tsx           # App entry with routing
-    index.html          # HTML entry point
-  server/               # Express backend
-    index.ts            # Server entry point
-    routes.ts           # API route registration
-    storage.ts          # Data access layer interface
-    vite.ts             # Vite dev server integration
-  shared/               # Shared types and schemas
-    schema.ts           # Drizzle database schema and Zod types
-  docs/                 # Documentation
+        Dashboard.tsx     # Main dashboard component (~2500 lines)
+      lib/                # Utilities, context providers
+        userContext.tsx   # User/admin context
+        queryClient.ts    # TanStack Query setup
+        mockData.ts       # Sample data generation
+      hooks/              # Custom React hooks
+      App.tsx             # App entry with routing
+    index.html            # HTML entry point
+  server/                 # Express backend
+    index.ts              # Server entry point
+    routes.ts             # API route registration
+    storage.ts            # Data access layer interface
+    vite.ts               # Vite dev server integration
+  shared/                 # Shared types and schemas
+    schema.ts             # Drizzle database schema and Zod types
+  docs/                   # Documentation
     FAST_Module_Documentation.md
     Functionality_Documentation.md
     Libraries_and_Dependencies.md
     UI_UX_Standards.md
-  script/               # Build scripts
-    build.ts            # Production build script
+  script/                 # Build scripts
+    build.ts              # Production build script
+  attached_assets/        # Branding and reference images
+  package.json            # Dependencies and scripts
+  vite.config.ts          # Vite configuration
+  tsconfig.json           # TypeScript configuration
+  drizzle.config.ts       # Database ORM configuration
+  replit.md               # Project documentation
 ```
 
 ### Module-Specific Features
