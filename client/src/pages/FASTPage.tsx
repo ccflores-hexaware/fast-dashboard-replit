@@ -862,25 +862,26 @@ export default function FASTPage() {
         />
 
         <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) handleCancelEdit(); setIsDialogOpen(open); }}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-            <DialogHeader className="pb-4 border-b">
-              <DialogTitle className="text-xl flex items-center gap-2">
-                {isEditing ? (selectedItem ? 'Edit Item' : 'Add New Item') : (selectedItem?.name || 'Details')}
+          <DialogContent className="w-full sm:max-w-2xl max-h-[90vh] flex flex-col p-0 gap-0">
+            <DialogHeader className="p-6 pb-2">
+              <div className="flex justify-between items-center pr-8">
+                <DialogTitle className="text-2xl font-bold text-primary">
+                  {isEditing ? (selectedItem ? 'Edit Item' : 'Add New Item') : (selectedItem?.name || 'Details')}
+                </DialogTitle>
                 {selectedItem?.isFakeAsset && (
                   <span className="px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-700 rounded-full">Fake Asset</span>
                 )}
-              </DialogTitle>
-              {selectedItem && !isEditing && (
-                <DialogDescription>
-                  {selectedItem.id} {selectedItem.version ? `• Version ${selectedItem.version}` : ''}
-                  {selectedItem.isLatestVersion && (
-                    <span className="ml-2 px-1.5 py-0.5 text-xs bg-green-100 text-green-700 rounded-full">Latest</span>
-                  )}
-                </DialogDescription>
-              )}
+              </div>
+              <DialogDescription>
+                {selectedItem?.id && `ID: ${selectedItem.id}`}
+                {selectedItem?.version ? ` • Version ${selectedItem.version}` : ''}
+                {selectedItem?.isLatestVersion && (
+                  <span className="ml-2 px-1.5 py-0.5 text-xs bg-green-100 text-green-700 rounded-full">Latest</span>
+                )}
+              </DialogDescription>
             </DialogHeader>
             
-            <ScrollArea className="flex-1 pr-4">
+            <div className="flex-1 overflow-y-auto px-6 min-h-0">
               <div className="flex flex-col space-y-1 py-4">
                 {isEditing ? (
                   columns
@@ -948,9 +949,9 @@ export default function FASTPage() {
                     })
                 )}
               </div>
-            </ScrollArea>
+            </div>
 
-            <div className="flex justify-between items-center pt-4 border-t">
+            <div className="p-6 pt-4 border-t mt-auto bg-muted/20 flex justify-between items-center">
               {isEditing ? (
                 <>
                   <Button variant="outline" onClick={handleCancelEdit}>Cancel</Button>

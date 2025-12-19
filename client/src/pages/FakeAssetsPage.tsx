@@ -417,13 +417,19 @@ export default function FakeAssetsPage() {
         <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} pageSize={pageSize} onPageChange={setCurrentPage} onPageSizeChange={setPageSize} />
 
         <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) handleCancelEdit(); setIsDialogOpen(open); }}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-            <DialogHeader className="pb-4 border-b">
-              <DialogTitle className="text-xl">{isEditing ? (selectedItem ? 'Edit Item' : 'Add New Item') : (selectedItem?.name || 'Details')}</DialogTitle>
-              {selectedItem && !isEditing && <DialogDescription>{selectedItem.id}</DialogDescription>}
+          <DialogContent className="w-full sm:max-w-2xl max-h-[90vh] flex flex-col p-0 gap-0">
+            <DialogHeader className="p-6 pb-2">
+              <div className="flex justify-between items-center pr-8">
+                <DialogTitle className="text-2xl font-bold text-primary">
+                  {isEditing ? (selectedItem ? 'Edit Item' : 'Add New Item') : (selectedItem?.name || 'Details')}
+                </DialogTitle>
+              </div>
+              <DialogDescription>
+                {selectedItem?.id && `ID: ${selectedItem.id}`}
+              </DialogDescription>
             </DialogHeader>
-            <ScrollArea className="flex-1 pr-4">
-              <div className="flex flex-col space-y-1 py-4">
+            <div className="flex-1 overflow-y-auto px-6 min-h-0">
+              <div className="flex flex-col space-y-1 pb-6 pt-2">
                 {isEditing ? (
                   columns.map((col) => {
                     const key = col.accessorKey;
@@ -484,8 +490,8 @@ export default function FakeAssetsPage() {
                   })
                 )}
               </div>
-            </ScrollArea>
-            <div className="flex justify-between items-center pt-4 border-t">
+            </div>
+            <div className="p-6 pt-4 border-t mt-auto bg-muted/20 flex justify-between items-center">
               {isEditing ? (
                 <><Button variant="outline" onClick={handleCancelEdit}>Cancel</Button><Button onClick={handleSave} className="gap-2"><Save className="h-4 w-4" /> Save</Button></>
               ) : (
