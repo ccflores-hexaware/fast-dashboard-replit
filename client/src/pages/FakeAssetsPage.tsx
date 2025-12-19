@@ -4,7 +4,6 @@ import { ViewToggle } from '@/components/ViewToggle';
 import { DataTable } from '@/components/DataTable';
 import { DataCard } from '@/components/DataCard';
 import { Pagination } from '@/components/Pagination';
-import { mockAssets } from '@/lib/mockData';
 import { Button } from '@/components/ui/button';
 import { Download, Plus, Save, X, Pencil, Search, Check, ChevronsUpDown, Settings2 } from 'lucide-react';
 import { cn } from "@/lib/utils";
@@ -95,7 +94,25 @@ export default function FakeAssetsPage() {
   const { isAdmin, user } = useUser();
   const { view, setView } = useViewToggle('table');
   
-  const [data, setData] = useState<any[]>(mockAssets);
+  const [data, setData] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch('/api/fake-assets');
+        if (!response.ok) throw new Error('Failed to fetch');
+        const assets = await response.json();
+        setData(assets);
+      } catch (error) {
+        console.error('Error fetching Fake Assets data:', error);
+        toast({ title: "Error", description: "Failed to load Fake Assets data", variant: "destructive" });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -290,23 +307,51 @@ export default function FakeAssetsPage() {
     setAssetIdError(null); setAssetIdAvailable(true); return true;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!validateAssetId(editFormData.id)) return;
     const updatedItem = { ...editFormData, lastModifiedBy: user?.name || 'Unknown User', lastModifiedDate: format(new Date(), 'MMM d, yyyy HH:mm') };
-    let updatedList: any[];
-    if (selectedItem) {
-      // Move updated item to top of list
-      const otherItems = data.filter((item: any) => item.id !== selectedItem.id);
-      updatedList = [updatedItem, ...otherItems];
-    } else {
-      // Insert new row at the top
-      updatedList = [updatedItem, ...data];
+    
+    try {
+      if (selectedItem) {
+        // Update existing
+        const response = await fetch(`/api/fake-assets/${selectedItem.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedItem)
+        });
+        
+        if (!response.ok) throw new Error('Failed to save');
+        const savedItem = await response.json();
+        
+        const otherItems = data.filter((item: any) => item.id !== selectedItem.id);
+        setData([savedItem, ...otherItems]);
+        setSelectedItem(savedItem);
+        setEditFormData(savedItem);
+        toast({ title: "Changes Saved", description: "Changes have been saved." });
+      } else {
+        // Create new
+        delete updatedItem.internalId;
+        delete updatedItem.createdAt;
+        
+        const response = await fetch('/api/fake-assets', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedItem)
+        });
+        
+        if (!response.ok) throw new Error('Failed to create');
+        const savedItem = await response.json();
+        
+        setData([savedItem, ...data]);
+        setSelectedItem(savedItem);
+        setEditFormData(savedItem);
+        toast({ title: "Asset Created", description: `New asset ${savedItem.id} has been created.` });
+      }
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error saving:', error);
+      toast({ title: "Error", description: "Failed to save changes. Please try again.", variant: "destructive" });
     }
-    setData(updatedList);
-    setSelectedItem(updatedItem);
-    setEditFormData(updatedItem);
-    setIsEditing(false);
-    toast({ title: selectedItem ? "Changes Saved" : "Asset Created", description: selectedItem ? "Changes have been saved." : `New asset ${updatedItem.id} has been created.` });
   };
 
   const applyColumnPreset = (preset: { name: string; columns: string[] | 'all' | 'default' }) => {

@@ -4,7 +4,6 @@ import { ViewToggle } from '@/components/ViewToggle';
 import { DataTable } from '@/components/DataTable';
 import { DataCard } from '@/components/DataCard';
 import { Pagination } from '@/components/Pagination';
-import { mockBTO } from '@/lib/mockData';
 import { Button } from '@/components/ui/button';
 import { Download, Search, Check, ChevronsUpDown, Settings2 } from 'lucide-react';
 import { cn } from "@/lib/utils";
@@ -35,7 +34,25 @@ export default function BTOPage() {
   const { isAdmin } = useUser();
   const { view, setView } = useViewToggle('table');
   
-  const [data] = useState<any[]>(mockBTO);
+  const [data, setData] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch('/api/bto');
+        if (!response.ok) throw new Error('Failed to fetch');
+        const assets = await response.json();
+        setData(assets);
+      } catch (error) {
+        console.error('Error fetching BTO data:', error);
+        toast({ title: "Error", description: "Failed to load BTO data", variant: "destructive" });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');

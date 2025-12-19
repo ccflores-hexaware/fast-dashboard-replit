@@ -4,7 +4,6 @@ import { ViewToggle } from '@/components/ViewToggle';
 import { DataTable, StatusBadge } from '@/components/DataTable';
 import { DataCard } from '@/components/DataCard';
 import { Pagination } from '@/components/Pagination';
-import { mockFAST } from '@/lib/mockData';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Download, Plus, Save, X, Pencil, Search, Check, ChevronsUpDown, Calendar as CalendarIcon, Copy, AlertTriangle, ArrowRight, Settings2, RotateCcw, Eye, EyeOff } from 'lucide-react';
@@ -113,7 +112,25 @@ export default function FASTPage() {
   const { isAdmin, user } = useUser();
   const { view, setView } = useViewToggle('table');
   
-  const [data, setData] = useState<any[]>(mockFAST);
+  const [data, setData] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch('/api/fast');
+        if (!response.ok) throw new Error('Failed to fetch');
+        const assets = await response.json();
+        setData(assets);
+      } catch (error) {
+        console.error('Error fetching FAST data:', error);
+        toast({ title: "Error", description: "Failed to load FAST data", variant: "destructive" });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -482,7 +499,7 @@ export default function FASTPage() {
     return true;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!validateAssetId(editFormData.id)) return;
     const hasDateErrors = Object.values(dateFieldErrors).some(error => error !== null);
     if (hasDateErrors) {
@@ -500,40 +517,80 @@ export default function FASTPage() {
       lastModifiedDate: format(new Date(), 'MMM d, yyyy HH:mm'),
     };
 
-    let updatedList: any[];
-    if (selectedItem) {
-      // Create snapshot of old version (mark as not latest)
-      const oldVersion = { ...selectedItem, isLatestVersion: false };
-      const newVersion = { 
-        ...updatedItem, 
-        version: (selectedItem.version || 1) + 1, 
-        isLatestVersion: true 
-      };
-      // Keep all items except the current latest version of this asset
-      // Then add the new version at the top, followed by old snapshot
-      const otherItems = data.filter((item: any) => 
-        !(item.id === selectedItem.id && item.version === selectedItem.version)
-      );
-      updatedList = [newVersion, oldVersion, ...otherItems];
-      setSelectedItem(newVersion);
-      setEditFormData(newVersion);
-    } else {
-      // Insert new row at the top
-      updatedItem.version = 1;
-      updatedItem.isLatestVersion = true;
-      updatedList = [updatedItem, ...data];
-      setSelectedItem(updatedItem);
-      setEditFormData(updatedItem);
+    try {
+      if (selectedItem) {
+        // Update existing: Mark old version as not latest
+        await fetch(`/api/fast/${selectedItem.internalId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isLatestVersion: false })
+        });
+        
+        // Create new version
+        const newVersion = { 
+          ...updatedItem, 
+          version: (selectedItem.version || 1) + 1, 
+          isLatestVersion: true 
+        };
+        delete newVersion.internalId;
+        delete newVersion.createdAt;
+        
+        const response = await fetch('/api/fast', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newVersion)
+        });
+        
+        if (!response.ok) throw new Error('Failed to save');
+        const savedItem = await response.json();
+        
+        // Refresh data from server
+        const refreshResponse = await fetch('/api/fast');
+        if (refreshResponse.ok) {
+          const refreshedData = await refreshResponse.json();
+          setData(refreshedData);
+        }
+        
+        setSelectedItem(savedItem);
+        setEditFormData(savedItem);
+        toast({
+          title: "Changes Saved",
+          description: `Version ${newVersion.version} has been saved.`,
+        });
+      } else {
+        // Create new asset
+        const newAsset = {
+          ...updatedItem,
+          version: 1,
+          isLatestVersion: true
+        };
+        
+        const response = await fetch('/api/fast', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newAsset)
+        });
+        
+        if (!response.ok) throw new Error('Failed to create');
+        const savedItem = await response.json();
+        
+        setData([savedItem, ...data]);
+        setSelectedItem(savedItem);
+        setEditFormData(savedItem);
+        toast({
+          title: "Asset Created",
+          description: `New asset ${savedItem.id} has been created.`,
+        });
+      }
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error saving:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save changes. Please try again.",
+        variant: "destructive"
+      });
     }
-
-    setData(updatedList);
-    setIsEditing(false);
-    toast({
-      title: selectedItem ? "Changes Saved" : "Asset Created",
-      description: selectedItem 
-        ? `Version ${(selectedItem.version || 1) + 1} has been saved.`
-        : `New asset ${updatedItem.id} has been created.`,
-    });
   };
 
   const handleDuplicate = () => {
