@@ -453,9 +453,14 @@ export default function FASTPage() {
       setAssetIdAvailable(false);
       return false;
     }
-    const isDuplicate = data.some((item: any) => 
-      item.id === id && (!selectedItem || item.id !== selectedItem.id || item.version !== selectedItem.version)
-    );
+    // When editing an existing item, skip validation since ID is read-only
+    if (selectedItem) {
+      setAssetIdError(null);
+      setAssetIdAvailable(true);
+      return true;
+    }
+    // When adding new item, check if ID already exists
+    const isDuplicate = data.some((item: any) => item.id === id);
     if (isDuplicate) {
       setAssetIdError('This Asset ID already exists');
       setAssetIdAvailable(false);
