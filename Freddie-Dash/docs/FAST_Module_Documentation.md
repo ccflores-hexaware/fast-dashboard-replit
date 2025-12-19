@@ -101,6 +101,7 @@ The FAST module includes comprehensive asset-level versioning:
   - Separate table with its own column structure (parent-child relationship with FAST)
   - Has "Add New" button for creating records directly
   - Admins can edit records to fill in additional details not available in FAST
+  - **No versioning**: Fake Asset List does not have version history, Version column, or FAST History toggle
 
 ### 8. Export to Excel
 
