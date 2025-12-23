@@ -382,7 +382,7 @@ export default function TPIPage() {
                                     <span className="text-xs text-muted-foreground/60 flex justify-center">└</span>
                                   </td>
                                   <td colSpan={visibleColumns.length} className="px-4 py-2">
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
                                       <span className="text-xs text-muted-foreground">
                                         {assetHistory?.total} history record{assetHistory?.total !== 1 ? 's' : ''}
                                         {totalHistoryPages > 1 && ` • Page ${currentHistoryPage} of ${totalHistoryPages}`}
