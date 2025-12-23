@@ -661,7 +661,7 @@ export default function FASTPage() {
             <p className="text-muted-foreground mt-1">Comprehensive asset tracking for onboarding, maintenance, and attestation workflows.</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={exportToExcel} className="gap-2">
+            <Button onClick={exportToExcel} className="gap-2 bg-green-600 hover:bg-green-700 text-white">
               <Download className="h-4 w-4" />
               Export to Excel
             </Button>

@@ -130,7 +130,7 @@ export default function BTOPage() {
             <h1 className="text-3xl font-bold tracking-tight">Business Technology Office (BTO)</h1>
             <p className="text-muted-foreground mt-1">Align technology initiatives with business goals and organizational divisions.</p>
           </div>
-          <Button variant="outline" onClick={exportToExcel} className="gap-2"><Download className="h-4 w-4" />Export to Excel</Button>
+          <Button onClick={exportToExcel} className="gap-2 bg-green-600 hover:bg-green-700 text-white"><Download className="h-4 w-4" />Export to Excel</Button>
         </div>
 
         <div className="flex flex-col lg:flex-row lg:items-center gap-4">
