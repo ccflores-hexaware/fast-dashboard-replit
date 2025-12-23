@@ -5,7 +5,7 @@ import { DataTable } from '@/components/DataTable';
 import { DataCard } from '@/components/DataCard';
 import { Pagination } from '@/components/Pagination';
 import { Button } from '@/components/ui/button';
-import { Download, Search, Check, ChevronsUpDown, Settings2 } from 'lucide-react';
+import { Download, Search, Check, ChevronsUpDown, Settings2, Loader2 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -154,7 +154,14 @@ export default function BTOPage() {
           </div>
         </div>
 
-        {view === 'table' ? (<DataTable data={paginatedData} columns={visibleColumns} onSort={handleSort} sortConfig={sortConfig} columnFilters={columnFilters} onColumnFiltersChange={(filters: Record<string, string[]>) => setColumnFilters(filters)} allData={sortedData} />) : (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-16">
+            <div className="flex flex-col items-center gap-4">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-muted-foreground">Loading assets...</p>
+            </div>
+          </div>
+        ) : view === 'table' ? (<DataTable data={paginatedData} columns={visibleColumns} onSort={handleSort} sortConfig={sortConfig} columnFilters={columnFilters} onColumnFiltersChange={(filters: Record<string, string[]>) => setColumnFilters(filters)} allData={sortedData} />) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">{paginatedData.map((item: any, index: number) => (<DataCard key={`${item.id}-${index}`} item={item} titleKey="bto" fields={visibleCardFields as any} onClick={handleItemClick} />))}</div>
         )}
 

@@ -5,7 +5,7 @@ import { DataTable, StatusBadge } from '@/components/DataTable';
 import { DataCard } from '@/components/DataCard';
 import { Pagination } from '@/components/Pagination';
 import { Button } from '@/components/ui/button';
-import { Download, Plus, Save, X, Pencil, Search, Check, ChevronsUpDown, Copy, ArrowRight, Settings2, RotateCcw, Eye, EyeOff } from 'lucide-react';
+import { Download, Plus, Save, X, Pencil, Search, Check, ChevronsUpDown, Copy, ArrowRight, Settings2, RotateCcw, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import {
@@ -112,6 +112,7 @@ export default function FASTPage() {
   
   const [data, setData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   
   useEffect(() => {
     const fetchData = async () => {
@@ -415,6 +416,7 @@ export default function FASTPage() {
       return;
     }
 
+    setIsSaving(true);
     const updatedItem = {
       ...editFormData,
       lastModifiedBy: user?.name || 'Unknown User',
@@ -479,6 +481,8 @@ export default function FASTPage() {
         description: "Failed to save changes. Please try again.",
         variant: "destructive"
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -666,7 +670,14 @@ export default function FASTPage() {
           </div>
         </div>
 
-        {view === 'table' ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-16">
+            <div className="flex flex-col items-center gap-4">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-muted-foreground">Loading assets...</p>
+            </div>
+          </div>
+        ) : view === 'table' ? (
           <DataTable
             data={paginatedData}
             columns={visibleColumns}
@@ -789,8 +800,11 @@ export default function FASTPage() {
             <div className="p-6 pt-4 border-t mt-auto bg-muted/20 flex justify-between items-center">
               {isEditing ? (
                 <>
-                  <Button variant="outline" onClick={handleCancelEdit}>Cancel</Button>
-                  <Button onClick={handleSave} className="gap-2"><Save className="h-4 w-4" /> Save</Button>
+                  <Button variant="outline" onClick={handleCancelEdit} disabled={isSaving}>Cancel</Button>
+                  <Button onClick={handleSave} disabled={isSaving} className="gap-2">
+                    {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    {isSaving ? 'Saving...' : 'Save'}
+                  </Button>
                 </>
               ) : (
                 <>
