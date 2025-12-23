@@ -128,7 +128,7 @@ export default function CMDBPage() {
             <h1 className="text-3xl font-bold tracking-tight">Configuration Management Database (CMDB)</h1>
             <p className="text-muted-foreground mt-1">View configuration items, versions, and operational status.</p>
           </div>
-          <Button onClick={exportToExcel} className="gap-2 bg-green-600 hover:bg-green-700 text-white"><Download className="h-4 w-4" />Export to Excel</Button>
+          <Button onClick={exportToExcel} className="gap-2 text-white" style={{ backgroundColor: '#89c24b' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#7ab043'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#89c24b'}><Download className="h-4 w-4" />Export to Excel</Button>
         </div>
 
         <div className="flex flex-col lg:flex-row lg:items-center gap-4">
