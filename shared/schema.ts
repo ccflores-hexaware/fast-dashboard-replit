@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, boolean, timestamp, serial } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, timestamp, serial } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -21,8 +21,6 @@ export const fastAssets = pgTable("fast_assets", {
   internalId: serial("internal_id").primaryKey(),
   id: varchar("id", { length: 50 }).notNull(),
   name: text("name").notNull(),
-  version: integer("version").notNull().default(1),
-  isLatestVersion: boolean("is_latest_version").notNull().default(true),
   kalmAssignee: text("kalm_assignee"),
   onboardingStatus: text("onboarding_status"),
   onboardingDisposition: text("onboarding_disposition"),
