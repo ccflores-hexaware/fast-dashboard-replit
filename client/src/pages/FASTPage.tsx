@@ -106,6 +106,62 @@ const ENUM_FIELDS: Record<string, string[]> = {
 
 const MAX_CARD_FIELDS = 7;
 
+const FIELD_LABELS: Record<string, string> = {
+  id: 'Asset ID',
+  name: 'Name',
+  kalmAssignee: 'KALM Assignee',
+  onboardingStatus: 'Onboarding Status',
+  onboardingDisposition: 'Onboarding Disposition',
+  airDisposition: 'AIR Disposition',
+  maintenanceDisposition: 'Maintenance Disposition',
+  lastConnectorDeliveryDate: 'Last Connector Delivery Date',
+  maintenanceSLAExpiration: 'Maintenance SLA Expiration',
+  technology: 'Technology',
+  cmdbStatus: 'CMDB Status',
+  cmdbBeingRetired: 'CMDB Being Retired',
+  cmdbLegalHold: 'CMDB Legal Hold',
+  ticketsOpened: 'Tickets Opened',
+  assetType: 'Asset Type',
+  yearOnboarded: 'Year Onboarded',
+  monthOnboarded: 'Month Onboarded',
+  assetPOCs: 'Asset POCs',
+  onboardingSchedule: 'Onboarding Schedule',
+  entitlementsMissing: 'Entitlements Missing',
+  membersMissing: 'Members Missing',
+  cisMissing: 'CIS Missing',
+  reliesOnCAFederation: 'Relies on CA Federation',
+  connectorPattern: 'Connector Pattern',
+  automationTeam: 'Automation Team',
+  nameOfConnector: 'Name of Connector',
+  connectorStatus: 'Connector Status',
+  enrollmentStatus: 'Enrollment Status',
+  evidenceStatus: 'Evidence Status',
+  miSchedule: 'MI Schedule',
+  miLastAIRUpload: 'MI Last AIR Upload',
+  miDaysSince: 'MI Days Since',
+  miDueDate: 'MI Due Date',
+  miOnboardingChangeDate: 'MI Onboarding Change Date',
+  miL2Assignee: 'MI L2 Assignee',
+  miStatus: 'MI Status',
+  attestationKickedOff: 'Attestation Kicked Off',
+  attestationComplete: 'Attestation Complete',
+  aiLastCandAAttestation: 'AI Last C&A Attestation',
+  keychainAttestationKickoffDate: 'Keychain Attestation Kickoff Date',
+  aiDaysSince: 'AI Days Since',
+  aiAttestationDueDate: 'AI Attestation Due Date',
+  aiOnboardingChangeDate: 'AI Onboarding Change Date',
+  aiL2Assignee: 'AI L2 Assignee',
+  aiStatus: 'AI Status',
+  theGap: 'The Gap',
+  comments: 'Comments',
+  lastModifiedBy: 'Last Modified By',
+  lastModifiedDate: 'Last Modified Date',
+};
+
+const getFieldLabel = (key: string): string => {
+  return FIELD_LABELS[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()).trim();
+};
+
 export default function FASTPage() {
   const { toast } = useToast();
   const { isAdmin, user } = useUser();
@@ -920,7 +976,7 @@ export default function FASTPage() {
                                 <div className="space-y-1.5">
                                   {Object.entries(activity.field).map(([fieldKey, change]: [string, any]) => (
                                     <div key={fieldKey} className="flex items-center gap-2 text-sm p-2 bg-muted/30 rounded">
-                                      <span className="font-medium min-w-[120px]">{fieldKey}</span>
+                                      <span className="font-medium min-w-[140px]">{getFieldLabel(fieldKey)}</span>
                                       <span className="text-red-500 bg-red-50 dark:bg-red-950/30 px-2 py-0.5 rounded text-xs line-through">
                                         {change.old || '(empty)'}
                                       </span>
