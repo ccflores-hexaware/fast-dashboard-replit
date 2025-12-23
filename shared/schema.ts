@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, timestamp, serial } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, timestamp, serial, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -79,6 +79,23 @@ export const insertFastAssetSchema = createInsertSchema(fastAssets).omit({
 export const selectFastAssetSchema = createSelectSchema(fastAssets);
 export type InsertFastAsset = z.infer<typeof insertFastAssetSchema>;
 export type FastAsset = typeof fastAssets.$inferSelect;
+
+export const assetActivity = pgTable("asset_activity", {
+  id: serial("id").primaryKey(),
+  assetId: varchar("asset_id", { length: 50 }).notNull(),
+  text: text("text"),
+  field: jsonb("field"),
+  modifiedDate: timestamp("modified_date").defaultNow(),
+  modifiedBy: text("modified_by").notNull(),
+});
+
+export const insertAssetActivitySchema = createInsertSchema(assetActivity).omit({
+  id: true,
+  modifiedDate: true,
+});
+export const selectAssetActivitySchema = createSelectSchema(assetActivity);
+export type InsertAssetActivity = z.infer<typeof insertAssetActivitySchema>;
+export type AssetActivity = typeof assetActivity.$inferSelect;
 
 export const tpiAssets = pgTable("tpi_assets", {
   internalId: serial("internal_id").primaryKey(),
