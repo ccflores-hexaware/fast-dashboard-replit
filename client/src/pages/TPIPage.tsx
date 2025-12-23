@@ -182,7 +182,7 @@ export default function TPIPage() {
   const exportToExcel = () => {
     const exportData = sortedData.map((item: any) => { const row: Record<string, any> = {}; visibleColumns.forEach(col => { row[col.header] = item[col.accessorKey] ?? ''; }); return row; });
     const ws = XLSX.utils.json_to_sheet(exportData); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'TPI'); XLSX.writeFile(wb, `TPI_Export_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
-    toast({ title: "Export Complete", description: `Exported ${exportData.length} records.` });
+    toast({ title: "Export Complete", description: `Exported ${exportData.length} records.`, variant: "success" });
   };
 
   return (

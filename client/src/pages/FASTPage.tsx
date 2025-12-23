@@ -549,6 +549,7 @@ export default function FASTPage() {
         toast({
           title: "Changes Saved",
           description: `Asset ${savedItem.id} has been updated.`,
+          variant: "success"
         });
       } else {
         // Create new asset
@@ -567,6 +568,7 @@ export default function FASTPage() {
         toast({
           title: "Asset Created",
           description: `New asset ${savedItem.id} has been created.`,
+          variant: "success"
         });
       }
       setIsEditing(false);
@@ -610,6 +612,7 @@ export default function FASTPage() {
       toast({
         title: "Asset Duplicated",
         description: `Created ${newId} as a copy of ${selectedItem.id}.`,
+        variant: "success"
       });
     } catch (error) {
       console.error('Error duplicating:', error);
@@ -649,7 +652,7 @@ export default function FASTPage() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'FAST');
     XLSX.writeFile(wb, `FAST_Export_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
-    toast({ title: "Export Complete", description: `Exported ${exportData.length} records.` });
+    toast({ title: "Export Complete", description: `Exported ${exportData.length} records.`, variant: "success" });
   };
 
   return (
