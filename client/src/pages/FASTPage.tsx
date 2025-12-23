@@ -1014,7 +1014,7 @@ export default function FASTPage() {
                 <>
                   <div className="flex gap-2">
                     {isAdmin && selectedItem && (
-                      <Button variant="outline" size="sm" onClick={() => setIsDuplicateConfirmOpen(true)} className="gap-1">
+                      <Button size="sm" onClick={() => setIsDuplicateConfirmOpen(true)} className="gap-1 text-white" style={{ backgroundColor: '#f59e0b' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d97706'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#f59e0b'}>
                         <Copy className="h-4 w-4" /> Duplicate
                       </Button>
                     )}
@@ -1039,7 +1039,7 @@ export default function FASTPage() {
             </DialogHeader>
             <div className="flex justify-end gap-2 mt-4">
               <Button variant="outline" onClick={() => setIsDuplicateConfirmOpen(false)}>Cancel</Button>
-              <Button onClick={handleDuplicate}>Duplicate</Button>
+              <Button onClick={handleDuplicate} className="text-white" style={{ backgroundColor: '#f59e0b' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d97706'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#f59e0b'}>Duplicate</Button>
             </div>
           </DialogContent>
         </Dialog>
