@@ -982,15 +982,11 @@ export default function FASTPage() {
                                 </p>
                               </div>
                             )}
-                            {activity.field && (Array.isArray(activity.field) ? activity.field.length > 0 : Object.keys(activity.field).length > 0) && (
+                            {activity.field && Array.isArray(activity.field) && activity.field.length > 0 && (
                               <div className="space-y-2">
                                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Field Changes</p>
                                 <div className="space-y-2">
-                                  {/* Handle both array format (new) and object format (legacy) */}
-                                  {(Array.isArray(activity.field) 
-                                    ? activity.field 
-                                    : Object.entries(activity.field).map(([key, val]: [string, any]) => ({ field: key, old: val.old, new: val.new }))
-                                  ).map((change: { field: string; old: any; new: any }, index: number) => (
+                                  {activity.field.map((change: { field: string; old: any; new: any }, index: number) => (
                                     <div key={change.field || index} className="flex items-center gap-3 text-base p-3 bg-muted/30 rounded-lg">
                                       <span className="font-semibold min-w-[180px]">{getFieldLabel(change.field)}</span>
                                       <span className="text-red-500 bg-red-50 dark:bg-red-950/30 px-3 py-1 rounded text-sm line-through">
