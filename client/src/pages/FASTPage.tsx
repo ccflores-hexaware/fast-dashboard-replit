@@ -747,7 +747,7 @@ export default function FASTPage() {
         />
 
         <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) handleCancelEdit(); setIsDialogOpen(open); }}>
-          <DialogContent className="w-full sm:max-w-2xl max-h-[90vh] flex flex-col p-0 gap-0">
+          <DialogContent className="w-full sm:max-w-4xl max-h-[90vh] flex flex-col p-0 gap-0">
             <DialogHeader className="p-6 pb-2">
               <div className="flex justify-between items-center pr-8">
                 <DialogTitle className="text-2xl font-bold text-primary">
@@ -795,55 +795,57 @@ export default function FASTPage() {
             )}
             
             <div className="flex-1 overflow-y-auto px-6 min-h-0">
-              <div className="flex flex-col space-y-1 py-4">
+              <div className="py-4">
                 {isEditing ? (
                   <>
-                    {columns.map((col) => {
-                      const key = col.accessorKey;
-                      const value = editFormData[key];
-                      const enumOptions = ENUM_FIELDS[key];
-                      const isAuditField = key === 'lastModifiedBy' || key === 'lastModifiedDate';
-                      const shouldDisable = (key === 'id' && !!selectedItem) || isAuditField;
-                      
-                      return (
-                        <div key={key} className="flex flex-col space-y-2 py-3 border-b border-border/50 last:border-0">
-                          <Label htmlFor={key} className="text-sm font-medium text-muted-foreground">
-                            {col.header}
-                            {key === 'id' && <span className="text-red-500 ml-1">*</span>}
-                          </Label>
-                          {enumOptions && !shouldDisable ? (
-                            <Select value={String(value || '')} onValueChange={(val) => setEditFormData((prev: any) => ({ ...prev, [key]: val }))}>
-                              <SelectTrigger className="font-semibold">
-                                <SelectValue placeholder={`Select ${col.header}`} />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {enumOptions.map(opt => (
-                                  <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          ) : (
-                            <Input
-                              id={key}
-                              value={shouldDisable && !value ? '-' : String(value || '')}
-                              onChange={(e) => {
-                                if (shouldDisable) return;
-                                setEditFormData((prev: any) => ({ ...prev, [key]: e.target.value }));
-                                if (key === 'id') validateAssetId(e.target.value);
-                              }}
-                              disabled={shouldDisable}
-                              className={cn(
-                                "font-semibold",
-                                key === 'id' && assetIdError ? 'border-red-500' : '',
-                                shouldDisable ? 'bg-muted cursor-not-allowed' : ''
-                              )}
-                            />
-                          )}
-                          {key === 'id' && !selectedItem && assetIdError && <p className="text-red-500 text-xs">{assetIdError}</p>}
-                          {key === 'id' && !selectedItem && assetIdAvailable && <p className="text-green-500 text-xs flex items-center gap-1"><Check className="h-3 w-3" /> Available</p>}
-                        </div>
-                      );
-                    })}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1">
+                      {columns.map((col) => {
+                        const key = col.accessorKey;
+                        const value = editFormData[key];
+                        const enumOptions = ENUM_FIELDS[key];
+                        const isAuditField = key === 'lastModifiedBy' || key === 'lastModifiedDate';
+                        const shouldDisable = (key === 'id' && !!selectedItem) || isAuditField;
+                        
+                        return (
+                          <div key={key} className="flex flex-col space-y-2 py-3 border-b border-border/50">
+                            <Label htmlFor={key} className="text-sm font-medium text-muted-foreground">
+                              {col.header}
+                              {key === 'id' && <span className="text-red-500 ml-1">*</span>}
+                            </Label>
+                            {enumOptions && !shouldDisable ? (
+                              <Select value={String(value || '')} onValueChange={(val) => setEditFormData((prev: any) => ({ ...prev, [key]: val }))}>
+                                <SelectTrigger className="font-semibold">
+                                  <SelectValue placeholder={`Select ${col.header}`} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {enumOptions.map(opt => (
+                                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <Input
+                                id={key}
+                                value={shouldDisable && !value ? '-' : String(value || '')}
+                                onChange={(e) => {
+                                  if (shouldDisable) return;
+                                  setEditFormData((prev: any) => ({ ...prev, [key]: e.target.value }));
+                                  if (key === 'id') validateAssetId(e.target.value);
+                                }}
+                                disabled={shouldDisable}
+                                className={cn(
+                                  "font-semibold",
+                                  key === 'id' && assetIdError ? 'border-red-500' : '',
+                                  shouldDisable ? 'bg-muted cursor-not-allowed' : ''
+                                )}
+                              />
+                            )}
+                            {key === 'id' && !selectedItem && assetIdError && <p className="text-red-500 text-xs">{assetIdError}</p>}
+                            {key === 'id' && !selectedItem && assetIdAvailable && <p className="text-green-500 text-xs flex items-center gap-1"><Check className="h-3 w-3" /> Available</p>}
+                          </div>
+                        );
+                      })}
+                    </div>
                     
                     <div className="flex flex-col space-y-2 py-4 border-t border-border mt-4">
                       <Label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -859,12 +861,12 @@ export default function FASTPage() {
                     </div>
                   </>
                 ) : activeTab === 'details' ? (
-                  <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1">
                     {columns.map((col) => {
                       const key = col.accessorKey;
                       const value = selectedItem?.[key];
                       return (
-                        <div key={key} className="flex flex-col space-y-1 py-3 border-b border-border/50 last:border-0">
+                        <div key={key} className="flex flex-col space-y-1 py-3 border-b border-border/50">
                           <span className="text-sm font-medium text-muted-foreground">{col.header}</span>
                           <span className="text-base font-semibold text-foreground">
                             {(value === undefined || value === null || value === '') ? '-' : String(value)}
@@ -872,7 +874,7 @@ export default function FASTPage() {
                         </div>
                       );
                     })}
-                  </>
+                  </div>
                 ) : (
                   <>
                     {isLoadingActivities ? (
