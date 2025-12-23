@@ -5,7 +5,7 @@ import { DataTable, StatusBadge } from '@/components/DataTable';
 import { DataCard } from '@/components/DataCard';
 import { Pagination } from '@/components/Pagination';
 import { Button } from '@/components/ui/button';
-import { Download, Save, X, Pencil, Search, Check, ChevronsUpDown, Copy, ArrowRight, Settings2, RotateCcw, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Download, Save, X, Pencil, Search, Check, ChevronsUpDown, Copy, ArrowRight, Settings2, RotateCcw, Eye, EyeOff, Loader2, MessageSquare, History } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import {
@@ -40,6 +40,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -113,6 +114,10 @@ export default function FASTPage() {
   const [data, setData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [originalItem, setOriginalItem] = useState<any>(null);
+  const [comment, setComment] = useState('');
+  const [activities, setActivities] = useState<any[]>([]);
+  const [isLoadingActivities, setIsLoadingActivities] = useState(false);
   
   useEffect(() => {
     const fetchData = async () => {
@@ -322,21 +327,40 @@ export default function FASTPage() {
   const visibleColumnCount = Object.values(columnVisibility).filter(Boolean).length;
   const totalColumnCount = ALL_COLUMN_KEYS.length;
 
+  const fetchActivities = async (assetId: string) => {
+    setIsLoadingActivities(true);
+    try {
+      const response = await fetch(`/api/activity/${assetId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setActivities(data);
+      }
+    } catch (error) {
+      console.error('Error fetching activities:', error);
+    } finally {
+      setIsLoadingActivities(false);
+    }
+  };
+
   const handleItemClick = (item: any) => {
     setSelectedItem(item);
     setIsEditing(false);
     setIsDialogOpen(true);
+    fetchActivities(item.id);
   };
 
   const handleEditClick = (item?: any) => {
     const itemToEdit = item || selectedItem;
     if (itemToEdit) {
       setEditFormData({ ...itemToEdit });
+      setOriginalItem({ ...itemToEdit });
       setSelectedItem(itemToEdit);
       setIsEditing(true);
+      setComment('');
       setAssetIdError(null);
       setAssetIdAvailable(false);
       setIsDialogOpen(true);
+      fetchActivities(itemToEdit.id);
     }
   };
 
@@ -344,6 +368,8 @@ export default function FASTPage() {
     setIsEditing(false);
     setIsDialogOpen(false);
     setEditFormData({});
+    setOriginalItem(null);
+    setComment('');
     setAssetIdError(null);
     setAssetIdAvailable(false);
     setDateFieldErrors({});
@@ -403,6 +429,24 @@ export default function FASTPage() {
     delete updatedItem.version;
     delete updatedItem.isLatestVersion;
 
+    // Detect field changes for activity tracking
+    const fieldChanges: Record<string, { old: any; new: any }> = {};
+    if (originalItem) {
+      const excludeFields = ['internalId', 'createdAt', 'version', 'isLatestVersion', 'lastModifiedBy', 'lastModifiedDate'];
+      Object.keys(editFormData).forEach(key => {
+        if (!excludeFields.includes(key)) {
+          const oldVal = originalItem[key];
+          const newVal = editFormData[key];
+          // Use nullish coalescing to preserve falsy values like 0 or false
+          const oldStr = String(oldVal ?? '');
+          const newStr = String(newVal ?? '');
+          if (oldStr !== newStr) {
+            fieldChanges[key] = { old: oldVal ?? '', new: newVal ?? '' };
+          }
+        }
+      });
+    }
+
     try {
       if (selectedItem) {
         // Update existing asset in place
@@ -415,6 +459,22 @@ export default function FASTPage() {
         if (!response.ok) throw new Error('Failed to save');
         const savedItem = await response.json();
         
+        // Create activity record if there are changes or a comment
+        const hasChanges = Object.keys(fieldChanges).length > 0;
+        const hasComment = comment.trim().length > 0;
+        if (hasChanges || hasComment) {
+          await fetch('/api/activity', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              assetId: savedItem.id,
+              text: hasComment ? comment.trim() : null,
+              field: hasChanges ? fieldChanges : null,
+              modifiedBy: user?.name || 'Unknown User',
+            })
+          });
+        }
+        
         // Refresh data from server
         const refreshResponse = await fetch('/api/fast');
         if (refreshResponse.ok) {
@@ -424,6 +484,9 @@ export default function FASTPage() {
         
         setSelectedItem(savedItem);
         setEditFormData(savedItem);
+        setOriginalItem(savedItem);
+        setComment('');
+        fetchActivities(savedItem.id);
         toast({
           title: "Changes Saved",
           description: `Asset ${savedItem.id} has been updated.`,
@@ -696,7 +759,8 @@ export default function FASTPage() {
             <div className="flex-1 overflow-y-auto px-6 min-h-0">
               <div className="flex flex-col space-y-1 py-4">
                 {isEditing ? (
-                  columns.map((col) => {
+                  <>
+                    {columns.map((col) => {
                       const key = col.accessorKey;
                       const value = editFormData[key];
                       const enumOptions = ENUM_FIELDS[key];
@@ -741,9 +805,24 @@ export default function FASTPage() {
                           {key === 'id' && !selectedItem && assetIdAvailable && <p className="text-green-500 text-xs flex items-center gap-1"><Check className="h-3 w-3" /> Available</p>}
                         </div>
                       );
-                    })
+                    })}
+                    
+                    <div className="flex flex-col space-y-2 py-4 border-t border-border mt-4">
+                      <Label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                        <MessageSquare className="h-4 w-4" /> Add Comment (optional)
+                      </Label>
+                      <Textarea
+                        value={comment}
+                        onChange={(e) => setComment(e.target.value)}
+                        placeholder="Enter a comment about this change..."
+                        className="resize-none"
+                        rows={3}
+                      />
+                    </div>
+                  </>
                 ) : (
-                  columns.map((col) => {
+                  <>
+                    {columns.map((col) => {
                       const key = col.accessorKey;
                       const value = selectedItem?.[key];
                       return (
@@ -754,7 +833,50 @@ export default function FASTPage() {
                           </span>
                         </div>
                       );
-                    })
+                    })}
+                    
+                    <div className="py-4 border-t border-border mt-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <History className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium text-muted-foreground">Activity History</span>
+                      </div>
+                      {isLoadingActivities ? (
+                        <div className="flex items-center justify-center py-4">
+                          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                        </div>
+                      ) : activities.length === 0 ? (
+                        <p className="text-sm text-muted-foreground italic">No activity recorded yet.</p>
+                      ) : (
+                        <div className="space-y-3 max-h-48 overflow-y-auto">
+                          {activities.map((activity: any) => (
+                            <div key={activity.id} className="border rounded-lg p-3 bg-muted/30">
+                              <div className="flex justify-between items-start mb-2">
+                                <span className="text-xs font-medium text-primary">{activity.modifiedBy}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {activity.modifiedDate ? format(new Date(activity.modifiedDate), 'MMM d, yyyy HH:mm') : '-'}
+                                </span>
+                              </div>
+                              {activity.text && (
+                                <p className="text-sm mb-2">{activity.text}</p>
+                              )}
+                              {activity.field && Object.keys(activity.field).length > 0 && (
+                                <div className="text-xs space-y-1">
+                                  {Object.entries(activity.field).map(([fieldKey, change]: [string, any]) => (
+                                    <div key={fieldKey} className="flex flex-wrap gap-1">
+                                      <span className="font-medium">{fieldKey}:</span>
+                                      <span className="text-red-500 line-through">{change.old || '(empty)'}</span>
+                                      <ArrowRight className="h-3 w-3" />
+                                      <span className="text-green-600">{change.new || '(empty)'}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </>
                 )}
               </div>
             </div>
