@@ -973,15 +973,15 @@ export default function FASTPage() {
                             {activity.field && Object.keys(activity.field).length > 0 && (
                               <div className="space-y-2">
                                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Field Changes</p>
-                                <div className="space-y-1.5">
+                                <div className="space-y-2">
                                   {Object.entries(activity.field).map(([fieldKey, change]: [string, any]) => (
-                                    <div key={fieldKey} className="flex items-center gap-2 text-sm p-2 bg-muted/30 rounded">
-                                      <span className="font-medium min-w-[140px]">{getFieldLabel(fieldKey)}</span>
-                                      <span className="text-red-500 bg-red-50 dark:bg-red-950/30 px-2 py-0.5 rounded text-xs line-through">
+                                    <div key={fieldKey} className="flex items-center gap-3 text-base p-3 bg-muted/30 rounded-lg">
+                                      <span className="font-semibold min-w-[180px]">{getFieldLabel(fieldKey)}</span>
+                                      <span className="text-red-500 bg-red-50 dark:bg-red-950/30 px-3 py-1 rounded text-sm line-through">
                                         {change.old || '(empty)'}
                                       </span>
-                                      <ArrowRight className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                                      <span className="text-green-600 bg-green-50 dark:bg-green-950/30 px-2 py-0.5 rounded text-xs">
+                                      <ArrowRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                      <span className="text-green-600 bg-green-50 dark:bg-green-950/30 px-3 py-1 rounded text-sm">
                                         {change.new || '(empty)'}
                                       </span>
                                     </div>
