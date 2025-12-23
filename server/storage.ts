@@ -183,7 +183,7 @@ export class DatabaseStorage implements IStorage {
   async getTpiAssetHistory(tpiAssetId: string): Promise<TpiAssetHistory[]> {
     return db.select().from(tpiAssetHistory)
       .where(eq(tpiAssetHistory.tpiAssetId, tpiAssetId))
-      .orderBy(desc(tpiAssetHistory.startDate));
+      .orderBy(desc(tpiAssetHistory.endDate), desc(tpiAssetHistory.startDate));
   }
 
   async getTpiAssetHistoryCount(tpiAssetId: string): Promise<number> {
