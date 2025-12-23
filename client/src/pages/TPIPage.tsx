@@ -215,7 +215,6 @@ export default function TPIPage() {
   const { currentPage, pageSize, setCurrentPage, setPageSize, paginatedData, totalPages, totalItems } = usePagination(sortedData);
 
   const visibleColumns = useMemo(() => columns.filter(col => columnVisibility[col.accessorKey] !== false), [columns, columnVisibility]);
-  const historyVisibleColumns = useMemo(() => visibleColumns.filter(col => col.accessorKey !== 'version' && col.accessorKey !== 'id'), [visibleColumns]);
   const visibleCardFields = useMemo(() => cardFields.filter(field => cardFieldVisibility[field.key]), [cardFieldVisibility]);
   const visibleColumnCount = Object.values(columnVisibility).filter(Boolean).length;
 
