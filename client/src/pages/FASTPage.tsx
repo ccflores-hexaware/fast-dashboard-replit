@@ -175,6 +175,7 @@ export default function FASTPage() {
   const [activities, setActivities] = useState<any[]>([]);
   const [isLoadingActivities, setIsLoadingActivities] = useState(false);
   const [activeTab, setActiveTab] = useState<'details' | 'activity'>('details');
+  const [activityDisplayLimit, setActivityDisplayLimit] = useState(5);
   
   useEffect(() => {
     const fetchData = async () => {
@@ -386,6 +387,7 @@ export default function FASTPage() {
 
   const fetchActivities = async (assetId: string) => {
     setIsLoadingActivities(true);
+    setActivityDisplayLimit(5);
     try {
       const response = await fetch(`/api/activity/${assetId}`);
       if (response.ok) {
@@ -956,54 +958,68 @@ export default function FASTPage() {
                         <p className="text-sm text-muted-foreground/70 mt-1">Changes and comments will appear here</p>
                       </div>
                     ) : (
-                      <div className="border rounded-lg overflow-hidden">
-                        <table className="w-full text-sm">
-                          <thead className="bg-muted/50 border-b">
-                            <tr>
-                              <th className="text-left p-3 font-semibold text-muted-foreground w-[180px]">Comment</th>
-                              <th className="text-left p-3 font-semibold text-muted-foreground">Field Changes</th>
-                              <th className="text-left p-3 font-semibold text-muted-foreground w-[120px]">Modified By</th>
-                              <th className="text-left p-3 font-semibold text-muted-foreground w-[160px]">Modified Date</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-border">
-                            {activities.map((activity: any, idx: number) => (
-                              <tr key={activity.id} className={idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
-                                <td className="p-3 align-top">
-                                  {activity.text ? (
-                                    <span className="text-sm">{activity.text}</span>
-                                  ) : (
-                                    <span className="text-muted-foreground/50">—</span>
-                                  )}
-                                </td>
-                                <td className="p-3 align-top">
-                                  {activity.field && Array.isArray(activity.field) && activity.field.length > 0 ? (
-                                    <div className="space-y-1">
-                                      {activity.field.map((change: { field: string; old: any; new: any }, index: number) => (
-                                        <div key={change.field || index} className="flex items-center gap-2 text-sm flex-wrap">
-                                          <span className="font-medium text-foreground">{getFieldLabel(change.field)}:</span>
-                                          <span className="text-red-500 line-through">{change.old || '(empty)'}</span>
-                                          <ArrowRight className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                                          <span className="text-green-600">{change.new || '(empty)'}</span>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <span className="text-muted-foreground/50">—</span>
-                                  )}
-                                </td>
-                                <td className="p-3 align-top">
-                                  <span className="text-sm font-medium">{activity.modifiedBy || '—'}</span>
-                                </td>
-                                <td className="p-3 align-top">
-                                  <span className="text-sm text-muted-foreground">
-                                    {activity.modifiedDate ? format(new Date(activity.modifiedDate), 'MMM d, yyyy h:mm a') : '—'}
-                                  </span>
-                                </td>
+                      <div className="space-y-3">
+                        <div className="border rounded-lg overflow-hidden">
+                          <table className="w-full text-sm">
+                            <thead className="bg-muted/50 border-b">
+                              <tr>
+                                <th className="text-left p-3 font-semibold text-muted-foreground w-[180px]">Comment</th>
+                                <th className="text-left p-3 font-semibold text-muted-foreground">Field Changes</th>
+                                <th className="text-left p-3 font-semibold text-muted-foreground w-[120px]">Modified By</th>
+                                <th className="text-left p-3 font-semibold text-muted-foreground w-[160px]">Modified Date</th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                            </thead>
+                            <tbody className="divide-y divide-border">
+                              {activities.slice(0, activityDisplayLimit).map((activity: any, idx: number) => (
+                                <tr key={activity.id} className={idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
+                                  <td className="p-3 align-top">
+                                    {activity.text ? (
+                                      <span className="text-sm">{activity.text}</span>
+                                    ) : (
+                                      <span className="text-muted-foreground/50">—</span>
+                                    )}
+                                  </td>
+                                  <td className="p-3 align-top">
+                                    {activity.field && Array.isArray(activity.field) && activity.field.length > 0 ? (
+                                      <div className="space-y-1">
+                                        {activity.field.map((change: { field: string; old: any; new: any }, index: number) => (
+                                          <div key={change.field || index} className="flex items-center gap-2 text-sm flex-wrap">
+                                            <span className="font-medium text-foreground">{getFieldLabel(change.field)}:</span>
+                                            <span className="text-red-500 line-through">{change.old || '(empty)'}</span>
+                                            <ArrowRight className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                                            <span className="text-green-600">{change.new || '(empty)'}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <span className="text-muted-foreground/50">—</span>
+                                    )}
+                                  </td>
+                                  <td className="p-3 align-top">
+                                    <span className="text-sm font-medium">{activity.modifiedBy || '—'}</span>
+                                  </td>
+                                  <td className="p-3 align-top">
+                                    <span className="text-sm text-muted-foreground">
+                                      {activity.modifiedDate ? format(new Date(activity.modifiedDate), 'MMM d, yyyy h:mm a') : '—'}
+                                    </span>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                        {activities.length > activityDisplayLimit && (
+                          <div className="flex justify-center">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setActivityDisplayLimit(prev => prev + 5)}
+                              className="text-muted-foreground hover:text-foreground"
+                            >
+                              Load more... ({activities.length - activityDisplayLimit} remaining)
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </>
