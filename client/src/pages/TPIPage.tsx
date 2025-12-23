@@ -215,6 +215,7 @@ export default function TPIPage() {
   const { currentPage, pageSize, setCurrentPage, setPageSize, paginatedData, totalPages, totalItems } = usePagination(sortedData);
 
   const visibleColumns = useMemo(() => columns.filter(col => columnVisibility[col.accessorKey] !== false), [columns, columnVisibility]);
+  const historyColumns = useMemo(() => visibleColumns.filter(col => col.accessorKey !== 'id'), [visibleColumns]);
   const visibleCardFields = useMemo(() => cardFields.filter(field => cardFieldVisibility[field.key]), [cardFieldVisibility]);
   const visibleColumnCount = Object.values(columnVisibility).filter(Boolean).length;
 
@@ -350,7 +351,12 @@ export default function TPIPage() {
                                       <span className="text-xs text-muted-foreground/60">└</span>
                                     </div>
                                   </td>
-                                  {visibleColumns.map((col, colIndex) => (
+                                  {columnVisibility['id'] !== false && (
+                                    <td className="px-4 py-2 text-sm whitespace-nowrap text-muted-foreground/50">
+                                      <span className="text-xs italic">—</span>
+                                    </td>
+                                  )}
+                                  {historyColumns.map((col, colIndex) => (
                                     <td key={col.accessorKey} className="px-4 py-2 text-sm whitespace-nowrap text-muted-foreground">
                                       {colIndex === 0 ? (
                                         <div className="flex items-center gap-2">
