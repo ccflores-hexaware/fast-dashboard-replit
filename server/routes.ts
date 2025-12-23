@@ -118,6 +118,17 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/tpi/history/:tpiAssetId", async (req: Request, res: Response) => {
+    try {
+      const history = await storage.getTpiAssetHistory(req.params.tpiAssetId);
+      const count = await storage.getTpiAssetHistoryCount(req.params.tpiAssetId);
+      res.json({ history, total: count });
+    } catch (error) {
+      console.error("Error fetching TPI asset history:", error);
+      res.status(500).json({ error: "Failed to fetch TPI asset history" });
+    }
+  });
+
   app.get("/api/bto", async (req: Request, res: Response) => {
     try {
       const assets = await storage.getAllBtoAssets();

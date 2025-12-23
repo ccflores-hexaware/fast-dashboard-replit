@@ -2,6 +2,7 @@ import {
   type User, type InsertUser, users,
   type FastAsset, type InsertFastAsset, fastAssets,
   type TpiAsset, type InsertTpiAsset, tpiAssets,
+  type TpiAssetHistory, type InsertTpiAssetHistory, tpiAssetHistory,
   type BtoAsset, type InsertBtoAsset, btoAssets,
   type CmdbAsset, type InsertCmdbAsset, cmdbAssets,
   type AssetActivity, type InsertAssetActivity, assetActivity
@@ -40,6 +41,9 @@ export interface IStorage {
   
   getAssetActivities(assetId: string): Promise<AssetActivity[]>;
   createAssetActivity(activity: InsertAssetActivity): Promise<AssetActivity>;
+  
+  getTpiAssetHistory(tpiAssetId: string): Promise<TpiAssetHistory[]>;
+  getTpiAssetHistoryCount(tpiAssetId: string): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -174,6 +178,19 @@ export class DatabaseStorage implements IStorage {
   async createAssetActivity(activity: InsertAssetActivity): Promise<AssetActivity> {
     const [newActivity] = await db.insert(assetActivity).values(activity).returning();
     return newActivity;
+  }
+
+  async getTpiAssetHistory(tpiAssetId: string): Promise<TpiAssetHistory[]> {
+    return db.select().from(tpiAssetHistory)
+      .where(eq(tpiAssetHistory.tpiAssetId, tpiAssetId))
+      .orderBy(desc(tpiAssetHistory.startDate));
+  }
+
+  async getTpiAssetHistoryCount(tpiAssetId: string): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` })
+      .from(tpiAssetHistory)
+      .where(eq(tpiAssetHistory.tpiAssetId, tpiAssetId));
+    return Number(result[0]?.count || 0);
   }
 }
 
