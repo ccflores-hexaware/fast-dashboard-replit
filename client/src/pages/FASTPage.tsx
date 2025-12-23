@@ -150,7 +150,6 @@ export default function FASTPage() {
   const [versionDatePreset, setVersionDatePreset] = useState<string>('all');
   const [isVersionDateOpen, setIsVersionDateOpen] = useState(false);
   const [isDuplicateConfirmOpen, setIsDuplicateConfirmOpen] = useState(false);
-  const [isFakeAssetConfirmOpen, setIsFakeAssetConfirmOpen] = useState(false);
   
   const defaultVisibleColumns = isAdmin ? ADMIN_DEFAULT_COLUMNS : VIEWER_DEFAULT_COLUMNS;
 
@@ -439,7 +438,6 @@ export default function FASTPage() {
       name: '',
       version: 1,
       isLatestVersion: true,
-      isFakeAsset: false,
       lastModifiedBy: user?.name || 'Unknown User',
       lastModifiedDate: format(new Date(), 'MMM d, yyyy HH:mm'),
     };
@@ -610,20 +608,6 @@ export default function FASTPage() {
     toast({
       title: "Asset Duplicated",
       description: `Created ${newId} as a copy of ${selectedItem.id}.`,
-    });
-  };
-
-  const handleMarkAsFakeAsset = () => {
-    if (!selectedItem) return;
-    const updatedList = data.map((item: any) =>
-      item.id === selectedItem.id ? { ...item, isFakeAsset: true } : item
-    );
-    setData(updatedList);
-    setSelectedItem({ ...selectedItem, isFakeAsset: true });
-    setIsFakeAssetConfirmOpen(false);
-    toast({
-      title: "Marked as Fake Asset",
-      description: `${selectedItem.id} has been marked as a fake asset.`,
     });
   };
 
@@ -927,9 +911,6 @@ export default function FASTPage() {
                 <DialogTitle className="text-2xl font-bold text-primary">
                   {isEditing ? (selectedItem ? 'Edit Item' : 'Add New Item') : (selectedItem?.name || 'Details')}
                 </DialogTitle>
-                {selectedItem?.isFakeAsset && (
-                  <span className="px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-700 rounded-full">Fake Asset</span>
-                )}
               </div>
               <DialogDescription>
                 {selectedItem?.id && `ID: ${selectedItem.id}`}
@@ -1019,11 +1000,6 @@ export default function FASTPage() {
               ) : (
                 <>
                   <div className="flex gap-2">
-                    {isAdmin && selectedItem && !selectedItem.isFakeAsset && (
-                      <Button variant="outline" size="sm" onClick={() => setIsFakeAssetConfirmOpen(true)} className="gap-1 text-orange-600">
-                        <AlertTriangle className="h-4 w-4" /> Mark as Fake Asset
-                      </Button>
-                    )}
                     {isAdmin && selectedItem && (
                       <Button variant="outline" size="sm" onClick={() => setIsDuplicateConfirmOpen(true)} className="gap-1">
                         <Copy className="h-4 w-4" /> Duplicate
@@ -1055,18 +1031,6 @@ export default function FASTPage() {
           </DialogContent>
         </Dialog>
 
-        <Dialog open={isFakeAssetConfirmOpen} onOpenChange={setIsFakeAssetConfirmOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-orange-500" /> Mark as Fake Asset</DialogTitle>
-              <DialogDescription>This action is permanent and cannot be undone.</DialogDescription>
-            </DialogHeader>
-            <div className="flex justify-end gap-2 mt-4">
-              <Button variant="outline" onClick={() => setIsFakeAssetConfirmOpen(false)}>Cancel</Button>
-              <Button variant="destructive" onClick={handleMarkAsFakeAsset}>Mark as Fake Asset</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
     </DashboardLayout>
   );

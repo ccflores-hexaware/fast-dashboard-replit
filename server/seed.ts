@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { fastAssets, fakeAssets, tpiAssets, btoAssets, cmdbAssets } from "@shared/schema";
+import { fastAssets, tpiAssets, btoAssets, cmdbAssets } from "@shared/schema";
 
 const pick = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 const randomDate = (startYear: number, endYear: number): string => {
@@ -110,8 +110,7 @@ async function seed() {
         comments: pick(['On track', 'Needs attention', 'Escalated', 'Waiting for approval', 'Under review', '']),
         status: cmdbStatus,
         lastModifiedBy: pick(assignees),
-        lastModifiedDate: randomDateTime(modifiedYear, modifiedYear),
-        isFakeAsset: isLatest && i < 25 ? true : false
+        lastModifiedDate: randomDateTime(modifiedYear, modifiedYear)
       });
     }
   }
@@ -119,56 +118,7 @@ async function seed() {
   await db.insert(fastAssets).values(fastRecords);
   console.log(`Inserted ${fastRecords.length} FAST records`);
 
-  console.log("Seeding Fake Assets...");
-  const fakeAssetRecords = [];
   const divisions = ['Single-Family', 'Multifamily', 'Capital Markets', 'Investments', 'Enterprise Ops', 'Legal', 'Finance'];
-  
-  for (let i = 0; i < 50; i++) {
-    const idNum = (i + 1).toString().padStart(4, '0');
-    fakeAssetRecords.push({
-      id: `FAL-${idNum}`,
-      name: `${pick(['Harmony', 'Vertex', 'Apex', 'Nexus', 'Spectrum'])} ${pick(['Suite', 'Platform', 'System'])} ${i + 1}`,
-      btoAlignment: `BTO-${Math.floor(Math.random() * 500) + 100}`,
-      version: `${Math.floor(Math.random() * 5)}.${Math.floor(Math.random() * 9)}.${Math.floor(Math.random() * 9)}`,
-      cmdbStatus: pick(cmdbStatuses),
-      deploymentLifecyclePhase: pick(['Analysis', 'Design', 'Development', 'Testing', 'Staging', 'Production', 'Decommission']),
-      applicationTypeFinancial: pick(['Financial', 'Non-Financial']),
-      itOwner: pick(assignees),
-      businessOwner: pick(assignees),
-      businessOwnerSME: pick(assignees),
-      supportedBy: pick(['Internal IT', 'Vendor Managed', 'Hybrid Team', 'Offshore Partner']),
-      supportSME: pick(assignees),
-      architect: pick(assignees),
-      division: pick(divisions),
-      blockFundingName: `Block Fund ${pick(['Alpha', 'Beta', 'Gamma', 'Delta', 'Epsilon'])}`,
-      blockFundingOwner: pick(assignees),
-      assessmentCategory: pick(['Mission Critical', 'Business Critical', 'Business Operational', 'Administrative']),
-      deploymentLifecycleStartDate: randomDate(2020, 2024),
-      type: pick(['Application', 'Microservice', 'Database', 'Infrastructure', 'Platform', 'SaaS']),
-      hosted: pick(['On-Premise', 'AWS Cloud', 'Azure Cloud', 'Hybrid', 'Vendor Cloud']),
-      sox: pick(yesNo),
-      customerFacing: pick(yesNo),
-      sppi: pick(yesNo),
-      ppiClassification: pick(['Public', 'Internal Use', 'Confidential', 'Restricted']),
-      foundational: pick(yesNo),
-      missionCritical: pick(yesNo),
-      businessCritical: pick(yesNo),
-      supporting: pick(yesNo),
-      cotsOrInHouse: pick(['COTS', 'In-House', 'Hybrid']),
-      isSaas: pick(yesNo),
-      maintenanceWindow: pick(['Sundays 00:00-04:00', 'Weekends', 'Quarterly', 'Ad-hoc', 'Patch Tuesday']),
-      operationalHours: pick(['24/7', 'Business Hours', 'Extended Business Hours', 'Weekdays Only']),
-      description: `Asset for ${pick(divisions)} division.`,
-      status: pick(cmdbStatuses),
-      isFakeAsset: true,
-      parentFastId: null,
-      lastModifiedBy: pick(assignees),
-      lastModifiedDate: randomDateTime(2024, 2024)
-    });
-  }
-  
-  await db.insert(fakeAssets).values(fakeAssetRecords);
-  console.log(`Inserted ${fakeAssetRecords.length} Fake Asset records`);
 
   console.log("Seeding TPI assets...");
   const tpiRecords = [];

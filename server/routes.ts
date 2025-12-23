@@ -62,62 +62,6 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/fake-assets", async (req: Request, res: Response) => {
-    try {
-      const assets = await storage.getAllFakeAssets();
-      res.json(assets);
-    } catch (error) {
-      console.error("Error fetching Fake assets:", error);
-      res.status(500).json({ error: "Failed to fetch Fake assets" });
-    }
-  });
-
-  app.get("/api/fake-assets/:id", async (req: Request, res: Response) => {
-    try {
-      const asset = await storage.getFakeAssetById(req.params.id);
-      if (!asset) {
-        return res.status(404).json({ error: "Asset not found" });
-      }
-      res.json(asset);
-    } catch (error) {
-      console.error("Error fetching Fake asset:", error);
-      res.status(500).json({ error: "Failed to fetch Fake asset" });
-    }
-  });
-
-  app.post("/api/fake-assets", async (req: Request, res: Response) => {
-    try {
-      const asset = await storage.createFakeAsset(req.body);
-      res.status(201).json(asset);
-    } catch (error) {
-      console.error("Error creating Fake asset:", error);
-      res.status(500).json({ error: "Failed to create Fake asset" });
-    }
-  });
-
-  app.put("/api/fake-assets/:id", async (req: Request, res: Response) => {
-    try {
-      const asset = await storage.updateFakeAsset(req.params.id, req.body);
-      if (!asset) {
-        return res.status(404).json({ error: "Asset not found" });
-      }
-      res.json(asset);
-    } catch (error) {
-      console.error("Error updating Fake asset:", error);
-      res.status(500).json({ error: "Failed to update Fake asset" });
-    }
-  });
-
-  app.delete("/api/fake-assets/:id", async (req: Request, res: Response) => {
-    try {
-      await storage.deleteFakeAsset(req.params.id);
-      res.status(204).send();
-    } catch (error) {
-      console.error("Error deleting Fake asset:", error);
-      res.status(500).json({ error: "Failed to delete Fake asset" });
-    }
-  });
-
   app.get("/api/tpi", async (req: Request, res: Response) => {
     try {
       const assets = await storage.getAllTpiAssets();

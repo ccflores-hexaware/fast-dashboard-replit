@@ -71,7 +71,6 @@ export const fastAssets = pgTable("fast_assets", {
   status: text("status"),
   lastModifiedBy: text("last_modified_by"),
   lastModifiedDate: text("last_modified_date"),
-  isFakeAsset: boolean("is_fake_asset").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -82,57 +81,6 @@ export const insertFastAssetSchema = createInsertSchema(fastAssets).omit({
 export const selectFastAssetSchema = createSelectSchema(fastAssets);
 export type InsertFastAsset = z.infer<typeof insertFastAssetSchema>;
 export type FastAsset = typeof fastAssets.$inferSelect;
-
-export const fakeAssets = pgTable("fake_assets", {
-  internalId: serial("internal_id").primaryKey(),
-  id: varchar("id", { length: 50 }).notNull().unique(),
-  name: text("name").notNull(),
-  btoAlignment: text("bto_alignment"),
-  version: text("version"),
-  cmdbStatus: text("cmdb_status"),
-  deploymentLifecyclePhase: text("deployment_lifecycle_phase"),
-  applicationTypeFinancial: text("application_type_financial"),
-  itOwner: text("it_owner"),
-  businessOwner: text("business_owner"),
-  businessOwnerSME: text("business_owner_sme"),
-  supportedBy: text("supported_by"),
-  supportSME: text("support_sme"),
-  architect: text("architect"),
-  division: text("division"),
-  blockFundingName: text("block_funding_name"),
-  blockFundingOwner: text("block_funding_owner"),
-  assessmentCategory: text("assessment_category"),
-  deploymentLifecycleStartDate: text("deployment_lifecycle_start_date"),
-  type: text("type"),
-  hosted: text("hosted"),
-  sox: text("sox"),
-  customerFacing: text("customer_facing"),
-  sppi: text("sppi"),
-  ppiClassification: text("ppi_classification"),
-  foundational: text("foundational"),
-  missionCritical: text("mission_critical"),
-  businessCritical: text("business_critical"),
-  supporting: text("supporting"),
-  cotsOrInHouse: text("cots_or_in_house"),
-  isSaas: text("is_saas"),
-  maintenanceWindow: text("maintenance_window"),
-  operationalHours: text("operational_hours"),
-  description: text("description"),
-  status: text("status"),
-  isFakeAsset: boolean("is_fake_asset").default(true),
-  parentFastId: text("parent_fast_id"),
-  lastModifiedBy: text("last_modified_by"),
-  lastModifiedDate: text("last_modified_date"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const insertFakeAssetSchema = createInsertSchema(fakeAssets).omit({
-  internalId: true,
-  createdAt: true,
-});
-export const selectFakeAssetSchema = createSelectSchema(fakeAssets);
-export type InsertFakeAsset = z.infer<typeof insertFakeAssetSchema>;
-export type FakeAsset = typeof fakeAssets.$inferSelect;
 
 export const tpiAssets = pgTable("tpi_assets", {
   internalId: serial("internal_id").primaryKey(),

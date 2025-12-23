@@ -1,7 +1,6 @@
 import { 
   type User, type InsertUser, users,
   type FastAsset, type InsertFastAsset, fastAssets,
-  type FakeAsset, type InsertFakeAsset, fakeAssets,
   type TpiAsset, type InsertTpiAsset, tpiAssets,
   type BtoAsset, type InsertBtoAsset, btoAssets,
   type CmdbAsset, type InsertCmdbAsset, cmdbAssets
@@ -19,12 +18,6 @@ export interface IStorage {
   createFastAsset(asset: InsertFastAsset): Promise<FastAsset>;
   updateFastAsset(internalId: number, asset: Partial<InsertFastAsset> & { isLatestVersion?: boolean }): Promise<FastAsset | undefined>;
   deleteFastAsset(internalId: number): Promise<boolean>;
-  
-  getAllFakeAssets(): Promise<FakeAsset[]>;
-  getFakeAssetById(id: string): Promise<FakeAsset | undefined>;
-  createFakeAsset(asset: InsertFakeAsset): Promise<FakeAsset>;
-  updateFakeAsset(id: string, asset: Partial<InsertFakeAsset>): Promise<FakeAsset | undefined>;
-  deleteFakeAsset(id: string): Promise<boolean>;
   
   getAllTpiAssets(): Promise<TpiAsset[]>;
   getTpiAssetById(id: string): Promise<TpiAsset | undefined>;
@@ -84,33 +77,6 @@ export class DatabaseStorage implements IStorage {
 
   async deleteFastAsset(internalId: number): Promise<boolean> {
     const result = await db.delete(fastAssets).where(eq(fastAssets.internalId, internalId));
-    return true;
-  }
-
-  async getAllFakeAssets(): Promise<FakeAsset[]> {
-    return db.select().from(fakeAssets).orderBy(desc(fakeAssets.createdAt));
-  }
-
-  async getFakeAssetById(id: string): Promise<FakeAsset | undefined> {
-    const [asset] = await db.select().from(fakeAssets).where(eq(fakeAssets.id, id));
-    return asset;
-  }
-
-  async createFakeAsset(asset: InsertFakeAsset): Promise<FakeAsset> {
-    const [newAsset] = await db.insert(fakeAssets).values(asset).returning();
-    return newAsset;
-  }
-
-  async updateFakeAsset(id: string, asset: Partial<InsertFakeAsset>): Promise<FakeAsset | undefined> {
-    const [updated] = await db.update(fakeAssets)
-      .set(asset)
-      .where(eq(fakeAssets.id, id))
-      .returning();
-    return updated;
-  }
-
-  async deleteFakeAsset(id: string): Promise<boolean> {
-    await db.delete(fakeAssets).where(eq(fakeAssets.id, id));
     return true;
   }
 
