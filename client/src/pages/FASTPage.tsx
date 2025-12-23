@@ -5,10 +5,8 @@ import { DataTable, StatusBadge } from '@/components/DataTable';
 import { DataCard } from '@/components/DataCard';
 import { Pagination } from '@/components/Pagination';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Download, Plus, Save, X, Pencil, Search, Check, ChevronsUpDown, Calendar as CalendarIcon, Copy, ArrowRight, Settings2, RotateCcw, Eye, EyeOff } from 'lucide-react';
+import { Download, Plus, Save, X, Pencil, Search, Check, ChevronsUpDown, Copy, ArrowRight, Settings2, RotateCcw, Eye, EyeOff } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import {
   Command,
@@ -50,7 +48,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { format, parse, isValid, subDays, startOfMonth, endOfMonth, subMonths, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
+import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/lib/userContext";
 import * as XLSX from 'xlsx';
@@ -145,10 +143,6 @@ export default function FASTPage() {
   const [cardFieldVisibility, setCardFieldVisibility] = useState<Record<string, boolean>>({});
   const [cardFieldSearchQuery, setCardFieldSearchQuery] = useState('');
   const [dateFieldErrors, setDateFieldErrors] = useState<Record<string, string | null>>({});
-  const [showVersionHistory, setShowVersionHistory] = useState(false);
-  const [versionDateRange, setVersionDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined });
-  const [versionDatePreset, setVersionDatePreset] = useState<string>('all');
-  const [isVersionDateOpen, setIsVersionDateOpen] = useState(false);
   const [isDuplicateConfirmOpen, setIsDuplicateConfirmOpen] = useState(false);
   
   const defaultVisibleColumns = isAdmin ? ADMIN_DEFAULT_COLUMNS : VIEWER_DEFAULT_COLUMNS;
@@ -209,30 +203,8 @@ export default function FASTPage() {
   }, [cardFieldVisibility]);
 
   const baseData = useMemo(() => {
-    if (showVersionHistory) {
-      return data;
-    }
     return data.filter((item: any) => item.isLatestVersion !== false);
-  }, [data, showVersionHistory]);
-
-  const dateFilteredData = useMemo(() => {
-    if (!showVersionHistory || !versionDateRange.from || !versionDateRange.to) {
-      return baseData;
-    }
-    return baseData.filter((item: any) => {
-      if (!item.lastModifiedDate) return true;
-      try {
-        const itemDate = parse(item.lastModifiedDate, 'MMM d, yyyy HH:mm', new Date());
-        if (!isValid(itemDate)) return true;
-        return isWithinInterval(itemDate, {
-          start: startOfDay(versionDateRange.from!),
-          end: endOfDay(versionDateRange.to!)
-        });
-      } catch {
-        return true;
-      }
-    });
-  }, [baseData, showVersionHistory, versionDateRange]);
+  }, [data]);
 
   const columns = useMemo(() => [
     { 
@@ -255,14 +227,7 @@ export default function FASTPage() {
       )
     },
     { header: 'Name', accessorKey: 'name', cell: (item: any) => <span className="font-semibold text-primary">{item.name}</span> },
-    { header: 'Version', accessorKey: 'version', cell: (item: any) => (
-      <div className="flex items-center gap-2">
-        <span>v{item.version || 1}</span>
-        {item.isLatestVersion && (
-          <span className="px-1.5 py-0.5 text-xs bg-green-100 text-green-700 rounded-full">Latest</span>
-        )}
-      </div>
-    )},
+    { header: 'Version', accessorKey: 'version', cell: (item: any) => <span>v{item.version || 1}</span> },
     { header: 'KALM Assignee', accessorKey: 'kalmAssignee' },
     { header: 'Onboarding Status', accessorKey: 'onboardingStatus' },
     { header: 'Onboarding Disposition', accessorKey: 'onboardingDisposition' },
@@ -325,9 +290,9 @@ export default function FASTPage() {
   ];
 
   const searchFilteredData = useMemo(() => {
-    if (!searchQuery.trim()) return dateFilteredData;
+    if (!searchQuery.trim()) return baseData;
     const query = searchQuery.toLowerCase();
-    return dateFilteredData.filter((item: any) => {
+    return baseData.filter((item: any) => {
       if (searchColumn === 'all') {
         return columns.some(col => {
           const value = item[col.accessorKey];
@@ -337,66 +302,18 @@ export default function FASTPage() {
       const value = item[searchColumn];
       return value && String(value).toLowerCase().includes(query);
     });
-  }, [dateFilteredData, searchQuery, searchColumn, columns]);
+  }, [baseData, searchQuery, searchColumn, columns]);
 
   const { columnFilters, setColumnFilters, filteredData } = useColumnFilters(searchFilteredData);
   const { sortConfig, handleSort, sortedData } = useSorting(filteredData);
-
-  // When FAST History is enabled, group by asset ID for pagination at asset level
-  const groupedAssetData = useMemo(() => {
-    if (!showVersionHistory) {
-      return { assets: sortedData, versionMap: new Map() };
-    }
-    // Group all versions by asset ID, keep only latest version as the display row
-    const versionMap = new Map<string, any[]>();
-    const latestVersions: any[] = [];
-    
-    sortedData.forEach((item: any) => {
-      const assetId = item.id;
-      if (!versionMap.has(assetId)) {
-        versionMap.set(assetId, []);
-      }
-      versionMap.get(assetId)!.push(item);
-    });
-    
-    // For each asset, find the latest version to display as the main row
-    versionMap.forEach((versions, assetId) => {
-      // Sort versions by version number descending
-      versions.sort((a, b) => (b.version || 1) - (a.version || 1));
-      // Add version count to the latest version for display
-      const latestVersion = versions.find(v => v.isLatestVersion) || versions[0];
-      latestVersions.push({ ...latestVersion, _versionCount: versions.length, _allVersions: versions });
-    });
-    
-    return { assets: latestVersions, versionMap };
-  }, [sortedData, showVersionHistory]);
-
-  // Use asset-level data for pagination when showing version history
-  const dataForPagination = showVersionHistory ? groupedAssetData.assets : sortedData;
-  const { currentPage, pageSize, setCurrentPage, setPageSize, paginatedData, totalPages, totalItems } = usePagination(dataForPagination);
-
-  // When showing version history, expand paginated data to include all versions for each asset
-  // This is needed for DataTable's expandable version accordion to work
-  const tableData = useMemo(() => {
-    if (!showVersionHistory) {
-      return paginatedData;
-    }
-    // For each paginated asset, include all its versions
-    const expandedData: any[] = [];
-    paginatedData.forEach((asset: any) => {
-      const allVersions = asset._allVersions || [asset];
-      allVersions.forEach((version: any) => expandedData.push(version));
-    });
-    return expandedData;
-  }, [paginatedData, showVersionHistory]);
+  const { currentPage, pageSize, setCurrentPage, setPageSize, paginatedData, totalPages, totalItems } = usePagination(sortedData);
 
   const visibleColumns = useMemo(() => {
     return columns.filter(col => {
       if (columnVisibility[col.accessorKey] === false) return false;
-      if (col.accessorKey === 'version' && !showVersionHistory) return false;
       return true;
     });
-  }, [columns, columnVisibility, showVersionHistory]);
+  }, [columns, columnVisibility]);
 
   const visibleCardFields = useMemo(() => {
     return cardFields.filter(field => cardFieldVisibility[field.key]);
@@ -414,14 +331,6 @@ export default function FASTPage() {
   const handleEditClick = (item?: any) => {
     const itemToEdit = item || selectedItem;
     if (itemToEdit) {
-      if (!itemToEdit.isLatestVersion) {
-        toast({
-          title: "Cannot Edit Historical Version",
-          description: "Only the latest version of an asset can be edited.",
-          variant: "destructive"
-        });
-        return;
-      }
       setEditFormData({ ...itemToEdit });
       setSelectedItem(itemToEdit);
       setIsEditing(true);
@@ -627,31 +536,6 @@ export default function FASTPage() {
     setColumnVisibility(visibility);
   };
 
-  const applyVersionDatePreset = (preset: string) => {
-    setVersionDatePreset(preset);
-    const now = new Date();
-    switch (preset) {
-      case 'today':
-        setVersionDateRange({ from: startOfDay(now), to: endOfDay(now) });
-        break;
-      case 'last7days':
-        setVersionDateRange({ from: startOfDay(subDays(now, 7)), to: endOfDay(now) });
-        break;
-      case 'last30days':
-        setVersionDateRange({ from: startOfDay(subDays(now, 30)), to: endOfDay(now) });
-        break;
-      case 'thisMonth':
-        setVersionDateRange({ from: startOfMonth(now), to: endOfMonth(now) });
-        break;
-      case 'lastMonth':
-        const lastMonth = subMonths(now, 1);
-        setVersionDateRange({ from: startOfMonth(lastMonth), to: endOfMonth(lastMonth) });
-        break;
-      default:
-        setVersionDateRange({ from: undefined, to: undefined });
-    }
-  };
-
   const exportToExcel = () => {
     const exportData = sortedData.map((item: any) => {
       const row: Record<string, any> = {};
@@ -777,97 +661,21 @@ export default function FASTPage() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <div className="flex items-center gap-2 px-3 py-2 bg-muted/50 rounded-md border">
-              <Checkbox
-                id="showVersionHistory"
-                checked={showVersionHistory}
-                onCheckedChange={(checked) => {
-                  setShowVersionHistory(checked === true);
-                  if (!checked) {
-                    setVersionDateRange({ from: undefined, to: undefined });
-                    setVersionDatePreset('all');
-                  }
-                }}
-              />
-              <Label htmlFor="showVersionHistory" className="text-sm font-medium cursor-pointer">
-                FAST History
-              </Label>
-            </div>
-
-            {showVersionHistory && (
-              <Popover open={isVersionDateOpen} onOpenChange={setIsVersionDateOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className={cn("justify-start text-left font-normal", !versionDateRange.from && "text-muted-foreground")}>
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {versionDatePreset !== 'custom' && versionDatePreset !== 'all'
-                      ? { today: 'Today', last7days: 'Last 7 Days', last30days: 'Last 30 Days', thisMonth: 'This Month', lastMonth: 'Last Month' }[versionDatePreset]
-                      : versionDatePreset === 'custom' && versionDateRange.from
-                        ? versionDateRange.to
-                          ? `${format(versionDateRange.from, 'MMM d')} - ${format(versionDateRange.to, 'MMM d, yyyy')}`
-                          : format(versionDateRange.from, 'MMM d, yyyy')
-                        : 'All Dates'
-                    }
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="end">
-                  <div className="p-3 border-b space-y-2">
-                    <h4 className="font-medium text-sm">Filter by Date</h4>
-                    <div className="flex flex-wrap gap-1">
-                      {[
-                        { key: 'all', label: 'All' },
-                        { key: 'today', label: 'Today' },
-                        { key: 'last7days', label: 'Last 7 Days' },
-                        { key: 'last30days', label: 'Last 30 Days' },
-                        { key: 'thisMonth', label: 'This Month' },
-                        { key: 'lastMonth', label: 'Last Month' },
-                      ].map(preset => (
-                        <Button
-                          key={preset.key}
-                          variant={versionDatePreset === preset.key ? 'default' : 'outline'}
-                          size="sm"
-                          className="h-7 text-xs"
-                          onClick={() => applyVersionDatePreset(preset.key)}
-                        >
-                          {preset.label}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                  <Calendar
-                    mode="range"
-                    selected={{ from: versionDateRange.from, to: versionDateRange.to }}
-                    onSelect={(range) => {
-                      setVersionDateRange({ from: range?.from, to: range?.to });
-                      setVersionDatePreset('custom');
-                    }}
-                    numberOfMonths={2}
-                    disabled={(date) => date > new Date()}
-                  />
-                  <div className="p-3 border-t flex justify-end">
-                    <Button size="sm" onClick={() => setIsVersionDateOpen(false)} disabled={!versionDateRange.from || !versionDateRange.to}>
-                      Apply
-                    </Button>
-                  </div>
-                </PopoverContent>
-              </Popover>
-            )}
-
             <ViewToggle view={view} setView={setView} />
           </div>
         </div>
 
         {view === 'table' ? (
           <DataTable
-            data={tableData}
+            data={paginatedData}
             columns={visibleColumns}
             onSort={handleSort}
             sortConfig={sortConfig}
             columnFilters={columnFilters}
             onColumnFiltersChange={(filters: Record<string, string[]>) => setColumnFilters(filters)}
             allData={sortedData}
-            expandableVersions={showVersionHistory}
             onRowClick={(item: any) => {
-              if (isAdmin && item.isLatestVersion) {
+              if (isAdmin) {
                 handleEditClick(item);
               } else {
                 handleItemClick(item);
@@ -876,22 +684,16 @@ export default function FASTPage() {
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {paginatedData.map((item: any, index: number) => {
-              const allVersionsForItem = showVersionHistory ? sortedData.filter((d: any) => d.id === item.id) : [];
-              return (
-                <DataCard
-                  key={`${item.id}-${item.version || index}`}
-                  item={item}
-                  titleKey="name"
-                  statusKey="cmdbStatus"
-                  fields={visibleCardFields as any}
-                  onClick={handleItemClick}
-                  showVersion={showVersionHistory}
-                  isLatestVersion={item.isLatestVersion}
-                  allVersions={allVersionsForItem}
-                />
-              );
-            })}
+            {paginatedData.map((item: any, index: number) => (
+              <DataCard
+                key={`${item.id}-${item.version || index}`}
+                item={item}
+                titleKey="name"
+                statusKey="cmdbStatus"
+                fields={visibleCardFields as any}
+                onClick={handleItemClick}
+              />
+            ))}
           </div>
         )}
 
@@ -915,9 +717,6 @@ export default function FASTPage() {
               <DialogDescription>
                 {selectedItem?.id && `ID: ${selectedItem.id}`}
                 {selectedItem?.version ? ` • Version ${selectedItem.version}` : ''}
-                {selectedItem?.isLatestVersion && (
-                  <span className="ml-2 px-1.5 py-0.5 text-xs bg-green-100 text-green-700 rounded-full">Latest</span>
-                )}
               </DialogDescription>
             </DialogHeader>
             

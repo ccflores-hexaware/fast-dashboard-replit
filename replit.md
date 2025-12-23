@@ -31,12 +31,9 @@ Preferred communication style: Simple, everyday language.
 - **Column Filtering**: Excel-style multi-select filters on table columns
 - **Column Visibility**: Configurable column visibility with presets and localStorage persistence (Table view only)
 - **Card Field Visibility**: Configurable card field display with 7-field maximum limit and localStorage persistence (Card view only)
-- **Asset-Level Versioning (FAST only)**: FAST module supports full version history with automatic snapshots:
-  - Each edit creates a new version and preserves the previous version as a read-only snapshot
-  - "FAST History" checkbox toggles between showing only latest versions (default) or all historical versions
-  - Historical versions are read-only; only the latest version can be edited
-  - Version numbers increment automatically on each save
-  - Date range filtering with presets (Today, Last 7 Days, etc.)
+- **Asset-Level Versioning (FAST only)**: FAST module maintains version numbers for tracking changes:
+  - Each edit creates a new version and the version number increments automatically
+  - Only the latest version of each asset is displayed in the dashboard
 - **Responsive Layout**: Mobile-first design with consistent navigation header
 
 ### Project Structure
@@ -90,12 +87,12 @@ Preferred communication style: Simple, everyday language.
 
 ### Module-Specific Features
 
-| Module | Versioning | Version Column | FAST History Toggle |
-|--------|-----------|----------------|---------------------|
-| FAST | Yes | Yes | Yes |
-| TPI | No | Yes | No |
-| BTO | No | No | No |
-| CMDB | No | Yes | No |
+| Module | Versioning | Version Column |
+|--------|-----------|----------------|
+| FAST | Yes | Yes |
+| TPI | No | Yes |
+| BTO | No | No |
+| CMDB | No | Yes |
 
 ## External Dependencies
 
