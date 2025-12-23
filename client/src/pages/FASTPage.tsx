@@ -420,6 +420,12 @@ export default function FASTPage() {
       lastModifiedBy: user?.name || 'Unknown User',
       lastModifiedDate: format(new Date(), 'MMM d, yyyy HH:mm'),
     };
+    
+    // Remove internal fields that shouldn't be sent to the server
+    delete updatedItem.internalId;
+    delete updatedItem.createdAt;
+    delete updatedItem.version;
+    delete updatedItem.isLatestVersion;
 
     try {
       if (selectedItem) {
