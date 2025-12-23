@@ -100,6 +100,9 @@ Preferred communication style: Simple, everyday language.
   - Current records have `end_date = 9999-12-31`
   - When updated, previous record's end_date is set to NOW(), new record starts with start_date = NOW()
 - **UI**: Inline accordion in TPI table rows with pagination (5 per page)
+  - History sub-table dynamically matches visible columns from main table (excluding version)
+  - Clickable rows open detail popup dialog
+  - "Current" badge on first column for active records
 - **API**: `GET /api/tpi/history/:tpiAssetId` returns `{ history, total }`
 
 ## External Dependencies
