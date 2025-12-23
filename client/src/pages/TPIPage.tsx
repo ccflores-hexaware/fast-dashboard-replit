@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { ViewToggle } from '@/components/ViewToggle';
 import { DataTable } from '@/components/DataTable';
 import { DataCard } from '@/components/DataCard';
 import { Pagination } from '@/components/Pagination';
 import { Button } from '@/components/ui/button';
-import { Download, Search, Check, ChevronsUpDown, Settings2, Loader2 } from 'lucide-react';
+import { Download, Search, Check, ChevronsUpDown, Settings2, Loader2, ChevronDown, ChevronRight, History, Eye } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -14,6 +14,7 @@ import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMe
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/lib/userContext";
@@ -74,6 +75,54 @@ export default function TPIPage() {
   const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({});
   const [columnSearchQuery, setColumnSearchQuery] = useState('');
   const [cardFieldVisibility, setCardFieldVisibility] = useState<Record<string, boolean>>({});
+  
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [historyData, setHistoryData] = useState<Record<string, { history: any[], total: number }>>({});
+  const [historyLoading, setHistoryLoading] = useState<Record<string, boolean>>({});
+  const [historyPage, setHistoryPage] = useState<Record<string, number>>({});
+  const [selectedHistoryItem, setSelectedHistoryItem] = useState<any>(null);
+  const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
+  const HISTORY_PAGE_SIZE = 5;
+
+  const fetchHistory = useCallback(async (assetId: string) => {
+    if (historyData[assetId]) return;
+    setHistoryLoading(prev => ({ ...prev, [assetId]: true }));
+    try {
+      const response = await fetch(`/api/tpi/history/${assetId}`);
+      if (!response.ok) throw new Error('Failed to fetch history');
+      const data = await response.json();
+      setHistoryData(prev => ({ ...prev, [assetId]: data }));
+      setHistoryPage(prev => ({ ...prev, [assetId]: 1 }));
+    } catch (error) {
+      console.error('Error fetching TPI history:', error);
+      toast({ title: "Error", description: "Failed to load history", variant: "destructive" });
+    } finally {
+      setHistoryLoading(prev => ({ ...prev, [assetId]: false }));
+    }
+  }, [historyData, toast]);
+
+  const toggleRow = useCallback((assetId: string) => {
+    setExpandedRows(prev => {
+      const next = new Set(prev);
+      if (next.has(assetId)) {
+        next.delete(assetId);
+      } else {
+        next.add(assetId);
+        fetchHistory(assetId);
+      }
+      return next;
+    });
+  }, [fetchHistory]);
+
+  const formatHistoryDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    if (date.getFullYear() === 9999) return 'Present';
+    return format(date, 'MMM d, yyyy HH:mm');
+  };
+
+  const isCurrentRecord = (endDate: string) => {
+    return new Date(endDate).getFullYear() === 9999;
+  };
 
   useEffect(() => {
     const storageKey = `tpi-column-visibility-${isAdmin ? 'admin' : 'viewer'}`;
@@ -224,7 +273,130 @@ export default function TPIPage() {
               <p className="text-muted-foreground">Loading assets...</p>
             </div>
           </div>
-        ) : view === 'table' ? (<DataTable data={paginatedData} columns={visibleColumns} onSort={handleSort} sortConfig={sortConfig} columnFilters={columnFilters} onColumnFiltersChange={(filters: Record<string, string[]>) => setColumnFilters(filters)} allData={sortedData} />) : (
+        ) : view === 'table' ? (
+          <div className="border rounded-lg overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-muted/50">
+                <tr>
+                  <th className="w-10 px-2 py-3"></th>
+                  {visibleColumns.map(col => (
+                    <th key={col.accessorKey} className="px-4 py-3 text-left text-sm font-medium text-muted-foreground cursor-pointer hover:bg-muted/80" onClick={() => handleSort(col.accessorKey)}>
+                      <div className="flex items-center gap-1">
+                        {col.header}
+                        {sortConfig?.key === col.accessorKey && (
+                          <span className="text-xs">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+                        )}
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedData.map((item: any, index: number) => {
+                  const isExpanded = expandedRows.has(item.id);
+                  const assetHistory = historyData[item.id];
+                  const isLoadingHistory = historyLoading[item.id];
+                  const currentHistoryPage = historyPage[item.id] || 1;
+                  const totalHistoryPages = assetHistory ? Math.ceil(assetHistory.total / HISTORY_PAGE_SIZE) : 0;
+                  const paginatedHistory = assetHistory?.history.slice((currentHistoryPage - 1) * HISTORY_PAGE_SIZE, currentHistoryPage * HISTORY_PAGE_SIZE) || [];
+                  
+                  return (
+                    <React.Fragment key={`${item.id}-${index}`}>
+                      <tr className={cn("border-t hover:bg-muted/30 cursor-pointer", index % 2 === 0 ? "bg-background" : "bg-muted/10")}>
+                        <td className="px-2 py-3">
+                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={(e) => { e.stopPropagation(); toggleRow(item.id); }}>
+                            {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                          </Button>
+                        </td>
+                        {visibleColumns.map(col => (
+                          <td key={col.accessorKey} className="px-4 py-3 text-sm" onClick={() => handleItemClick(item)}>
+                            {col.cell ? col.cell(item) : (item[col.accessorKey] ?? '—')}
+                          </td>
+                        ))}
+                      </tr>
+                      {isExpanded && (
+                        <tr className="bg-muted/20">
+                          <td colSpan={visibleColumns.length + 1} className="px-4 py-4">
+                            <div className="border rounded-lg bg-background p-4">
+                              <div className="flex items-center gap-2 mb-4">
+                                <History className="h-4 w-4 text-muted-foreground" />
+                                <span className="font-semibold text-sm">History</span>
+                                {assetHistory && <Badge variant="secondary" className="text-xs">{assetHistory.total} records</Badge>}
+                              </div>
+                              
+                              {isLoadingHistory ? (
+                                <div className="flex items-center justify-center py-4">
+                                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                                </div>
+                              ) : paginatedHistory.length === 0 ? (
+                                <p className="text-sm text-muted-foreground text-center py-4">No history available</p>
+                              ) : (
+                                <>
+                                  <div className="border rounded-md overflow-hidden">
+                                    <table className="w-full text-sm">
+                                      <thead className="bg-muted/50">
+                                        <tr>
+                                          <th className="px-3 py-2 text-left font-medium">Version</th>
+                                          <th className="px-3 py-2 text-left font-medium">Status</th>
+                                          <th className="px-3 py-2 text-left font-medium">Start Date</th>
+                                          <th className="px-3 py-2 text-left font-medium">End Date</th>
+                                          <th className="px-3 py-2 text-left font-medium">Actions</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {paginatedHistory.map((historyItem: any, hIndex: number) => (
+                                          <tr key={historyItem.id} className={cn("border-t", hIndex % 2 === 0 ? "bg-background" : "bg-muted/10")}>
+                                            <td className="px-3 py-2">
+                                              <div className="flex items-center gap-2">
+                                                <span>{historyItem.version || '—'}</span>
+                                                {isCurrentRecord(historyItem.endDate) && (
+                                                  <Badge className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">Current</Badge>
+                                                )}
+                                              </div>
+                                            </td>
+                                            <td className="px-3 py-2">{historyItem.cmdbStatus || '—'}</td>
+                                            <td className="px-3 py-2">{formatHistoryDate(historyItem.startDate)}</td>
+                                            <td className="px-3 py-2">{formatHistoryDate(historyItem.endDate)}</td>
+                                            <td className="px-3 py-2">
+                                              <Button variant="ghost" size="sm" className="h-7 gap-1" onClick={() => { setSelectedHistoryItem(historyItem); setIsHistoryDialogOpen(true); }}>
+                                                <Eye className="h-3 w-3" />
+                                                View
+                                              </Button>
+                                            </td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                  
+                                  {totalHistoryPages > 1 && (
+                                    <div className="flex items-center justify-between mt-3 pt-3 border-t">
+                                      <span className="text-xs text-muted-foreground">
+                                        Page {currentHistoryPage} of {totalHistoryPages} ({assetHistory?.total} total)
+                                      </span>
+                                      <div className="flex items-center gap-2">
+                                        <Button variant="outline" size="sm" className="h-7" disabled={currentHistoryPage === 1} onClick={() => setHistoryPage(prev => ({ ...prev, [item.id]: currentHistoryPage - 1 }))}>
+                                          Prev
+                                        </Button>
+                                        <Button variant="outline" size="sm" className="h-7" disabled={currentHistoryPage === totalHistoryPages} onClick={() => setHistoryPage(prev => ({ ...prev, [item.id]: currentHistoryPage + 1 }))}>
+                                          Next
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">{paginatedData.map((item: any, index: number) => (<DataCard key={`${item.id}-${index}`} item={item} titleKey="name" statusKey="cmdbStatus" fields={visibleCardFields as any} onClick={handleItemClick} />))}</div>
         )}
 
@@ -239,6 +411,43 @@ export default function TPIPage() {
               </div>
             </ScrollArea>
             <div className="flex justify-end pt-4 border-t"><Button variant="outline" onClick={() => setIsDialogOpen(false)}>Close</Button></div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isHistoryDialogOpen} onOpenChange={setIsHistoryDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+            <DialogHeader className="pb-4 border-b">
+              <DialogTitle className="text-xl flex items-center gap-2">
+                Historical Snapshot
+                {selectedHistoryItem && isCurrentRecord(selectedHistoryItem.endDate) && (
+                  <Badge className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">Current</Badge>
+                )}
+              </DialogTitle>
+              <DialogDescription>
+                {selectedHistoryItem && (
+                  <>
+                    Version {selectedHistoryItem.version || '—'} | {formatHistoryDate(selectedHistoryItem.startDate)} → {formatHistoryDate(selectedHistoryItem.endDate)}
+                  </>
+                )}
+              </DialogDescription>
+            </DialogHeader>
+            <ScrollArea className="flex-1 pr-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+                {selectedHistoryItem && Object.entries(selectedHistoryItem)
+                  .filter(([key]) => !['id', 'tpiAssetId', 'startDate', 'endDate'].includes(key))
+                  .map(([key, value]) => {
+                    const column = columns.find(c => c.accessorKey === key);
+                    const label = column?.header || key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                    return (
+                      <div key={key} className="space-y-1">
+                        <Label className="text-sm text-muted-foreground">{label}</Label>
+                        <p className="text-sm font-medium">{String(value || '—')}</p>
+                      </div>
+                    );
+                  })}
+              </div>
+            </ScrollArea>
+            <div className="flex justify-end pt-4 border-t"><Button variant="outline" onClick={() => setIsHistoryDialogOpen(false)}>Close</Button></div>
           </DialogContent>
         </Dialog>
       </div>
