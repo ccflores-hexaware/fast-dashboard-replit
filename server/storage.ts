@@ -3,7 +3,8 @@ import {
   type FastAsset, type InsertFastAsset, fastAssets,
   type TpiAsset, type InsertTpiAsset, tpiAssets,
   type BtoAsset, type InsertBtoAsset, btoAssets,
-  type CmdbAsset, type InsertCmdbAsset, cmdbAssets
+  type CmdbAsset, type InsertCmdbAsset, cmdbAssets,
+  type AssetActivity, type InsertAssetActivity, assetActivity
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql } from "drizzle-orm";
@@ -36,6 +37,9 @@ export interface IStorage {
   createCmdbAsset(asset: InsertCmdbAsset): Promise<CmdbAsset>;
   updateCmdbAsset(id: string, asset: Partial<InsertCmdbAsset>): Promise<CmdbAsset | undefined>;
   deleteCmdbAsset(id: string): Promise<boolean>;
+  
+  getAssetActivities(assetId: string): Promise<AssetActivity[]>;
+  createAssetActivity(activity: InsertAssetActivity): Promise<AssetActivity>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -59,7 +63,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getFastAssetById(id: string): Promise<FastAsset[]> {
-    return db.select().from(fastAssets).where(eq(fastAssets.id, id)).orderBy(desc(fastAssets.version));
+    return db.select().from(fastAssets).where(eq(fastAssets.id, id));
   }
 
   async createFastAsset(asset: InsertFastAsset): Promise<FastAsset> {
@@ -159,6 +163,17 @@ export class DatabaseStorage implements IStorage {
   async deleteCmdbAsset(id: string): Promise<boolean> {
     await db.delete(cmdbAssets).where(eq(cmdbAssets.id, id));
     return true;
+  }
+
+  async getAssetActivities(assetId: string): Promise<AssetActivity[]> {
+    return db.select().from(assetActivity)
+      .where(eq(assetActivity.assetId, assetId))
+      .orderBy(desc(assetActivity.modifiedDate));
+  }
+
+  async createAssetActivity(activity: InsertAssetActivity): Promise<AssetActivity> {
+    const [newActivity] = await db.insert(assetActivity).values(activity).returning();
+    return newActivity;
   }
 }
 

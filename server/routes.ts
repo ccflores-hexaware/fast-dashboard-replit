@@ -230,5 +230,25 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/activity/:assetId", async (req: Request, res: Response) => {
+    try {
+      const activities = await storage.getAssetActivities(req.params.assetId);
+      res.json(activities);
+    } catch (error) {
+      console.error("Error fetching asset activities:", error);
+      res.status(500).json({ error: "Failed to fetch asset activities" });
+    }
+  });
+
+  app.post("/api/activity", async (req: Request, res: Response) => {
+    try {
+      const activity = await storage.createAssetActivity(req.body);
+      res.status(201).json(activity);
+    } catch (error) {
+      console.error("Error creating asset activity:", error);
+      res.status(500).json({ error: "Failed to create asset activity" });
+    }
+  });
+
   return httpServer;
 }
