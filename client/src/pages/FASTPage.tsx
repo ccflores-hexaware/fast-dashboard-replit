@@ -522,13 +522,22 @@ export default function FASTPage() {
         const hasChanges = Object.keys(fieldChanges).length > 0;
         const hasComment = comment.trim().length > 0;
         if (hasChanges || hasComment) {
+          // Convert fieldChanges object to array format
+          const fieldChangesArray = hasChanges 
+            ? Object.entries(fieldChanges).map(([key, value]) => ({
+                field: key,
+                old: value.old,
+                new: value.new
+              }))
+            : null;
+          
           await fetch('/api/activity', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               assetId: savedItem.id,
               text: hasComment ? comment.trim() : null,
-              field: hasChanges ? fieldChanges : null,
+              field: fieldChangesArray,
               modifiedBy: user?.name || 'Unknown User',
             })
           });
@@ -973,13 +982,17 @@ export default function FASTPage() {
                                 </p>
                               </div>
                             )}
-                            {activity.field && Object.keys(activity.field).length > 0 && (
+                            {activity.field && (Array.isArray(activity.field) ? activity.field.length > 0 : Object.keys(activity.field).length > 0) && (
                               <div className="space-y-2">
                                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Field Changes</p>
                                 <div className="space-y-2">
-                                  {Object.entries(activity.field).map(([fieldKey, change]: [string, any]) => (
-                                    <div key={fieldKey} className="flex items-center gap-3 text-base p-3 bg-muted/30 rounded-lg">
-                                      <span className="font-semibold min-w-[180px]">{getFieldLabel(fieldKey)}</span>
+                                  {/* Handle both array format (new) and object format (legacy) */}
+                                  {(Array.isArray(activity.field) 
+                                    ? activity.field 
+                                    : Object.entries(activity.field).map(([key, val]: [string, any]) => ({ field: key, old: val.old, new: val.new }))
+                                  ).map((change: { field: string; old: any; new: any }, index: number) => (
+                                    <div key={change.field || index} className="flex items-center gap-3 text-base p-3 bg-muted/30 rounded-lg">
+                                      <span className="font-semibold min-w-[180px]">{getFieldLabel(change.field)}</span>
                                       <span className="text-red-500 bg-red-50 dark:bg-red-950/30 px-3 py-1 rounded text-sm line-through">
                                         {change.old || '(empty)'}
                                       </span>
