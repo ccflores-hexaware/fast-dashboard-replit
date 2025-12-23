@@ -31,9 +31,7 @@ Preferred communication style: Simple, everyday language.
 - **Column Filtering**: Excel-style multi-select filters on table columns
 - **Column Visibility**: Configurable column visibility with presets and localStorage persistence (Table view only)
 - **Card Field Visibility**: Configurable card field display with 7-field maximum limit and localStorage persistence (Card view only)
-- **Asset-Level Versioning (FAST only)**: FAST module maintains version numbers for tracking changes:
-  - Each edit creates a new version and the version number increments automatically
-  - Only the latest version of each asset is displayed in the dashboard
+- **Standard CRUD Operations**: All modules support create, read, update, delete operations without versioning
 - **Responsive Layout**: Mobile-first design with consistent navigation header
 
 ### Project Structure
@@ -87,12 +85,12 @@ Preferred communication style: Simple, everyday language.
 
 ### Module-Specific Features
 
-| Module | Versioning | Version Column |
-|--------|-----------|----------------|
-| FAST | Yes | Yes |
-| TPI | No | Yes |
-| BTO | No | No |
-| CMDB | No | Yes |
+| Module | Version Column |
+|--------|----------------|
+| FAST | No |
+| TPI | Yes |
+| BTO | No |
+| CMDB | Yes |
 
 ## External Dependencies
 

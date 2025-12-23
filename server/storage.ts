@@ -16,7 +16,7 @@ export interface IStorage {
   getAllFastAssets(): Promise<FastAsset[]>;
   getFastAssetById(id: string): Promise<FastAsset[]>;
   createFastAsset(asset: InsertFastAsset): Promise<FastAsset>;
-  updateFastAsset(internalId: number, asset: Partial<InsertFastAsset> & { isLatestVersion?: boolean }): Promise<FastAsset | undefined>;
+  updateFastAsset(internalId: number, asset: Partial<InsertFastAsset>): Promise<FastAsset | undefined>;
   deleteFastAsset(internalId: number): Promise<boolean>;
   
   getAllTpiAssets(): Promise<TpiAsset[]>;
@@ -67,7 +67,7 @@ export class DatabaseStorage implements IStorage {
     return newAsset;
   }
 
-  async updateFastAsset(internalId: number, asset: Partial<InsertFastAsset> & { isLatestVersion?: boolean }): Promise<FastAsset | undefined> {
+  async updateFastAsset(internalId: number, asset: Partial<InsertFastAsset>): Promise<FastAsset | undefined> {
     const [updated] = await db.update(fastAssets)
       .set(asset)
       .where(eq(fastAssets.internalId, internalId))

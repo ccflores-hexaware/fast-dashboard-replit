@@ -55,7 +55,7 @@ import * as XLSX from 'xlsx';
 import { usePagination, useSorting, useColumnFilters, useViewToggle } from '@/hooks';
 
 const ALL_COLUMN_KEYS = [
-  'id', 'name', 'version', 'kalmAssignee', 'onboardingStatus', 'onboardingDisposition', 'airDisposition', 
+  'id', 'name', 'kalmAssignee', 'onboardingStatus', 'onboardingDisposition', 'airDisposition', 
   'maintenanceDisposition', 'lastConnectorDeliveryDate', 'maintenanceSLAExpiration', 'technology', 'cmdbStatus', 
   'cmdbBeingRetired', 'cmdbLegalHold', 'ticketsOpened', 'assetType', 'yearOnboarded', 'monthOnboarded', 
   'assetPOCs', 'onboardingSchedule', 'entitlementsMissing', 'membersMissing', 'cisMissing', 'reliesOnCAFederation',
@@ -67,13 +67,13 @@ const ALL_COLUMN_KEYS = [
 ];
 
 const ADMIN_DEFAULT_COLUMNS = [
-  'id', 'name', 'version', 'kalmAssignee', 'onboardingStatus', 'onboardingDisposition',
+  'id', 'name', 'kalmAssignee', 'onboardingStatus', 'onboardingDisposition',
   'airDisposition', 'maintenanceDisposition', 'cmdbStatus', 'assetType', 'technology',
   'connectorStatus', 'enrollmentStatus', 'evidenceStatus', 'lastModifiedBy', 'lastModifiedDate'
 ];
 
 const VIEWER_DEFAULT_COLUMNS = [
-  'id', 'name', 'version', 'assetType', 'technology', 'onboardingStatus', 'cmdbStatus',
+  'id', 'name', 'assetType', 'technology', 'onboardingStatus', 'cmdbStatus',
   'maintenanceDisposition', 'airDisposition'
 ];
 
@@ -203,7 +203,7 @@ export default function FASTPage() {
   }, [cardFieldVisibility]);
 
   const baseData = useMemo(() => {
-    return data.filter((item: any) => item.isLatestVersion !== false);
+    return data;
   }, [data]);
 
   const columns = useMemo(() => [
@@ -214,7 +214,7 @@ export default function FASTPage() {
         <button 
           onClick={(e) => {
             e.stopPropagation();
-            if (isAdmin && item.isLatestVersion) {
+            if (isAdmin) {
               handleEditClick(item);
             } else {
               handleItemClick(item);
@@ -227,7 +227,6 @@ export default function FASTPage() {
       )
     },
     { header: 'Name', accessorKey: 'name', cell: (item: any) => <span className="font-semibold text-primary">{item.name}</span> },
-    { header: 'Version', accessorKey: 'version', cell: (item: any) => <span>v{item.version || 1}</span> },
     { header: 'KALM Assignee', accessorKey: 'kalmAssignee' },
     { header: 'Onboarding Status', accessorKey: 'onboardingStatus' },
     { header: 'Onboarding Disposition', accessorKey: 'onboardingDisposition' },
@@ -341,12 +340,10 @@ export default function FASTPage() {
   };
 
   const handleAddNew = () => {
-    const newId = `AST-${String(data.filter(f => f.isLatestVersion).length + 1).padStart(4, '0')}`;
+    const newId = `AST-${String(data.length + 1).padStart(4, '0')}`;
     const newItem: any = {
       id: newId,
       name: '',
-      version: 1,
-      isLatestVersion: true,
       lastModifiedBy: user?.name || 'Unknown User',
       lastModifiedDate: format(new Date(), 'MMM d, yyyy HH:mm'),
     };
@@ -426,26 +423,11 @@ export default function FASTPage() {
 
     try {
       if (selectedItem) {
-        // Update existing: Mark old version as not latest
-        await fetch(`/api/fast/${selectedItem.internalId}`, {
+        // Update existing asset in place
+        const response = await fetch(`/api/fast/${selectedItem.internalId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ isLatestVersion: false })
-        });
-        
-        // Create new version
-        const newVersion = { 
-          ...updatedItem, 
-          version: (selectedItem.version || 1) + 1, 
-          isLatestVersion: true 
-        };
-        delete newVersion.internalId;
-        delete newVersion.createdAt;
-        
-        const response = await fetch('/api/fast', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newVersion)
+          body: JSON.stringify(updatedItem)
         });
         
         if (!response.ok) throw new Error('Failed to save');
@@ -462,20 +444,14 @@ export default function FASTPage() {
         setEditFormData(savedItem);
         toast({
           title: "Changes Saved",
-          description: `Version ${newVersion.version} has been saved.`,
+          description: `Asset ${savedItem.id} has been updated.`,
         });
       } else {
         // Create new asset
-        const newAsset = {
-          ...updatedItem,
-          version: 1,
-          isLatestVersion: true
-        };
-        
         const response = await fetch('/api/fast', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newAsset)
+          body: JSON.stringify(updatedItem)
         });
         
         if (!response.ok) throw new Error('Failed to create');
@@ -500,24 +476,43 @@ export default function FASTPage() {
     }
   };
 
-  const handleDuplicate = () => {
+  const handleDuplicate = async () => {
     if (!selectedItem) return;
-    const newId = `FAST-${String(data.filter(f => f.isLatestVersion).length + 1).padStart(4, '0')}`;
+    const newId = `AST-${String(data.length + 1).padStart(4, '0')}`;
     const duplicatedItem = {
       ...selectedItem,
       id: newId,
       name: `${selectedItem.name} (Copy)`,
-      version: 1,
-      isLatestVersion: true,
       lastModifiedBy: user?.name || 'Unknown User',
       lastModifiedDate: format(new Date(), 'MMM d, yyyy HH:mm'),
     };
-    setData([...data, duplicatedItem]);
-    setIsDuplicateConfirmOpen(false);
-    toast({
-      title: "Asset Duplicated",
-      description: `Created ${newId} as a copy of ${selectedItem.id}.`,
-    });
+    delete duplicatedItem.internalId;
+    delete duplicatedItem.createdAt;
+    
+    try {
+      const response = await fetch('/api/fast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(duplicatedItem)
+      });
+      
+      if (!response.ok) throw new Error('Failed to duplicate');
+      const savedItem = await response.json();
+      
+      setData([savedItem, ...data]);
+      setIsDuplicateConfirmOpen(false);
+      toast({
+        title: "Asset Duplicated",
+        description: `Created ${newId} as a copy of ${selectedItem.id}.`,
+      });
+    } catch (error) {
+      console.error('Error duplicating:', error);
+      toast({
+        title: "Error",
+        description: "Failed to duplicate asset.",
+        variant: "destructive"
+      });
+    }
   };
 
   const applyColumnPreset = (preset: { name: string; columns: string[] | 'all' | 'default' }) => {
@@ -686,7 +681,7 @@ export default function FASTPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {paginatedData.map((item: any, index: number) => (
               <DataCard
-                key={`${item.id}-${item.version || index}`}
+                key={`${item.id}-${item.internalId || index}`}
                 item={item}
                 titleKey="name"
                 statusKey="cmdbStatus"
@@ -716,16 +711,13 @@ export default function FASTPage() {
               </div>
               <DialogDescription>
                 {selectedItem?.id && `ID: ${selectedItem.id}`}
-                {selectedItem?.version ? ` • Version ${selectedItem.version}` : ''}
               </DialogDescription>
             </DialogHeader>
             
             <div className="flex-1 overflow-y-auto px-6 min-h-0">
               <div className="flex flex-col space-y-1 py-4">
                 {isEditing ? (
-                  columns
-                    .filter(col => !['version'].includes(col.accessorKey))
-                    .map((col) => {
+                  columns.map((col) => {
                       const key = col.accessorKey;
                       const value = editFormData[key];
                       const enumOptions = ENUM_FIELDS[key];
@@ -772,9 +764,7 @@ export default function FASTPage() {
                       );
                     })
                 ) : (
-                  columns
-                    .filter(col => !['version'].includes(col.accessorKey))
-                    .map((col) => {
+                  columns.map((col) => {
                       const key = col.accessorKey;
                       const value = selectedItem?.[key];
                       return (
@@ -807,7 +797,7 @@ export default function FASTPage() {
                   </div>
                   <div className="flex gap-2">
                     <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Close</Button>
-                    {isAdmin && selectedItem?.isLatestVersion && (
+                    {isAdmin && selectedItem && (
                       <Button onClick={() => handleEditClick()} className="gap-2"><Pencil className="h-4 w-4" /> Edit</Button>
                     )}
                   </div>
