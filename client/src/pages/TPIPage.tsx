@@ -355,7 +355,6 @@ export default function TPIPage() {
                                         <div className="flex items-center gap-2">
                                           <span className="text-xs text-muted-foreground/60">└</span>
                                           <History className="h-3 w-3 text-muted-foreground/50" />
-                                          <span>{historyItem[col.accessorKey] ?? '—'}</span>
                                           {isCurrentRecord(historyItem.endDate) && (
                                             <Badge className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">Current</Badge>
                                           )}
