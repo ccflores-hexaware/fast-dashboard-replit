@@ -279,7 +279,7 @@ export default function TPIPage() {
             <table className="w-full caption-bottom text-sm">
               <thead className="bg-muted/50">
                 <tr className="border-b border-border">
-                  <th className="w-10 px-2 py-3 whitespace-nowrap border-r border-border"></th>
+                  <th className="w-10 px-2 py-3 whitespace-nowrap border-r border-border sticky left-0 z-30 bg-slate-200"></th>
                   {visibleColumns.map((col, index) => (
                     <th key={col.accessorKey} className={cn("font-bold text-primary whitespace-nowrap border-r border-border px-4 py-3 h-auto select-none cursor-pointer hover:bg-muted/80 text-left", index === visibleColumns.length - 1 && "border-r-0")} onClick={() => handleSort(col.accessorKey)}>
                       <div className="flex items-center gap-1">
@@ -304,7 +304,7 @@ export default function TPIPage() {
                   return (
                     <React.Fragment key={`${item.id}-${index}`}>
                       <tr className="hover:bg-muted/30 transition-colors border-b border-border cursor-pointer">
-                        <td className="px-2 py-3 whitespace-nowrap border-r border-border">
+                        <td className="px-2 py-3 whitespace-nowrap border-r border-border sticky left-0 z-20 bg-slate-100">
                           <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={(e) => { e.stopPropagation(); toggleRow(item.id); }}>
                             {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                           </Button>
@@ -343,7 +343,7 @@ export default function TPIPage() {
                                   className="border-b border-border cursor-pointer hover:bg-muted/30 transition-colors bg-muted/5"
                                   onClick={() => { setSelectedHistoryItem(historyItem); setIsHistoryDialogOpen(true); }}
                                 >
-                                  <td className="px-2 py-3 whitespace-nowrap border-r border-border">
+                                  <td className="px-2 py-3 whitespace-nowrap border-r border-border sticky left-0 z-20 bg-slate-50">
                                     <div className="flex items-center justify-center">
                                       <span className="text-xs text-muted-foreground/60">└</span>
                                     </div>
@@ -375,7 +375,7 @@ export default function TPIPage() {
                               ))}
                               {(totalHistoryPages > 1 || assetHistory) && (
                                 <tr className="bg-muted/5 border-b border-border">
-                                  <td className="px-2 py-3 whitespace-nowrap border-r border-border">
+                                  <td className="px-2 py-3 whitespace-nowrap border-r border-border sticky left-0 z-20 bg-slate-50">
                                     <span className="text-xs text-muted-foreground/60 flex justify-center">└</span>
                                   </td>
                                   <td colSpan={visibleColumns.length} className="px-4 py-3">
