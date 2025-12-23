@@ -215,7 +215,6 @@ export default function TPIPage() {
   const { currentPage, pageSize, setCurrentPage, setPageSize, paginatedData, totalPages, totalItems } = usePagination(sortedData);
 
   const visibleColumns = useMemo(() => columns.filter(col => columnVisibility[col.accessorKey] !== false), [columns, columnVisibility]);
-  const historyColumns = useMemo(() => visibleColumns.filter(col => col.accessorKey !== 'id'), [visibleColumns]);
   const visibleCardFields = useMemo(() => cardFields.filter(field => cardFieldVisibility[field.key]), [cardFieldVisibility]);
   const visibleColumnCount = Object.values(columnVisibility).filter(Boolean).length;
 
@@ -279,9 +278,8 @@ export default function TPIPage() {
             <table className="w-full caption-bottom text-sm">
               <thead className="bg-muted/50">
                 <tr className="border-b border-border">
-                  <th className="w-10 px-2 py-3 whitespace-nowrap border-r border-border sticky left-0 z-30 bg-slate-200"></th>
                   {visibleColumns.map((col, index) => (
-                    <th key={col.accessorKey} className={cn("font-bold text-primary whitespace-nowrap border-r border-border px-4 py-3 h-auto select-none cursor-pointer hover:bg-muted/80 text-left", index === visibleColumns.length - 1 && "border-r-0")} onClick={() => handleSort(col.accessorKey)}>
+                    <th key={col.accessorKey} className={cn("font-bold text-primary whitespace-nowrap border-r border-border px-4 py-3 h-auto select-none cursor-pointer hover:bg-muted/80 text-left", index === 0 && "sticky left-0 z-30 bg-slate-200", index === visibleColumns.length - 1 && "border-r-0")} onClick={() => handleSort(col.accessorKey)}>
                       <div className="flex items-center gap-1">
                         {col.header}
                         {sortConfig?.key === col.accessorKey && (
@@ -304,14 +302,22 @@ export default function TPIPage() {
                   return (
                     <React.Fragment key={`${item.id}-${index}`}>
                       <tr className="hover:bg-muted/30 transition-colors border-b border-border cursor-pointer">
-                        <td className="px-2 py-3 whitespace-nowrap border-r border-border sticky left-0 z-20 bg-slate-100">
-                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={(e) => { e.stopPropagation(); toggleRow(item.id); }}>
-                            {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                          </Button>
-                        </td>
                         {visibleColumns.map((col, colIndex) => (
-                          <td key={col.accessorKey} className={cn("text-sm border-r border-border px-4 py-3 whitespace-nowrap", colIndex === visibleColumns.length - 1 && "border-r-0")} onClick={() => handleItemClick(item)}>
-                            {col.cell ? col.cell(item) : (item[col.accessorKey] ?? '—')}
+                          <td key={col.accessorKey} className={cn("text-sm border-r border-border px-4 py-3 whitespace-nowrap", colIndex === 0 && "sticky left-0 z-20 bg-slate-100", colIndex === visibleColumns.length - 1 && "border-r-0")} onClick={() => handleItemClick(item)}>
+                            {colIndex === 0 ? (
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); toggleRow(item.id); }}
+                                  className="p-0.5 hover:bg-muted rounded transition-colors"
+                                  aria-label={isExpanded ? "Collapse history" : "Expand history"}
+                                >
+                                  {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                                </button>
+                                <span>{col.cell ? col.cell(item) : (item[col.accessorKey] ?? '—')}</span>
+                              </div>
+                            ) : (
+                              col.cell ? col.cell(item) : (item[col.accessorKey] ?? '—')
+                            )}
                           </td>
                         ))}
                       </tr>
@@ -319,7 +325,7 @@ export default function TPIPage() {
                         <>
                           {isLoadingHistory ? (
                             <tr className="bg-muted/5 border-b border-border">
-                              <td colSpan={visibleColumns.length + 1} className="px-4 py-3">
+                              <td colSpan={visibleColumns.length} className="px-4 py-3">
                                 <div className="flex items-center justify-center gap-2">
                                   <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                                   <span className="text-sm text-muted-foreground">Loading history...</span>
@@ -328,7 +334,7 @@ export default function TPIPage() {
                             </tr>
                           ) : paginatedHistory.length === 0 ? (
                             <tr className="bg-muted/5 border-b border-border">
-                              <td colSpan={visibleColumns.length + 1} className="px-4 py-3">
+                              <td colSpan={visibleColumns.length} className="px-4 py-3">
                                 <div className="flex items-center justify-center gap-2">
                                   <History className="h-4 w-4 text-muted-foreground" />
                                   <span className="text-sm text-muted-foreground">No history available</span>
@@ -343,20 +349,11 @@ export default function TPIPage() {
                                   className="border-b border-border cursor-pointer hover:bg-muted/30 transition-colors bg-muted/5"
                                   onClick={() => { setSelectedHistoryItem(historyItem); setIsHistoryDialogOpen(true); }}
                                 >
-                                  <td className="px-2 py-3 whitespace-nowrap border-r border-border sticky left-0 z-20 bg-slate-50">
-                                    <div className="flex items-center justify-center">
-                                      <span className="text-xs text-muted-foreground/60">└</span>
-                                    </div>
-                                  </td>
-                                  {columnVisibility['id'] !== false && (
-                                    <td className="text-sm border-r border-border px-4 py-3 whitespace-nowrap text-muted-foreground/50">
-                                      <span className="text-xs italic">—</span>
-                                    </td>
-                                  )}
-                                  {historyColumns.map((col, colIndex) => (
-                                    <td key={col.accessorKey} className={cn("text-sm border-r border-border px-4 py-3 whitespace-nowrap text-muted-foreground", colIndex === historyColumns.length - 1 && "border-r-0")}>
+                                  {visibleColumns.map((col, colIndex) => (
+                                    <td key={col.accessorKey} className={cn("text-sm border-r border-border px-4 py-3 whitespace-nowrap text-muted-foreground", colIndex === 0 && "sticky left-0 z-20 bg-slate-50", colIndex === visibleColumns.length - 1 && "border-r-0")}>
                                       {colIndex === 0 ? (
                                         <div className="flex items-center gap-2">
+                                          <span className="text-xs text-muted-foreground/60">└</span>
                                           <History className="h-3 w-3 text-muted-foreground/50" />
                                           <span>{historyItem[col.accessorKey] ?? '—'}</span>
                                           {isCurrentRecord(historyItem.endDate) && (
@@ -375,10 +372,7 @@ export default function TPIPage() {
                               ))}
                               {(totalHistoryPages > 1 || assetHistory) && (
                                 <tr className="bg-muted/5 border-b border-border">
-                                  <td className="px-2 py-3 whitespace-nowrap border-r border-border sticky left-0 z-20 bg-slate-50">
-                                    <span className="text-xs text-muted-foreground/60 flex justify-center">└</span>
-                                  </td>
-                                  <td colSpan={visibleColumns.length} className="px-4 py-3">
+                                  <td colSpan={visibleColumns.length} className="px-4 py-3 sticky left-0 z-20 bg-slate-50">
                                     <div className="flex items-center gap-3">
                                       <span className="text-xs text-muted-foreground">
                                         {assetHistory?.total} history record{assetHistory?.total !== 1 ? 's' : ''}
