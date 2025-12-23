@@ -31,7 +31,6 @@ Preferred communication style: Simple, everyday language.
 - **Column Filtering**: Excel-style multi-select filters on table columns
 - **Column Visibility**: Configurable column visibility with presets and localStorage persistence (Table view only)
 - **Card Field Visibility**: Configurable card field display with 7-field maximum limit and localStorage persistence (Card view only)
-- **Bidirectional Fake Asset Sync**: "Mark as Fake Asset" toggle syncs between FAST and Fake Asset List pages (permanent, one-way action)
 - **Asset-Level Versioning (FAST only)**: FAST module supports full version history with automatic snapshots:
   - Each edit creates a new version and preserves the previous version as a read-only snapshot
   - "FAST History" checkbox toggles between showing only latest versions (default) or all historical versions
@@ -57,7 +56,6 @@ Preferred communication style: Simple, everyday language.
           DashboardContainer.tsx  # Shared dashboard logic (~1770 lines)
       pages/
         FASTPage.tsx      # FAST module entry point
-        FakeAssetsPage.tsx # Fake Asset List module entry point
         TPIPage.tsx       # TPI module entry point
         BTOPage.tsx       # BTO module entry point
         CMDBPage.tsx      # CMDB module entry point
@@ -95,7 +93,6 @@ Preferred communication style: Simple, everyday language.
 | Module | Versioning | Version Column | FAST History Toggle |
 |--------|-----------|----------------|---------------------|
 | FAST | Yes | Yes | Yes |
-| Fake Asset List | No | No | No |
 | TPI | No | Yes | No |
 | BTO | No | No | No |
 | CMDB | No | Yes | No |
