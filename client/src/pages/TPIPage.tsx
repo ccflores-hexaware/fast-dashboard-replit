@@ -5,7 +5,7 @@ import { DataTable } from '@/components/DataTable';
 import { DataCard } from '@/components/DataCard';
 import { Pagination } from '@/components/Pagination';
 import { Button } from '@/components/ui/button';
-import { Download, Search, Check, ChevronsUpDown, Settings2, Loader2, ChevronDown, ChevronRight, History, Eye } from 'lucide-react';
+import { Download, Search, Check, ChevronsUpDown, Settings2, Loader2, ChevronDown, ChevronRight, History } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -215,6 +215,7 @@ export default function TPIPage() {
   const { currentPage, pageSize, setCurrentPage, setPageSize, paginatedData, totalPages, totalItems } = usePagination(sortedData);
 
   const visibleColumns = useMemo(() => columns.filter(col => columnVisibility[col.accessorKey] !== false), [columns, columnVisibility]);
+  const historyVisibleColumns = useMemo(() => visibleColumns.filter(col => col.accessorKey !== 'version'), [visibleColumns]);
   const visibleCardFields = useMemo(() => cardFields.filter(field => cardFieldVisibility[field.key]), [cardFieldVisibility]);
   const visibleColumnCount = Object.values(columnVisibility).filter(Boolean).length;
 
@@ -332,37 +333,46 @@ export default function TPIPage() {
                                 <p className="text-sm text-muted-foreground text-center py-4">No history available</p>
                               ) : (
                                 <>
-                                  <div className="border rounded-md overflow-hidden">
+                                  <div className="border rounded-md overflow-auto">
                                     <table className="w-full text-sm">
                                       <thead className="bg-muted/50">
                                         <tr>
-                                          <th className="px-3 py-2 text-left font-medium">Version</th>
-                                          <th className="px-3 py-2 text-left font-medium">Status</th>
-                                          <th className="px-3 py-2 text-left font-medium">Start Date</th>
-                                          <th className="px-3 py-2 text-left font-medium">End Date</th>
-                                          <th className="px-3 py-2 text-left font-medium">Actions</th>
+                                          {historyVisibleColumns.map((col, colIndex) => (
+                                            <th key={col.accessorKey} className="px-3 py-2 text-left font-medium whitespace-nowrap">
+                                              {colIndex === 0 ? (
+                                                <div className="flex items-center gap-2">
+                                                  {col.header}
+                                                </div>
+                                              ) : col.header}
+                                            </th>
+                                          ))}
+                                          <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Start Date</th>
+                                          <th className="px-3 py-2 text-left font-medium whitespace-nowrap">End Date</th>
                                         </tr>
                                       </thead>
                                       <tbody>
                                         {paginatedHistory.map((historyItem: any, hIndex: number) => (
-                                          <tr key={historyItem.id} className={cn("border-t", hIndex % 2 === 0 ? "bg-background" : "bg-muted/10")}>
-                                            <td className="px-3 py-2">
-                                              <div className="flex items-center gap-2">
-                                                <span>{historyItem.version || '—'}</span>
-                                                {isCurrentRecord(historyItem.endDate) && (
-                                                  <Badge className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">Current</Badge>
+                                          <tr 
+                                            key={historyItem.id} 
+                                            className={cn("border-t cursor-pointer hover:bg-muted/40", hIndex % 2 === 0 ? "bg-background" : "bg-muted/10")}
+                                            onClick={() => { setSelectedHistoryItem(historyItem); setIsHistoryDialogOpen(true); }}
+                                          >
+                                            {historyVisibleColumns.map((col, colIndex) => (
+                                              <td key={col.accessorKey} className="px-3 py-2 whitespace-nowrap">
+                                                {colIndex === 0 ? (
+                                                  <div className="flex items-center gap-2">
+                                                    <span>{historyItem[col.accessorKey] ?? '—'}</span>
+                                                    {isCurrentRecord(historyItem.endDate) && (
+                                                      <Badge className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">Current</Badge>
+                                                    )}
+                                                  </div>
+                                                ) : (
+                                                  <span>{historyItem[col.accessorKey] ?? '—'}</span>
                                                 )}
-                                              </div>
-                                            </td>
-                                            <td className="px-3 py-2">{historyItem.cmdbStatus || '—'}</td>
-                                            <td className="px-3 py-2">{formatHistoryDate(historyItem.startDate)}</td>
-                                            <td className="px-3 py-2">{formatHistoryDate(historyItem.endDate)}</td>
-                                            <td className="px-3 py-2">
-                                              <Button variant="ghost" size="sm" className="h-7 gap-1" onClick={() => { setSelectedHistoryItem(historyItem); setIsHistoryDialogOpen(true); }}>
-                                                <Eye className="h-3 w-3" />
-                                                View
-                                              </Button>
-                                            </td>
+                                              </td>
+                                            ))}
+                                            <td className="px-3 py-2 whitespace-nowrap">{formatHistoryDate(historyItem.startDate)}</td>
+                                            <td className="px-3 py-2 whitespace-nowrap">{formatHistoryDate(historyItem.endDate)}</td>
                                           </tr>
                                         ))}
                                       </tbody>
@@ -426,7 +436,7 @@ export default function TPIPage() {
               <DialogDescription>
                 {selectedHistoryItem && (
                   <>
-                    Version {selectedHistoryItem.version || '—'} | {formatHistoryDate(selectedHistoryItem.startDate)} → {formatHistoryDate(selectedHistoryItem.endDate)}
+                    {formatHistoryDate(selectedHistoryItem.startDate)} → {formatHistoryDate(selectedHistoryItem.endDate)}
                   </>
                 )}
               </DialogDescription>
@@ -434,7 +444,7 @@ export default function TPIPage() {
             <ScrollArea className="flex-1 pr-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
                 {selectedHistoryItem && Object.entries(selectedHistoryItem)
-                  .filter(([key]) => !['id', 'tpiAssetId', 'startDate', 'endDate'].includes(key))
+                  .filter(([key]) => !['id', 'tpiAssetId', 'startDate', 'endDate', 'version'].includes(key))
                   .map(([key, value]) => {
                     const column = columns.find(c => c.accessorKey === key);
                     const label = column?.header || key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
