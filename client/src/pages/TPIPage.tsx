@@ -342,68 +342,70 @@ export default function TPIPage() {
                               </td>
                             </tr>
                           ) : (
-                            <>
-                              {paginatedHistory.map((historyItem: any, hIndex: number) => (
-                                <tr 
-                                  key={`history-${historyItem.id}`}
-                                  className="border-b border-border cursor-pointer hover:bg-muted/30 transition-colors bg-muted/5"
-                                  onClick={() => { setSelectedHistoryItem(historyItem); setIsHistoryDialogOpen(true); }}
-                                >
-                                  {visibleColumns.map((col, colIndex) => (
-                                    <td key={col.accessorKey} className={cn("text-sm border-r border-border px-4 py-3 whitespace-nowrap text-muted-foreground", colIndex === 0 && "sticky left-0 z-20 bg-slate-50", colIndex === visibleColumns.length - 1 && "border-r-0")}>
-                                      {colIndex === 0 ? (
-                                        <div className="flex items-center gap-2">
-                                          <span className="text-xs text-muted-foreground/60">└</span>
-                                          <History className="h-3 w-3 text-muted-foreground/50" />
-                                          {isCurrentRecord(historyItem.endDate) && (
-                                            <Badge className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">Current</Badge>
-                                          )}
-                                          <span className="text-xs text-muted-foreground/70">
-                                            ({formatHistoryDate(historyItem.startDate)} → {formatHistoryDate(historyItem.endDate)})
-                                          </span>
-                                        </div>
-                                      ) : (
-                                        <span>{historyItem[col.accessorKey] ?? '—'}</span>
-                                      )}
-                                    </td>
-                                  ))}
-                                </tr>
-                              ))}
-                              {(totalHistoryPages > 1 || assetHistory) && (
-                                <tr className="bg-muted/5 border-b border-border">
-                                  <td colSpan={visibleColumns.length} className="px-4 py-3 sticky left-0 z-20 bg-slate-50">
-                                    <div className="flex items-center gap-3">
-                                      <span className="text-xs text-muted-foreground">
-                                        {assetHistory?.total} history record{assetHistory?.total !== 1 ? 's' : ''}
-                                        {totalHistoryPages > 1 && ` • Page ${currentHistoryPage} of ${totalHistoryPages}`}
-                                      </span>
-                                      {totalHistoryPages > 1 && (
-                                        <div className="flex items-center gap-1">
-                                          <Button 
-                                            variant="ghost" 
-                                            size="sm" 
-                                            className="h-6 px-2 text-xs" 
-                                            disabled={currentHistoryPage === 1} 
-                                            onClick={(e) => { e.stopPropagation(); setHistoryPage(prev => ({ ...prev, [item.id]: currentHistoryPage - 1 })); }}
-                                          >
-                                            Prev
-                                          </Button>
-                                          <Button 
-                                            variant="ghost" 
-                                            size="sm" 
-                                            className="h-6 px-2 text-xs" 
-                                            disabled={currentHistoryPage === totalHistoryPages} 
-                                            onClick={(e) => { e.stopPropagation(); setHistoryPage(prev => ({ ...prev, [item.id]: currentHistoryPage + 1 })); }}
-                                          >
-                                            Next
-                                          </Button>
-                                        </div>
-                                      )}
+                            <tr className="bg-muted/5">
+                              <td colSpan={visibleColumns.length} className="p-0">
+                                <div className="overflow-x-auto">
+                                  <table className="w-full text-sm">
+                                    <tbody>
+                                      {paginatedHistory.map((historyItem: any, hIndex: number) => (
+                                        <tr 
+                                          key={`history-${historyItem.id}`}
+                                          className="border-b border-border cursor-pointer hover:bg-muted/30 transition-colors"
+                                          onClick={() => { setSelectedHistoryItem(historyItem); setIsHistoryDialogOpen(true); }}
+                                        >
+                                          {visibleColumns.map((col, colIndex) => (
+                                            <td key={col.accessorKey} className={cn("text-sm border-r border-border px-4 py-3 whitespace-nowrap text-muted-foreground", colIndex === 0 && "sticky left-0 z-20 bg-slate-50", colIndex === visibleColumns.length - 1 && "border-r-0")}>
+                                              {colIndex === 0 ? (
+                                                <div className="flex items-center gap-2">
+                                                  <span className="text-xs text-muted-foreground/60">└</span>
+                                                  <History className="h-3 w-3 text-muted-foreground/50" />
+                                                  {isCurrentRecord(historyItem.endDate) && (
+                                                    <Badge className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">Current</Badge>
+                                                  )}
+                                                  <span className="text-xs text-muted-foreground/70">
+                                                    ({formatHistoryDate(historyItem.startDate)} → {formatHistoryDate(historyItem.endDate)})
+                                                  </span>
+                                                </div>
+                                              ) : (
+                                                <span>{historyItem[col.accessorKey] ?? '—'}</span>
+                                              )}
+                                            </td>
+                                          ))}
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                                <div className="flex items-center gap-3 px-4 py-2 border-t border-border">
+                                  <span className="text-xs text-muted-foreground">
+                                    {assetHistory?.total} history record{assetHistory?.total !== 1 ? 's' : ''}
+                                    {totalHistoryPages > 1 && ` • Page ${currentHistoryPage} of ${totalHistoryPages}`}
+                                  </span>
+                                  {totalHistoryPages > 1 && (
+                                    <div className="flex items-center gap-1">
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        className="h-6 px-2 text-xs" 
+                                        disabled={currentHistoryPage === 1} 
+                                        onClick={(e) => { e.stopPropagation(); setHistoryPage(prev => ({ ...prev, [item.id]: currentHistoryPage - 1 })); }}
+                                      >
+                                        Prev
+                                      </Button>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        className="h-6 px-2 text-xs" 
+                                        disabled={currentHistoryPage === totalHistoryPages} 
+                                        onClick={(e) => { e.stopPropagation(); setHistoryPage(prev => ({ ...prev, [item.id]: currentHistoryPage + 1 })); }}
+                                      >
+                                        Next
+                                      </Button>
                                     </div>
-                                  </td>
-                                </tr>
-                              )}
-                            </>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
                           )}
                         </>
                       )}
