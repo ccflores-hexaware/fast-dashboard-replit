@@ -86,12 +86,21 @@ Preferred communication style: Simple, everyday language.
 
 ### Module-Specific Features
 
-| Module | Version Column |
-|--------|----------------|
-| FAST | No |
-| TPI | Yes |
-| BTO | No |
-| CMDB | Yes |
+| Module | Version Column | History Auditing |
+|--------|----------------|------------------|
+| FAST | No | Activity log (user edits) |
+| TPI | Yes | SCD Type 2 history (external system updates) |
+| BTO | No | None |
+| CMDB | Yes | None |
+
+### TPI History Auditing
+- **Table**: `tpi_asset_history` stores full snapshots of TPI records with start/end dates
+- **Trigger**: PostgreSQL trigger `log_tpi_asset_changes()` automatically captures INSERT/UPDATE operations
+- **Pattern**: Slowly Changing Dimension Type 2 (SCD Type 2)
+  - Current records have `end_date = 9999-12-31`
+  - When updated, previous record's end_date is set to NOW(), new record starts with start_date = NOW()
+- **UI**: Inline accordion in TPI table rows with pagination (5 per page)
+- **API**: `GET /api/tpi/history/:tpiAssetId` returns `{ history, total }`
 
 ## External Dependencies
 
