@@ -956,53 +956,54 @@ export default function FASTPage() {
                         <p className="text-sm text-muted-foreground/70 mt-1">Changes and comments will appear here</p>
                       </div>
                     ) : (
-                      <div className="space-y-4">
-                        {activities.map((activity: any) => (
-                          <div key={activity.id} className="border rounded-lg p-4 bg-card shadow-sm">
-                            <div className="flex justify-between items-start mb-3">
-                              <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                                  <span className="text-xs font-bold text-primary">
-                                    {activity.modifiedBy?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || '?'}
-                                  </span>
-                                </div>
-                                <div>
-                                  <p className="text-sm font-medium">{activity.modifiedBy}</p>
-                                  <p className="text-xs text-muted-foreground">
-                                    {activity.modifiedDate ? format(new Date(activity.modifiedDate), 'MMM d, yyyy \'at\' h:mm a') : '-'}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                            {activity.text && (
-                              <div className="mb-3 p-3 bg-muted/50 rounded-md">
-                                <p className="text-sm flex items-start gap-2">
-                                  <MessageSquare className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                                  {activity.text}
-                                </p>
-                              </div>
-                            )}
-                            {activity.field && Array.isArray(activity.field) && activity.field.length > 0 && (
-                              <div className="space-y-2">
-                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Field Changes</p>
-                                <div className="space-y-2">
-                                  {activity.field.map((change: { field: string; old: any; new: any }, index: number) => (
-                                    <div key={change.field || index} className="flex items-center gap-3 text-base p-3 bg-muted/30 rounded-lg">
-                                      <span className="font-semibold min-w-[180px]">{getFieldLabel(change.field)}</span>
-                                      <span className="text-red-500 bg-red-50 dark:bg-red-950/30 px-3 py-1 rounded text-sm line-through">
-                                        {change.old || '(empty)'}
-                                      </span>
-                                      <ArrowRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                                      <span className="text-green-600 bg-green-50 dark:bg-green-950/30 px-3 py-1 rounded text-sm">
-                                        {change.new || '(empty)'}
-                                      </span>
+                      <div className="border rounded-lg overflow-hidden">
+                        <table className="w-full text-sm">
+                          <thead className="bg-muted/50 border-b">
+                            <tr>
+                              <th className="text-left p-3 font-semibold text-muted-foreground w-[180px]">Comment</th>
+                              <th className="text-left p-3 font-semibold text-muted-foreground">Field Changes</th>
+                              <th className="text-left p-3 font-semibold text-muted-foreground w-[120px]">Modified By</th>
+                              <th className="text-left p-3 font-semibold text-muted-foreground w-[160px]">Modified Date</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border">
+                            {activities.map((activity: any, idx: number) => (
+                              <tr key={activity.id} className={idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
+                                <td className="p-3 align-top">
+                                  {activity.text ? (
+                                    <span className="text-sm">{activity.text}</span>
+                                  ) : (
+                                    <span className="text-muted-foreground/50">—</span>
+                                  )}
+                                </td>
+                                <td className="p-3 align-top">
+                                  {activity.field && Array.isArray(activity.field) && activity.field.length > 0 ? (
+                                    <div className="space-y-1">
+                                      {activity.field.map((change: { field: string; old: any; new: any }, index: number) => (
+                                        <div key={change.field || index} className="flex items-center gap-2 text-sm flex-wrap">
+                                          <span className="font-medium text-foreground">{getFieldLabel(change.field)}:</span>
+                                          <span className="text-red-500 line-through">{change.old || '(empty)'}</span>
+                                          <ArrowRight className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                                          <span className="text-green-600">{change.new || '(empty)'}</span>
+                                        </div>
+                                      ))}
                                     </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        ))}
+                                  ) : (
+                                    <span className="text-muted-foreground/50">—</span>
+                                  )}
+                                </td>
+                                <td className="p-3 align-top">
+                                  <span className="text-sm font-medium">{activity.modifiedBy || '—'}</span>
+                                </td>
+                                <td className="p-3 align-top">
+                                  <span className="text-sm text-muted-foreground">
+                                    {activity.modifiedDate ? format(new Date(activity.modifiedDate), 'MMM d, yyyy h:mm a') : '—'}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
                     )}
                   </>
