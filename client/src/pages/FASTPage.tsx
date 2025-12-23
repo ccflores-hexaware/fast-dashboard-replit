@@ -5,7 +5,7 @@ import { DataTable, StatusBadge } from '@/components/DataTable';
 import { DataCard } from '@/components/DataCard';
 import { Pagination } from '@/components/Pagination';
 import { Button } from '@/components/ui/button';
-import { Download, Plus, Save, X, Pencil, Search, Check, ChevronsUpDown, Copy, ArrowRight, Settings2, RotateCcw, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Download, Save, X, Pencil, Search, Check, ChevronsUpDown, Copy, ArrowRight, Settings2, RotateCcw, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import {
@@ -340,32 +340,6 @@ export default function FASTPage() {
     }
   };
 
-  const handleAddNew = () => {
-    const newId = `AST-${String(data.length + 1).padStart(4, '0')}`;
-    const newItem: any = {
-      id: newId,
-      name: '',
-      lastModifiedBy: user?.name || 'Unknown User',
-      lastModifiedDate: format(new Date(), 'MMM d, yyyy HH:mm'),
-    };
-    // Initialize all column fields with empty/default values
-    columns.forEach(col => {
-      if (!(col.accessorKey in newItem)) {
-        if (ENUM_FIELDS[col.accessorKey]) {
-          newItem[col.accessorKey] = ENUM_FIELDS[col.accessorKey][0] || '';
-        } else {
-          newItem[col.accessorKey] = '';
-        }
-      }
-    });
-    setEditFormData(newItem);
-    setSelectedItem(null);
-    setIsEditing(true);
-    setAssetIdError(null);
-    setAssetIdAvailable(false);
-    setIsDialogOpen(true);
-  };
-
   const handleCancelEdit = () => {
     setIsEditing(false);
     setIsDialogOpen(false);
@@ -569,12 +543,6 @@ export default function FASTPage() {
               <Download className="h-4 w-4" />
               Export to Excel
             </Button>
-            {isAdmin && (
-              <Button onClick={handleAddNew} className="gap-2">
-                <Plus className="h-4 w-4" />
-                Add New
-              </Button>
-            )}
           </div>
         </div>
 
