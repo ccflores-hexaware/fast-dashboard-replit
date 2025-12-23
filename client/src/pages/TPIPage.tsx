@@ -275,13 +275,13 @@ export default function TPIPage() {
             </div>
           </div>
         ) : view === 'table' ? (
-          <div className="border rounded-lg overflow-x-auto">
-            <table className="w-full">
+          <div className="rounded-md border border-border bg-card shadow-sm overflow-x-auto overflow-y-hidden">
+            <table className="w-full caption-bottom text-sm">
               <thead className="bg-muted/50">
-                <tr>
-                  <th className="w-10 px-2 py-3 whitespace-nowrap"></th>
-                  {visibleColumns.map(col => (
-                    <th key={col.accessorKey} className="px-4 py-3 text-left text-sm font-medium text-muted-foreground cursor-pointer hover:bg-muted/80 whitespace-nowrap" onClick={() => handleSort(col.accessorKey)}>
+                <tr className="border-b border-border">
+                  <th className="w-10 px-2 py-3 whitespace-nowrap border-r border-border"></th>
+                  {visibleColumns.map((col, index) => (
+                    <th key={col.accessorKey} className={cn("font-bold text-primary whitespace-nowrap border-r border-border px-4 py-3 h-auto select-none cursor-pointer hover:bg-muted/80 text-left", index === visibleColumns.length - 1 && "border-r-0")} onClick={() => handleSort(col.accessorKey)}>
                       <div className="flex items-center gap-1">
                         {col.header}
                         {sortConfig?.key === col.accessorKey && (
@@ -292,7 +292,7 @@ export default function TPIPage() {
                   ))}
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="[&_tr:last-child]:border-0">
                 {paginatedData.map((item: any, index: number) => {
                   const isExpanded = expandedRows.has(item.id);
                   const assetHistory = historyData[item.id];
@@ -303,14 +303,14 @@ export default function TPIPage() {
                   
                   return (
                     <React.Fragment key={`${item.id}-${index}`}>
-                      <tr className={cn("border-t hover:bg-muted/30 cursor-pointer", index % 2 === 0 ? "bg-background" : "bg-muted/10")}>
-                        <td className="px-2 py-3 whitespace-nowrap">
+                      <tr className="hover:bg-muted/30 transition-colors border-b border-border cursor-pointer">
+                        <td className="px-2 py-3 whitespace-nowrap border-r border-border">
                           <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={(e) => { e.stopPropagation(); toggleRow(item.id); }}>
                             {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                           </Button>
                         </td>
-                        {visibleColumns.map(col => (
-                          <td key={col.accessorKey} className="px-4 py-3 text-sm whitespace-nowrap" onClick={() => handleItemClick(item)}>
+                        {visibleColumns.map((col, colIndex) => (
+                          <td key={col.accessorKey} className={cn("text-sm border-r border-border px-4 py-3 whitespace-nowrap", colIndex === visibleColumns.length - 1 && "border-r-0")} onClick={() => handleItemClick(item)}>
                             {col.cell ? col.cell(item) : (item[col.accessorKey] ?? '—')}
                           </td>
                         ))}
@@ -318,8 +318,8 @@ export default function TPIPage() {
                       {isExpanded && (
                         <>
                           {isLoadingHistory ? (
-                            <tr className="bg-muted/5 border-t border-dashed">
-                              <td colSpan={visibleColumns.length + 1} className="px-4 py-4">
+                            <tr className="bg-muted/5 border-b border-border">
+                              <td colSpan={visibleColumns.length + 1} className="px-4 py-3">
                                 <div className="flex items-center justify-center gap-2">
                                   <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                                   <span className="text-sm text-muted-foreground">Loading history...</span>
@@ -327,8 +327,8 @@ export default function TPIPage() {
                               </td>
                             </tr>
                           ) : paginatedHistory.length === 0 ? (
-                            <tr className="bg-muted/5 border-t border-dashed">
-                              <td colSpan={visibleColumns.length + 1} className="px-4 py-4">
+                            <tr className="bg-muted/5 border-b border-border">
+                              <td colSpan={visibleColumns.length + 1} className="px-4 py-3">
                                 <div className="flex items-center justify-center gap-2">
                                   <History className="h-4 w-4 text-muted-foreground" />
                                   <span className="text-sm text-muted-foreground">No history available</span>
@@ -340,24 +340,21 @@ export default function TPIPage() {
                               {paginatedHistory.map((historyItem: any, hIndex: number) => (
                                 <tr 
                                   key={`history-${historyItem.id}`}
-                                  className={cn(
-                                    "border-t border-dashed cursor-pointer hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-colors",
-                                    "bg-gradient-to-r from-blue-50/30 to-transparent dark:from-blue-950/10"
-                                  )}
+                                  className="border-b border-border cursor-pointer hover:bg-muted/30 transition-colors bg-muted/5"
                                   onClick={() => { setSelectedHistoryItem(historyItem); setIsHistoryDialogOpen(true); }}
                                 >
-                                  <td className="px-2 py-2 whitespace-nowrap">
+                                  <td className="px-2 py-3 whitespace-nowrap border-r border-border">
                                     <div className="flex items-center justify-center">
                                       <span className="text-xs text-muted-foreground/60">└</span>
                                     </div>
                                   </td>
                                   {columnVisibility['id'] !== false && (
-                                    <td className="px-4 py-2 text-sm whitespace-nowrap text-muted-foreground/50">
+                                    <td className="text-sm border-r border-border px-4 py-3 whitespace-nowrap text-muted-foreground/50">
                                       <span className="text-xs italic">—</span>
                                     </td>
                                   )}
                                   {historyColumns.map((col, colIndex) => (
-                                    <td key={col.accessorKey} className="px-4 py-2 text-sm whitespace-nowrap text-muted-foreground">
+                                    <td key={col.accessorKey} className={cn("text-sm border-r border-border px-4 py-3 whitespace-nowrap text-muted-foreground", colIndex === historyColumns.length - 1 && "border-r-0")}>
                                       {colIndex === 0 ? (
                                         <div className="flex items-center gap-2">
                                           <History className="h-3 w-3 text-muted-foreground/50" />
@@ -377,11 +374,11 @@ export default function TPIPage() {
                                 </tr>
                               ))}
                               {(totalHistoryPages > 1 || assetHistory) && (
-                                <tr className="bg-muted/5 border-t border-dashed">
-                                  <td className="px-2 py-2 whitespace-nowrap">
+                                <tr className="bg-muted/5 border-b border-border">
+                                  <td className="px-2 py-3 whitespace-nowrap border-r border-border">
                                     <span className="text-xs text-muted-foreground/60 flex justify-center">└</span>
                                   </td>
-                                  <td colSpan={visibleColumns.length} className="px-4 py-2">
+                                  <td colSpan={visibleColumns.length} className="px-4 py-3">
                                     <div className="flex items-center gap-3">
                                       <span className="text-xs text-muted-foreground">
                                         {assetHistory?.total} history record{assetHistory?.total !== 1 ? 's' : ''}
