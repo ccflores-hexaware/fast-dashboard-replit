@@ -19,7 +19,7 @@ export type User = typeof users.$inferSelect;
 
 export const fastAssets = pgTable("fast_assets", {
   internalId: serial("internal_id").primaryKey(),
-  id: varchar("id", { length: 50 }).notNull(),
+  id: varchar("id", { length: 50 }).notNull().unique(),
   name: text("name").notNull(),
   kalmAssignee: text("kalm_assignee"),
   onboardingStatus: text("onboarding_status"),
