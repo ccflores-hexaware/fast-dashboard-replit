@@ -32,6 +32,7 @@ Preferred communication style: Simple, everyday language.
 - **Column Visibility**: Configurable column visibility with presets and localStorage persistence (Table view only)
 - **Card Field Visibility**: Configurable card field display with 7-field maximum limit and localStorage persistence (Card view only)
 - **Standard CRUD Operations**: All modules support create, read, update, delete operations without versioning
+- **Activity Tracking**: Unified activity log tracks field changes and comments for FAST assets with JSONB storage
 - **Responsive Layout**: Mobile-first design with consistent navigation header
 
 ### Project Structure
