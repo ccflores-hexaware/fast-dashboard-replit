@@ -430,8 +430,8 @@ export default function TPIPage() {
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
             <DialogHeader className="pb-4 border-b"><DialogTitle className="text-xl">{selectedItem?.name || 'Details'}</DialogTitle><DialogDescription>{selectedItem?.id}</DialogDescription></DialogHeader>
-            <ScrollArea className="flex-1 pr-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+            <ScrollArea className="flex-1 min-h-0 max-h-[calc(90vh-150px)]">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4 pr-4">
                 {selectedItem && columns.map(col => (
                   <div key={col.accessorKey} className="space-y-1">
                     <Label className="text-sm text-muted-foreground">{col.header}</Label>
@@ -467,8 +467,8 @@ export default function TPIPage() {
                 )}
               </DialogDescription>
             </DialogHeader>
-            <ScrollArea className="flex-1 pr-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+            <ScrollArea className="flex-1 min-h-0 max-h-[calc(90vh-150px)]">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4 pr-4">
                 {selectedHistoryItem && (
                   <>
                     <div className="space-y-1">
