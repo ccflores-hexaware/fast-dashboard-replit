@@ -530,7 +530,8 @@ export default function SubAssetsPage() {
                       const value = editFormData[key];
                       const enumOptions = ENUM_FIELDS[key];
                       const isAuditField = key === 'lastModifiedBy' || key === 'lastModifiedDate';
-                      const shouldDisable = isAuditField;
+                      const isAssetIdField = key === 'assetId';
+                      const shouldDisable = isAuditField || isAssetIdField;
                       
                       return (
                         <div key={key} className="flex flex-col space-y-2 py-3 border-b border-border/50">
