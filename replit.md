@@ -92,8 +92,25 @@ Preferred communication style: Simple, everyday language.
 | FAST | No | Activity log (user edits) |
 | Sub-assets | No | None |
 | TPI | Yes | SCD Type 2 history (external system updates) |
-| BTO | No | None |
+| BTO | No | Derived data from TPI |
 | CMDB | Yes | SCD Type 2 history (matching TPI pattern) |
+
+### BTO Module (Derived Data)
+- **Data Source**: BTO page data is derived by joining `tpi_assets` with `bto_mapping` table
+- **Mapping Logic**: 
+  - `tpi_assets.bto_alignment` = `bto_mapping.bto` AND
+  - `tpi_assets.owning_internal_org` = `bto_mapping.division`
+  - This combination maps to `bto_mapping.higher_level_bto`
+- **Lookup Table**: `bto_mapping` stores static mapping with columns:
+  - `higher_level_bto` (EBTO, EDO, EO&T)
+  - `bto` (Business Technology Office name)
+  - `division` (Division name)
+- **UI Features**:
+  - Expandable rows showing breakdown by BTO and Division
+  - Aggregated totals by Higher Level BTO
+  - Grand total of all matched assets
+  - Export to Excel with hierarchical structure
+- **API**: `GET /api/bto/summary` returns aggregated asset counts
 
 ### CMDB History Auditing
 - **Table**: `cmdb_asset_history` stores full snapshots of CMDB records with start/end dates
