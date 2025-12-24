@@ -1,28 +1,26 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { ViewToggle } from '@/components/ViewToggle';
 import { DataTable } from '@/components/DataTable';
 import { DataCard } from '@/components/DataCard';
 import { Pagination } from '@/components/Pagination';
 import { Button } from '@/components/ui/button';
-import { Download, Search, Check, ChevronsUpDown, Settings2, Loader2 } from 'lucide-react';
+import { Download, Search, Check, ChevronsUpDown, Settings2 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/lib/userContext";
 import * as XLSX from 'xlsx';
 import { usePagination, useSorting, useColumnFilters, useViewToggle } from '@/hooks';
 
-const ALL_COLUMN_KEYS = ['id', 'higherLevelBTO', 'bto', 'division', 'concatValue', 'owner', 'deadline', 'status', 'progress'];
-const DEFAULT_COLUMNS = ['id', 'higherLevelBTO', 'bto', 'division', 'owner', 'deadline', 'status', 'progress'];
-const DEFAULT_CARD_FIELDS = ['id', 'higherLevelBTO', 'division', 'owner', 'status', 'progress'];
+const ALL_COLUMN_KEYS = ['higherLevelBTO', 'bto', 'division', 'totalAssets'];
+const DEFAULT_COLUMNS = ['higherLevelBTO', 'bto', 'division', 'totalAssets'];
+const DEFAULT_CARD_FIELDS = ['higherLevelBTO', 'bto', 'division', 'totalAssets'];
 
 const COLUMN_PRESETS = [
   { name: 'Default', columns: 'default' as const },
@@ -34,60 +32,36 @@ export default function BTOPage() {
   const { isAdmin } = useUser();
   const { view, setView } = useViewToggle('table');
   
-  const [data, setData] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const data: any[] = [];
   
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch('/api/bto');
-        if (!response.ok) throw new Error('Failed to fetch');
-        const assets = await response.json();
-        setData(assets);
-      } catch (error) {
-        console.error('Error fetching BTO data:', error);
-        toast({ title: "Error", description: "Failed to load BTO data", variant: "destructive" });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
-  const [selectedItem, setSelectedItem] = useState<any>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchColumn, setSearchColumn] = useState('all');
   const [openCombobox, setOpenCombobox] = useState(false);
-  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({});
+  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>(() => {
+    const v: Record<string, boolean> = {};
+    ALL_COLUMN_KEYS.forEach(k => { v[k] = DEFAULT_COLUMNS.includes(k); });
+    return v;
+  });
   const [columnSearchQuery, setColumnSearchQuery] = useState('');
-  const [cardFieldVisibility, setCardFieldVisibility] = useState<Record<string, boolean>>({});
-
-  useEffect(() => {
-    const storageKey = `bto-column-visibility-${isAdmin ? 'admin' : 'viewer'}`;
-    const saved = localStorage.getItem(storageKey);
-    if (saved) { try { setColumnVisibility(JSON.parse(saved)); } catch { const v: Record<string, boolean> = {}; ALL_COLUMN_KEYS.forEach(k => { v[k] = DEFAULT_COLUMNS.includes(k); }); setColumnVisibility(v); } }
-    else { const v: Record<string, boolean> = {}; ALL_COLUMN_KEYS.forEach(k => { v[k] = DEFAULT_COLUMNS.includes(k); }); setColumnVisibility(v); }
-    const cardSaved = localStorage.getItem('bto-card-field-visibility');
-    if (cardSaved) { try { setCardFieldVisibility(JSON.parse(cardSaved)); } catch { const v: Record<string, boolean> = {}; DEFAULT_CARD_FIELDS.forEach(k => { v[k] = true; }); setCardFieldVisibility(v); } }
-    else { const v: Record<string, boolean> = {}; DEFAULT_CARD_FIELDS.forEach(k => { v[k] = true; }); setCardFieldVisibility(v); }
-  }, [isAdmin]);
-
-  useEffect(() => { if (Object.keys(columnVisibility).length > 0) localStorage.setItem(`bto-column-visibility-${isAdmin ? 'admin' : 'viewer'}`, JSON.stringify(columnVisibility)); }, [columnVisibility, isAdmin]);
-  useEffect(() => { if (Object.keys(cardFieldVisibility).length > 0) localStorage.setItem('bto-card-field-visibility', JSON.stringify(cardFieldVisibility)); }, [cardFieldVisibility]);
+  const [cardFieldVisibility, setCardFieldVisibility] = useState<Record<string, boolean>>(() => {
+    const v: Record<string, boolean> = {};
+    DEFAULT_CARD_FIELDS.forEach(k => { v[k] = true; });
+    return v;
+  });
 
   const columns = useMemo(() => [
-    { header: 'ID', accessorKey: 'id' },
-    { header: 'Higher Level BTO', accessorKey: 'higherLevelBTO', cell: (item: any) => <span className="font-semibold text-primary">{item.higherLevelBTO}</span> },
+    { header: 'Higher Level BTO', accessorKey: 'higherLevelBTO' },
     { header: 'BTO', accessorKey: 'bto' },
     { header: 'Division', accessorKey: 'division' },
-    { header: 'Concat Value', accessorKey: 'concatValue' },
-    { header: 'Owner', accessorKey: 'owner' },
-    { header: 'Deadline', accessorKey: 'deadline' },
-    { header: 'Status', accessorKey: 'status' },
-    { header: 'Progress', accessorKey: 'progress', cell: (item: any) => <span>{item.progress}%</span> },
+    { header: 'Total Assets', accessorKey: 'totalAssets' },
   ], []);
 
-  const cardFields = [{ label: 'ID', key: 'id' }, { label: 'Higher Level BTO', key: 'higherLevelBTO' }, { label: 'Division', key: 'division' }, { label: 'Owner', key: 'owner' }, { label: 'Status', key: 'status' }, { label: 'Progress', key: 'progress' }];
+  const cardFields = [
+    { label: 'Higher Level BTO', key: 'higherLevelBTO' },
+    { label: 'BTO', key: 'bto' },
+    { label: 'Division', key: 'division' },
+    { label: 'Total Assets', key: 'totalAssets' },
+  ];
 
   const searchFilteredData = useMemo(() => {
     if (!searchQuery.trim()) return data;
@@ -105,8 +79,6 @@ export default function BTOPage() {
   const visibleColumns = useMemo(() => columns.filter(col => columnVisibility[col.accessorKey] !== false), [columns, columnVisibility]);
   const visibleCardFields = useMemo(() => cardFields.filter(field => cardFieldVisibility[field.key]), [cardFieldVisibility]);
   const visibleColumnCount = Object.values(columnVisibility).filter(Boolean).length;
-
-  const handleItemClick = (item: any) => { setSelectedItem(item); setIsDialogOpen(true); };
 
   const applyColumnPreset = (preset: { name: string; columns: string[] | 'all' | 'default' }) => {
     let cols: string[];
@@ -154,30 +126,34 @@ export default function BTOPage() {
           </div>
         </div>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <div className="flex flex-col items-center gap-4">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-muted-foreground">Loading assets...</p>
-            </div>
+        {view === 'table' ? (
+          <DataTable 
+            data={paginatedData} 
+            columns={visibleColumns} 
+            onSort={handleSort} 
+            sortConfig={sortConfig} 
+            columnFilters={columnFilters} 
+            onColumnFiltersChange={(filters: Record<string, string[]>) => setColumnFilters(filters)} 
+            allData={searchFilteredData}
+            emptyStateTitle="No BTO Data"
+            emptyStateMessage="BTO data will be derived from other sources. Configuration pending."
+          />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {paginatedData.length === 0 ? (
+              <div className="col-span-full text-center py-16 text-muted-foreground">
+                <p className="text-lg font-medium">No BTO Data</p>
+                <p className="text-sm">BTO data will be derived from other sources. Configuration pending.</p>
+              </div>
+            ) : (
+              paginatedData.map((item: any, index: number) => (
+                <DataCard key={`${item.bto}-${index}`} item={item} titleKey="bto" fields={visibleCardFields as any} />
+              ))
+            )}
           </div>
-        ) : view === 'table' ? (<DataTable data={paginatedData} columns={visibleColumns} onSort={handleSort} sortConfig={sortConfig} columnFilters={columnFilters} onColumnFiltersChange={(filters: Record<string, string[]>) => setColumnFilters(filters)} allData={searchFilteredData} />) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">{paginatedData.map((item: any, index: number) => (<DataCard key={`${item.id}-${index}`} item={item} titleKey="bto" fields={visibleCardFields as any} onClick={handleItemClick} />))}</div>
         )}
 
         <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} pageSize={pageSize} onPageChange={setCurrentPage} onPageSizeChange={setPageSize} />
-
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-            <DialogHeader className="pb-4 border-b"><DialogTitle className="text-xl">{selectedItem?.bto || 'Details'}</DialogTitle><DialogDescription>{selectedItem?.higherLevelBTO}</DialogDescription></DialogHeader>
-            <ScrollArea className="flex-1 pr-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-                {selectedItem && Object.entries(selectedItem).map(([key, value]) => { const column = columns.find(c => c.accessorKey === key); return (<div key={key} className="space-y-1"><Label className="text-sm text-muted-foreground">{column?.header || key}</Label><p className="text-sm font-medium">{String(value || '-')}</p></div>); })}
-              </div>
-            </ScrollArea>
-            <div className="flex justify-end pt-4 border-t"><Button variant="outline" onClick={() => setIsDialogOpen(false)}>Close</Button></div>
-          </DialogContent>
-        </Dialog>
       </div>
     </DashboardLayout>
   );
