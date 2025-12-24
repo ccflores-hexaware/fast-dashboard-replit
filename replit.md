@@ -118,10 +118,12 @@ Preferred communication style: Simple, everyday language.
 - **Pattern**: Slowly Changing Dimension Type 2 (SCD Type 2)
   - Current records have `end_date = 9999-12-31`
   - When updated, previous record's end_date is set to NOW(), new record starts with start_date = NOW()
-- **UI**: Inline accordion in CMDB table rows with pagination (5 per page)
+- **UI**: 
+  - Inline accordion in CMDB table rows with pagination (5 per page)
   - History sub-table dynamically matches visible columns from main table
   - Clickable rows open detail popup dialog
   - "Current" badge on first column for active records
+  - **Detail Dialog History Tab**: Tabbed interface in asset detail dialog with Details and History tabs (available in both table and card views)
 - **API**: `GET /api/cmdb/history/:cmdbAssetId` returns `{ history, total }`
 
 ### Sub-assets Feature
@@ -148,10 +150,12 @@ Preferred communication style: Simple, everyday language.
 - **Pattern**: Slowly Changing Dimension Type 2 (SCD Type 2)
   - Current records have `end_date = 9999-12-31`
   - When updated, previous record's end_date is set to NOW(), new record starts with start_date = NOW()
-- **UI**: Inline accordion in TPI table rows with pagination (5 per page)
+- **UI**: 
+  - Inline accordion in TPI table rows with pagination (5 per page)
   - History sub-table dynamically matches visible columns from main table (excluding version)
   - Clickable rows open detail popup dialog
   - "Current" badge on first column for active records
+  - **Detail Dialog History Tab**: Tabbed interface in asset detail dialog with Details and History tabs (available in both table and card views)
 - **API**: `GET /api/tpi/history/:tpiAssetId` returns `{ history, total }`
 
 ## External Dependencies
