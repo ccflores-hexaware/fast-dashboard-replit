@@ -295,5 +295,15 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/bto/summary", async (req: Request, res: Response) => {
+    try {
+      const summary = await storage.getBtoSummary();
+      res.json(summary);
+    } catch (error) {
+      console.error("Error fetching BTO summary:", error);
+      res.status(500).json({ error: "Failed to fetch BTO summary" });
+    }
+  });
+
   return httpServer;
 }
