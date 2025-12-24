@@ -287,7 +287,7 @@ export type CmdbAsset = typeof cmdbAssets.$inferSelect;
 
 export const subAssets = pgTable("sub_assets", {
   internalId: serial("internal_id").primaryKey(),
-  parentAssetId: varchar("parent_asset_id", { length: 50 }).notNull(),
+  parentAssetId: varchar("parent_asset_id", { length: 50 }).notNull().references(() => fastAssets.id),
   name: text("name"),
   assetId: text("asset_id"),
   btoAlignment: text("bto_alignment"),
