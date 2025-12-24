@@ -655,7 +655,9 @@ export default function FASTPage() {
       
       if (!subAssetResponse.ok) throw new Error('Failed to create sub-asset');
       
-      setData([savedFastItem, ...data]);
+      // Mark as sub-asset since POST response doesn't include the computed flag
+      const savedFastItemWithFlag = { ...savedFastItem, isSubAsset: true };
+      setData([savedFastItemWithFlag, ...data]);
       setIsDuplicateConfirmOpen(false);
       fetchSubAssetCounts();
       toast({
