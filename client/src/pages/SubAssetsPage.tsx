@@ -150,12 +150,9 @@ const FIELD_LABELS: Record<string, string> = {
 export default function SubAssetsPage() {
   const { user, isAdmin } = useUser();
   const { toast } = useToast();
-  const [data, setData] = useState<any[]>([]);
+  const [baseData, setBaseData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { view, setView } = useViewToggle('table');
-  const { currentPage, setCurrentPage, pageSize, setPageSize, totalPages, totalItems, paginatedData, setTotalItems } = usePagination({ initialPageSize: 25 });
-  const { sortColumn, sortDirection, handleSort } = useSorting();
-  const { columnFilters, setColumnFilter, clearColumnFilters, filterData } = useColumnFilters();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchColumn, setSearchColumn] = useState('all');
   const [openCombobox, setOpenCombobox] = useState(false);
@@ -215,7 +212,7 @@ export default function SubAssetsPage() {
       const response = await fetch('/api/sub-assets');
       if (!response.ok) throw new Error('Failed to fetch');
       const result = await response.json();
-      setData(result);
+      setBaseData(result);
     } catch (error) {
       console.error('Error fetching sub-assets:', error);
       toast({ title: "Error", description: "Failed to load sub-assets.", variant: "destructive" });
@@ -228,57 +225,45 @@ export default function SubAssetsPage() {
     return ALL_COLUMN_KEYS.map(key => ({
       accessorKey: key,
       header: FIELD_LABELS[key] || key,
-      enableSorting: true,
-      enableFiltering: true,
     }));
   }, []);
+
+  const cardFields = useMemo(() => {
+    return ALL_COLUMN_KEYS.map(key => ({
+      key,
+      label: FIELD_LABELS[key] || key,
+    }));
+  }, []);
+
+  const searchFilteredData = useMemo(() => {
+    if (!searchQuery.trim()) return baseData;
+    const query = searchQuery.toLowerCase();
+    return baseData.filter((item: any) => {
+      if (searchColumn === 'all') {
+        return columns.some(col => {
+          const value = item[col.accessorKey];
+          return value && String(value).toLowerCase().includes(query);
+        });
+      }
+      const value = item[searchColumn];
+      return value && String(value).toLowerCase().includes(query);
+    });
+  }, [baseData, searchQuery, searchColumn, columns]);
+
+  const { columnFilters, setColumnFilters, filteredData } = useColumnFilters(searchFilteredData);
+  const { sortConfig, handleSort, sortedData } = useSorting(filteredData);
+  const { currentPage, pageSize, setCurrentPage, setPageSize, paginatedData, totalPages, totalItems } = usePagination(sortedData);
 
   const visibleColumns = useMemo(() => {
     return columns.filter(col => columnVisibility[col.accessorKey] !== false);
   }, [columns, columnVisibility]);
 
   const visibleCardFields = useMemo(() => {
-    return columns.filter(col => cardFieldVisibility[col.accessorKey] === true);
-  }, [columns, cardFieldVisibility]);
+    return cardFields.filter(field => cardFieldVisibility[field.key]);
+  }, [cardFields, cardFieldVisibility]);
 
   const visibleColumnCount = Object.values(columnVisibility).filter(Boolean).length;
   const totalColumnCount = ALL_COLUMN_KEYS.length;
-  const visibleCardFieldCount = Object.values(cardFieldVisibility).filter(Boolean).length;
-
-  const filteredData = useMemo(() => {
-    let result = [...data];
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(item => {
-        if (searchColumn === 'all') {
-          return Object.values(item).some(val => String(val).toLowerCase().includes(query));
-        }
-        return String(item[searchColumn]).toLowerCase().includes(query);
-      });
-    }
-    result = filterData(result);
-    return result;
-  }, [data, searchQuery, searchColumn, filterData]);
-
-  const sortedData = useMemo(() => {
-    if (!sortColumn) return filteredData;
-    return [...filteredData].sort((a, b) => {
-      const aVal = a[sortColumn] ?? '';
-      const bVal = b[sortColumn] ?? '';
-      if (sortDirection === 'asc') return String(aVal).localeCompare(String(bVal));
-      return String(bVal).localeCompare(String(aVal));
-    });
-  }, [filteredData, sortColumn, sortDirection]);
-
-  useEffect(() => {
-    setTotalItems(sortedData.length);
-    setCurrentPage(1);
-  }, [sortedData.length, setTotalItems, setCurrentPage]);
-
-  const currentPageData = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return sortedData.slice(start, start + pageSize);
-  }, [sortedData, currentPage, pageSize]);
 
   const handleItemClick = (item: any) => {
     setSelectedItem(item);
@@ -316,7 +301,7 @@ export default function SubAssetsPage() {
       if (!response.ok) throw new Error('Failed to update');
       const savedItem = await response.json();
       
-      setData(data.map(item => item.internalId === savedItem.internalId ? savedItem : item));
+      setBaseData(baseData.map(item => item.internalId === savedItem.internalId ? savedItem : item));
       setSelectedItem(savedItem);
       setEditFormData(savedItem);
       setIsEditing(false);
@@ -482,20 +467,20 @@ export default function SubAssetsPage() {
           </div>
         ) : view === 'table' ? (
           <DataTable
-            data={currentPageData}
+            data={paginatedData}
             columns={visibleColumns}
             onRowClick={handleItemClick}
-            sortColumn={sortColumn}
-            sortDirection={sortDirection}
+            sortColumn={sortConfig.key}
+            sortDirection={sortConfig.direction}
             onSort={handleSort}
             columnFilters={columnFilters}
-            onColumnFilter={setColumnFilter}
-            onClearFilters={clearColumnFilters}
-            allData={data}
+            onColumnFilter={(key, values) => setColumnFilters(prev => ({ ...prev, [key]: values }))}
+            onClearFilters={() => setColumnFilters({})}
+            allData={baseData}
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {currentPageData.map((item: any, index: number) => (
+            {paginatedData.map((item: any, index: number) => (
               <DataCard
                 key={`${item.internalId}-${index}`}
                 item={item}

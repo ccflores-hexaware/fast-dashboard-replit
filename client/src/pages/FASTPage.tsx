@@ -5,7 +5,9 @@ import { DataTable, StatusBadge } from '@/components/DataTable';
 import { DataCard } from '@/components/DataCard';
 import { Pagination } from '@/components/Pagination';
 import { Button } from '@/components/ui/button';
-import { Download, Save, X, Pencil, Search, Check, ChevronsUpDown, Copy, ArrowRight, Settings2, RotateCcw, Eye, EyeOff, Loader2, MessageSquare, History } from 'lucide-react';
+import { Download, Save, X, Pencil, Search, Check, ChevronsUpDown, Copy, ArrowRight, Settings2, RotateCcw, Eye, EyeOff, Loader2, MessageSquare, History, Layers } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Link } from 'wouter';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import {
@@ -176,7 +178,21 @@ export default function FASTPage() {
   const [isLoadingActivities, setIsLoadingActivities] = useState(false);
   const [activeTab, setActiveTab] = useState<'details' | 'activity'>('details');
   const [activityDisplayLimit, setActivityDisplayLimit] = useState(5);
+  const [subAssetCounts, setSubAssetCounts] = useState<Record<string, number>>({});
+  const [isCreatingSubAsset, setIsCreatingSubAsset] = useState(false);
   
+  const fetchSubAssetCounts = async () => {
+    try {
+      const response = await fetch('/api/sub-assets/counts');
+      if (response.ok) {
+        const counts = await response.json();
+        setSubAssetCounts(counts);
+      }
+    } catch (error) {
+      console.error('Error fetching sub-asset counts:', error);
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -184,6 +200,7 @@ export default function FASTPage() {
         if (!response.ok) throw new Error('Failed to fetch');
         const assets = await response.json();
         setData(assets);
+        fetchSubAssetCounts();
       } catch (error) {
         console.error('Error fetching FAST data:', error);
         toast({ title: "Error", description: "Failed to load FAST data", variant: "destructive" });
@@ -270,25 +287,51 @@ export default function FASTPage() {
     return data;
   }, [data]);
 
+  const isSubAsset = (id: string) => /-SUB\d+$/.test(id);
+  const getParentId = (id: string) => id.replace(/-SUB\d+$/, '');
+  const getSubAssetCount = (id: string) => subAssetCounts[id] || 0;
+
   const columns = useMemo(() => [
     { 
       header: 'Asset ID', 
       accessorKey: 'id',
-      cell: (item: any) => (
-        <button 
-          onClick={(e) => {
-            e.stopPropagation();
-            if (isAdmin) {
-              handleEditClick(item);
-            } else {
-              handleItemClick(item);
-            }
-          }}
-          className="text-primary hover:underline font-bold underline decoration-2 underline-offset-2 hover:text-primary/80 transition-colors"
-        >
-          {item.id}
-        </button>
-      )
+      cell: (item: any) => {
+        const isSub = isSubAsset(item.id);
+        const parentId = isSub ? getParentId(item.id) : null;
+        const subCount = !isSub ? getSubAssetCount(item.id) : 0;
+        
+        return (
+          <div className="flex flex-col gap-1">
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                if (isAdmin) {
+                  handleEditClick(item);
+                } else {
+                  handleItemClick(item);
+                }
+              }}
+              className="text-primary hover:underline font-bold underline decoration-2 underline-offset-2 hover:text-primary/80 transition-colors text-left"
+            >
+              {item.id}
+            </button>
+            <div className="flex gap-1 flex-wrap">
+              {isSub && (
+                <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800">
+                  <Layers className="h-3 w-3 mr-1" />
+                  Sub-asset
+                </Badge>
+              )}
+              {subCount > 0 && (
+                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800">
+                  <Layers className="h-3 w-3 mr-1" />
+                  {subCount} sub-asset{subCount > 1 ? 's' : ''}
+                </Badge>
+              )}
+            </div>
+          </div>
+        );
+      }
     },
     { header: 'Name', accessorKey: 'name', cell: (item: any) => <span className="font-semibold text-primary">{item.name}</span> },
     { header: 'KALM Assignee', accessorKey: 'kalmAssignee' },
@@ -338,7 +381,7 @@ export default function FASTPage() {
     { header: 'Comments', accessorKey: 'comments' },
     { header: 'Last Modified By', accessorKey: 'lastModifiedBy' },
     { header: 'Last Modified Date', accessorKey: 'lastModifiedDate' },
-  ], [isAdmin]);
+  ], [isAdmin, subAssetCounts]);
 
   const cardFields = [
     { label: 'Asset ID', key: 'id' },
@@ -597,41 +640,61 @@ export default function FASTPage() {
 
   const handleDuplicate = async () => {
     if (!selectedItem) return;
-    const newId = `AST-${String(data.length + 1).padStart(4, '0')}`;
-    const duplicatedItem = {
-      ...selectedItem,
-      id: newId,
-      name: `${selectedItem.name} (Copy)`,
-      lastModifiedBy: user?.name || 'Unknown User',
-      lastModifiedDate: format(new Date(), 'MMM d, yyyy HH:mm'),
-    };
-    delete duplicatedItem.internalId;
-    delete duplicatedItem.createdAt;
+    setIsCreatingSubAsset(true);
     
     try {
+      const nextIdResponse = await fetch(`/api/fast/next-sub-id/${selectedItem.id}`);
+      if (!nextIdResponse.ok) throw new Error('Failed to get next sub-asset ID');
+      const { nextId } = await nextIdResponse.json();
+      
+      const duplicatedItem = {
+        ...selectedItem,
+        id: nextId,
+        name: `${selectedItem.name} (Sub-asset)`,
+        lastModifiedBy: user?.name || 'Unknown User',
+        lastModifiedDate: format(new Date(), 'MMM d, yyyy HH:mm'),
+      };
+      delete duplicatedItem.internalId;
+      delete duplicatedItem.createdAt;
+      
       const response = await fetch('/api/fast', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(duplicatedItem)
       });
       
-      if (!response.ok) throw new Error('Failed to duplicate');
-      const savedItem = await response.json();
+      if (!response.ok) throw new Error('Failed to create FAST asset');
+      const savedFastItem = await response.json();
       
-      setData([savedItem, ...data]);
+      const subAssetResponse = await fetch('/api/sub-assets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          parentAssetId: nextId,
+          lastModifiedBy: user?.name || 'Unknown User',
+          lastModifiedDate: format(new Date(), 'MMM d, yyyy HH:mm'),
+        })
+      });
+      
+      if (!subAssetResponse.ok) throw new Error('Failed to create sub-asset');
+      
+      setData([savedFastItem, ...data]);
       setIsDuplicateConfirmOpen(false);
+      fetchSubAssetCounts();
       toast({
-        title: "Asset Duplicated",
-        description: `Created ${newId} as a copy of ${selectedItem.id}.`,
+        title: "Sub-asset Created",
+        description: `Created ${nextId} as a sub-asset. Go to the Sub-assets page to fill in the details.`,
         variant: "success"
       });
     } catch (error) {
-      console.error('Error duplicating:', error);
+      console.error('Error creating sub-asset:', error);
       toast({
         title: "Error",
-        description: "Failed to duplicate asset.",
+        description: "Failed to create sub-asset.",
         variant: "destructive"
       });
+    } finally {
+      setIsCreatingSubAsset(false);
     }
   };
 
@@ -1041,7 +1104,7 @@ export default function FASTPage() {
                   <div className="flex gap-2">
                     {isAdmin && selectedItem && (
                       <Button size="sm" onClick={() => setIsDuplicateConfirmOpen(true)} className="gap-1 text-white" style={{ backgroundColor: '#f59e0b' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d97706'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#f59e0b'}>
-                        <Copy className="h-4 w-4" /> Duplicate
+                        <Layers className="h-4 w-4" /> Create Sub-asset
                       </Button>
                     )}
                   </div>
@@ -1060,12 +1123,19 @@ export default function FASTPage() {
         <Dialog open={isDuplicateConfirmOpen} onOpenChange={setIsDuplicateConfirmOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Duplicate Asset</DialogTitle>
-              <DialogDescription>Create a copy of {selectedItem?.id}?</DialogDescription>
+              <DialogTitle>Create Sub-asset</DialogTitle>
+              <DialogDescription>
+                This will create a new sub-asset derived from {selectedItem?.id}. The new asset will have an ID like <span className="font-mono font-bold">{selectedItem?.id}-SUB1</span>.
+                <br /><br />
+                After creation, go to the Sub-assets page to fill in the sub-asset specific fields.
+              </DialogDescription>
             </DialogHeader>
             <div className="flex justify-end gap-2 mt-4">
-              <Button variant="outline" onClick={() => setIsDuplicateConfirmOpen(false)}>Cancel</Button>
-              <Button onClick={handleDuplicate} className="text-white" style={{ backgroundColor: '#f59e0b' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d97706'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#f59e0b'}>Duplicate</Button>
+              <Button variant="outline" onClick={() => setIsDuplicateConfirmOpen(false)} disabled={isCreatingSubAsset}>Cancel</Button>
+              <Button onClick={handleDuplicate} disabled={isCreatingSubAsset} className="text-white gap-2" style={{ backgroundColor: '#f59e0b' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d97706'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#f59e0b'}>
+                {isCreatingSubAsset ? <Loader2 className="h-4 w-4 animate-spin" /> : <Layers className="h-4 w-4" />}
+                {isCreatingSubAsset ? 'Creating...' : 'Create Sub-asset'}
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
