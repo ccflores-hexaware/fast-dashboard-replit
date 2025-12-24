@@ -431,7 +431,18 @@ export default function TPIPage() {
             <DialogHeader className="pb-4 border-b"><DialogTitle className="text-xl">{selectedItem?.name || 'Details'}</DialogTitle><DialogDescription>{selectedItem?.id}</DialogDescription></DialogHeader>
             <ScrollArea className="flex-1 pr-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-                {selectedItem && Object.entries(selectedItem).map(([key, value]) => { const column = columns.find(c => c.accessorKey === key); return (<div key={key} className="space-y-1"><Label className="text-sm text-muted-foreground">{column?.header || key}</Label><p className="text-sm font-medium">{String(value || '-')}</p></div>); })}
+                {selectedItem && columns.map(col => (
+                  <div key={col.accessorKey} className="space-y-1">
+                    <Label className="text-sm text-muted-foreground">{col.header}</Label>
+                    <p className="text-sm font-medium">{String(selectedItem[col.accessorKey] ?? '—')}</p>
+                  </div>
+                ))}
+                {selectedItem?.createdAt && (
+                  <div className="space-y-1">
+                    <Label className="text-sm text-muted-foreground">Created At</Label>
+                    <p className="text-sm font-medium">{format(new Date(selectedItem.createdAt), 'MMM d, yyyy HH:mm')}</p>
+                  </div>
+                )}
               </div>
             </ScrollArea>
             <div className="flex justify-end pt-4 border-t"><Button variant="outline" onClick={() => setIsDialogOpen(false)}>Close</Button></div>
@@ -457,18 +468,24 @@ export default function TPIPage() {
             </DialogHeader>
             <ScrollArea className="flex-1 pr-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-                {selectedHistoryItem && Object.entries(selectedHistoryItem)
-                  .filter(([key]) => !['id', 'tpiAssetId', 'startDate', 'endDate', 'version'].includes(key))
-                  .map(([key, value]) => {
-                    const column = columns.find(c => c.accessorKey === key);
-                    const label = column?.header || key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
-                    return (
-                      <div key={key} className="space-y-1">
-                        <Label className="text-sm text-muted-foreground">{label}</Label>
-                        <p className="text-sm font-medium">{String(value || '—')}</p>
+                {selectedHistoryItem && (
+                  <>
+                    <div className="space-y-1">
+                      <Label className="text-sm text-muted-foreground">Start Date</Label>
+                      <p className="text-sm font-medium">{formatHistoryDate(selectedHistoryItem.startDate)}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-sm text-muted-foreground">End Date</Label>
+                      <p className="text-sm font-medium">{formatHistoryDate(selectedHistoryItem.endDate)}</p>
+                    </div>
+                    {columns.map(col => (
+                      <div key={col.accessorKey} className="space-y-1">
+                        <Label className="text-sm text-muted-foreground">{col.header}</Label>
+                        <p className="text-sm font-medium">{String(selectedHistoryItem[col.accessorKey] ?? '—')}</p>
                       </div>
-                    );
-                  })}
+                    ))}
+                  </>
+                )}
               </div>
             </ScrollArea>
             <div className="flex justify-end pt-4 border-t"><Button variant="outline" onClick={() => setIsHistoryDialogOpen(false)}>Close</Button></div>
