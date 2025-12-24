@@ -25,6 +25,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const tabs = [
     { name: 'FAST', path: '/fast' },
+    { name: 'Sub-assets', path: '/sub-assets' },
     { name: 'TPI', path: '/tpi' },
     { name: 'BTO', path: '/bto' },
     { name: 'CMDB', path: '/cmdb' },

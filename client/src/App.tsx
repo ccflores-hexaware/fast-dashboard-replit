@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import NotFound from "@/pages/not-found";
 import FASTPage from "@/pages/FASTPage";
+import SubAssetsPage from "@/pages/SubAssetsPage";
 import TPIPage from "@/pages/TPIPage";
 import BTOPage from "@/pages/BTOPage";
 import CMDBPage from "@/pages/CMDBPage";
@@ -16,6 +17,9 @@ function Router() {
     <Switch>
       <Route path="/">
          <Redirect to="/fast" />
+      </Route>
+      <Route path="/sub-assets">
+        <SubAssetsPage />
       </Route>
       <Route path="/tpi">
         <TPIPage />
