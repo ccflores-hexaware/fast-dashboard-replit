@@ -6,7 +6,8 @@ import {
   type CmdbAsset, type InsertCmdbAsset, cmdbAssets,
   type CmdbAssetHistory, type InsertCmdbAssetHistory, cmdbAssetHistory,
   type AssetActivity, type InsertAssetActivity, assetActivity,
-  type SubAsset, type InsertSubAsset, subAssets
+  type SubAsset, type InsertSubAsset, subAssets,
+  type BtoMapping, btoMapping
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql } from "drizzle-orm";
@@ -51,6 +52,8 @@ export interface IStorage {
   updateSubAsset(internalId: number, asset: Partial<InsertSubAsset>): Promise<SubAsset | undefined>;
   getNextSubAssetNumber(baseAssetId: string): Promise<number>;
   getSubAssetCounts(): Promise<Record<string, number>>;
+  
+  getBtoSummary(): Promise<{ higherLevelBto: string; bto: string | null; division: string | null; totalAssets: number }[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -251,6 +254,29 @@ export class DatabaseStorage implements IStorage {
       counts[row.parentAssetId] = Number(row.count);
     }
     return counts;
+  }
+
+  async getBtoSummary(): Promise<{ higherLevelBto: string; bto: string | null; division: string | null; totalAssets: number }[]> {
+    const results = await db.select({
+      higherLevelBto: btoMapping.higherLevelBto,
+      bto: btoMapping.bto,
+      division: btoMapping.division,
+      totalAssets: sql<number>`count(${tpiAssets.id})`
+    })
+    .from(btoMapping)
+    .leftJoin(tpiAssets, and(
+      eq(tpiAssets.btoAlignment, btoMapping.bto),
+      eq(tpiAssets.owningInternalOrg, btoMapping.division)
+    ))
+    .groupBy(btoMapping.higherLevelBto, btoMapping.bto, btoMapping.division)
+    .orderBy(btoMapping.higherLevelBto, btoMapping.bto, btoMapping.division);
+    
+    return results.map(row => ({
+      higherLevelBto: row.higherLevelBto,
+      bto: row.bto,
+      division: row.division,
+      totalAssets: Number(row.totalAssets)
+    }));
   }
 }
 
