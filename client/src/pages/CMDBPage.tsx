@@ -154,9 +154,18 @@ export default function CMDBPage() {
 
   const handleItemClick = (item: any) => { setSelectedItem(item); setIsDialogOpen(true); };
 
+  const allUniqueValues = useMemo(() => {
+    const result: Record<string, string[]> = {};
+    columns.forEach(col => {
+      const key = col.accessorKey;
+      const values = Array.from(new Set(data.map((item: any) => String(item[key] || ''))));
+      result[key] = values.sort();
+    });
+    return result;
+  }, [data, columns]);
+
   const getUniqueValues = (key: string) => {
-    const values = Array.from(new Set(data.map((item: any) => String(item[key] || ''))));
-    return values.sort();
+    return allUniqueValues[key] || [];
   };
 
   const handleFilterChange = (key: string, value: string, uniqueValues: string[]) => {
