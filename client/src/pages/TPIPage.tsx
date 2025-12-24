@@ -478,7 +478,11 @@ export default function TPIPage() {
                       <Label className="text-sm text-muted-foreground">End Date</Label>
                       <p className="text-sm font-medium">{formatHistoryDate(selectedHistoryItem.endDate)}</p>
                     </div>
-                    {columns.map(col => (
+                    <div className="space-y-1">
+                      <Label className="text-sm text-muted-foreground">CI ID</Label>
+                      <p className="text-sm font-medium">{String(selectedHistoryItem.tpiAssetId ?? '—')}</p>
+                    </div>
+                    {columns.filter(col => col.accessorKey !== 'id').map(col => (
                       <div key={col.accessorKey} className="space-y-1">
                         <Label className="text-sm text-muted-foreground">{col.header}</Label>
                         <p className="text-sm font-medium">{String(selectedHistoryItem[col.accessorKey] ?? '—')}</p>
