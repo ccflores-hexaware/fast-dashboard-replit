@@ -26,12 +26,12 @@ const ALL_COLUMN_KEYS = [
   'architect', 'assetIdInFAST', 'assetIdInSchedule', 'assetIdInWeeklyStatusReport', 'assetTier', 'blockFunding',
   'btoAlignment', 'businessOwnerCommsCheck', 'businessOwnerOwnedBy', 'businessOwnerSME', 'cashPaymentSystems',
   'cmdbBeingRetired', 'cmdbLegalHold', 'concatinatedBTOandDivision', 'connectorStatus', 'cotsOrInHouseBuilt',
-  'customerFacing', 'default', 'description', 'disposition', 'externalFacing', 'financialImpact4hrOutage',
+  'customerFacing', 'defaultTier', 'description', 'disposition', 'externalFacing', 'financialImpact4hrOutage',
   'foundational', 'highLevelBTO', 'hosted', 'infoSecCritical', 'informationClassification', 'isSaas',
   'itOwnerCommsCheck', 'itOwnerManagedBy', 'keyChainOnboardingStatus', 'maintenanceWindow', 'mdAssetDesignation',
   'multiFactorAuthentication', 'nfr9', 'nfr10', 'nonDefaultTier1', 'nonDefaultTier2', 'nonDefaultTier3',
   'nonDefaultTier4', 'onboardingStatus', 'operationalHours', 'owningInternalOrg', 'ppiClassification',
-  'privilegedAccess', 'sox', 'spof', 'sppi', 'supportSME', 'supportedBy', 'supportedByCommsCheck', 'version'
+  'privilegedAccess', 'sox', 'spof', 'sppi', 'status', 'supportSME', 'supportedBy', 'supportedByCommsCheck', 'version'
 ];
 
 const DEFAULT_COLUMNS = ['id', 'name', 'cmdbStatus', 'assetType', 'btoAlignment', 'applicationTypeFinancial', 'itOwnerManagedBy', 'businessOwnerOwnedBy', 'connectorStatus', 'onboardingStatus', 'disposition', 'assetTier', 'foundational'];
@@ -162,7 +162,7 @@ export default function TPIPage() {
     { header: 'Connector Status', accessorKey: 'connectorStatus' },
     { header: 'COTS or In House Built', accessorKey: 'cotsOrInHouseBuilt' },
     { header: 'Customer Facing', accessorKey: 'customerFacing' },
-    { header: 'Default', accessorKey: 'default' },
+    { header: 'Default Tier', accessorKey: 'defaultTier' },
     { header: 'Description', accessorKey: 'description' },
     { header: 'Disposition', accessorKey: 'disposition' },
     { header: 'External Facing', accessorKey: 'externalFacing' },
@@ -193,6 +193,7 @@ export default function TPIPage() {
     { header: 'SOX', accessorKey: 'sox' },
     { header: 'SPOF', accessorKey: 'spof' },
     { header: 'SPPI', accessorKey: 'sppi' },
+    { header: 'Status', accessorKey: 'status' },
     { header: 'Support SME', accessorKey: 'supportSME' },
     { header: 'Supported by', accessorKey: 'supportedBy' },
     { header: 'Supported By Comms Check', accessorKey: 'supportedByCommsCheck' },
