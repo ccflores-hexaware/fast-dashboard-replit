@@ -428,31 +428,34 @@ export default function TPIPage() {
         <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} pageSize={pageSize} onPageChange={setCurrentPage} onPageSizeChange={setPageSize} />
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-            <DialogHeader className="pb-4 border-b"><DialogTitle className="text-xl">{selectedItem?.name || 'Details'}</DialogTitle><DialogDescription>{selectedItem?.id}</DialogDescription></DialogHeader>
-            <ScrollArea className="flex-1 min-h-0 max-h-[calc(90vh-150px)]">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4 pr-4">
+          <DialogContent className="w-full sm:max-w-4xl max-h-[90vh] flex flex-col p-0 gap-0">
+            <DialogHeader className="p-6 pb-4 border-b">
+              <DialogTitle className="text-xl">{selectedItem?.name || 'Details'}</DialogTitle>
+              <DialogDescription>{selectedItem?.id}</DialogDescription>
+            </DialogHeader>
+            <div className="flex-1 overflow-y-auto px-6 min-h-0">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1 py-4">
                 {selectedItem && columns.map(col => (
-                  <div key={col.accessorKey} className="space-y-1">
-                    <Label className="text-sm text-muted-foreground">{col.header}</Label>
-                    <p className="text-sm font-medium">{String(selectedItem[col.accessorKey] ?? '—')}</p>
+                  <div key={col.accessorKey} className="flex flex-col space-y-1 py-3 border-b border-border/50">
+                    <span className="text-sm font-medium text-muted-foreground">{col.header}</span>
+                    <span className="text-base font-semibold text-foreground">{String(selectedItem[col.accessorKey] ?? '—')}</span>
                   </div>
                 ))}
                 {selectedItem?.createdAt && (
-                  <div className="space-y-1">
-                    <Label className="text-sm text-muted-foreground">Created At</Label>
-                    <p className="text-sm font-medium">{format(new Date(selectedItem.createdAt), 'MMM d, yyyy HH:mm')}</p>
+                  <div className="flex flex-col space-y-1 py-3 border-b border-border/50">
+                    <span className="text-sm font-medium text-muted-foreground">Created At</span>
+                    <span className="text-base font-semibold text-foreground">{format(new Date(selectedItem.createdAt), 'MMM d, yyyy HH:mm')}</span>
                   </div>
                 )}
               </div>
-            </ScrollArea>
-            <div className="flex justify-end pt-4 border-t"><Button variant="outline" onClick={() => setIsDialogOpen(false)}>Close</Button></div>
+            </div>
+            <div className="flex justify-end p-6 pt-4 border-t"><Button variant="outline" onClick={() => setIsDialogOpen(false)}>Close</Button></div>
           </DialogContent>
         </Dialog>
 
         <Dialog open={isHistoryDialogOpen} onOpenChange={setIsHistoryDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-            <DialogHeader className="pb-4 border-b">
+          <DialogContent className="w-full sm:max-w-4xl max-h-[90vh] flex flex-col p-0 gap-0">
+            <DialogHeader className="p-6 pb-4 border-b">
               <DialogTitle className="text-xl flex items-center gap-2">
                 Historical Snapshot
                 {selectedHistoryItem && isCurrentRecord(selectedHistoryItem.endDate) && (
@@ -467,33 +470,33 @@ export default function TPIPage() {
                 )}
               </DialogDescription>
             </DialogHeader>
-            <ScrollArea className="flex-1 min-h-0 max-h-[calc(90vh-150px)]">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4 pr-4">
+            <div className="flex-1 overflow-y-auto px-6 min-h-0">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1 py-4">
                 {selectedHistoryItem && (
                   <>
-                    <div className="space-y-1">
-                      <Label className="text-sm text-muted-foreground">Start Date</Label>
-                      <p className="text-sm font-medium">{formatHistoryDate(selectedHistoryItem.startDate)}</p>
+                    <div className="flex flex-col space-y-1 py-3 border-b border-border/50">
+                      <span className="text-sm font-medium text-muted-foreground">Start Date</span>
+                      <span className="text-base font-semibold text-foreground">{formatHistoryDate(selectedHistoryItem.startDate)}</span>
                     </div>
-                    <div className="space-y-1">
-                      <Label className="text-sm text-muted-foreground">End Date</Label>
-                      <p className="text-sm font-medium">{formatHistoryDate(selectedHistoryItem.endDate)}</p>
+                    <div className="flex flex-col space-y-1 py-3 border-b border-border/50">
+                      <span className="text-sm font-medium text-muted-foreground">End Date</span>
+                      <span className="text-base font-semibold text-foreground">{formatHistoryDate(selectedHistoryItem.endDate)}</span>
                     </div>
-                    <div className="space-y-1">
-                      <Label className="text-sm text-muted-foreground">CI ID</Label>
-                      <p className="text-sm font-medium">{String(selectedHistoryItem.tpiAssetId ?? '—')}</p>
+                    <div className="flex flex-col space-y-1 py-3 border-b border-border/50">
+                      <span className="text-sm font-medium text-muted-foreground">CI ID</span>
+                      <span className="text-base font-semibold text-foreground">{String(selectedHistoryItem.tpiAssetId ?? '—')}</span>
                     </div>
                     {columns.filter(col => col.accessorKey !== 'id').map(col => (
-                      <div key={col.accessorKey} className="space-y-1">
-                        <Label className="text-sm text-muted-foreground">{col.header}</Label>
-                        <p className="text-sm font-medium">{String(selectedHistoryItem[col.accessorKey] ?? '—')}</p>
+                      <div key={col.accessorKey} className="flex flex-col space-y-1 py-3 border-b border-border/50">
+                        <span className="text-sm font-medium text-muted-foreground">{col.header}</span>
+                        <span className="text-base font-semibold text-foreground">{String(selectedHistoryItem[col.accessorKey] ?? '—')}</span>
                       </div>
                     ))}
                   </>
                 )}
               </div>
-            </ScrollArea>
-            <div className="flex justify-end pt-4 border-t"><Button variant="outline" onClick={() => setIsHistoryDialogOpen(false)}>Close</Button></div>
+            </div>
+            <div className="flex justify-end p-6 pt-4 border-t"><Button variant="outline" onClick={() => setIsHistoryDialogOpen(false)}>Close</Button></div>
           </DialogContent>
         </Dialog>
       </div>
