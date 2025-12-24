@@ -167,9 +167,20 @@ export function DataTable<T extends { id: string }>({
     return () => wrapper.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const allUniqueValues = useMemo(() => {
+    const result: Record<string, string[]> = {};
+    columns.forEach(col => {
+      if (col.accessorKey) {
+        const key = String(col.accessorKey);
+        const values = Array.from(new Set(allData.map(item => String(item[col.accessorKey!] || ''))));
+        result[key] = values.sort();
+      }
+    });
+    return result;
+  }, [allData, columns]);
+
   const getUniqueValues = (key: keyof T) => {
-    const values = Array.from(new Set(allData.map(item => String(item[key] || ''))));
-    return values.sort();
+    return allUniqueValues[String(key)] || [];
   };
 
   const handleFilterChange = (key: string, value: string, uniqueValues: string[]) => {
