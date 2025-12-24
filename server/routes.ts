@@ -318,7 +318,8 @@ export async function registerRoutes(
   app.put("/api/sub-assets/:internalId", async (req: Request, res: Response) => {
     try {
       const internalId = parseInt(req.params.internalId);
-      const asset = await storage.updateSubAsset(internalId, req.body);
+      const { createdAt, internalId: _, ...updateData } = req.body;
+      const asset = await storage.updateSubAsset(internalId, updateData);
       if (!asset) {
         return res.status(404).json({ error: "Sub-asset not found" });
       }
