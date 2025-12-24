@@ -285,6 +285,26 @@ export const selectCmdbAssetSchema = createSelectSchema(cmdbAssets);
 export type InsertCmdbAsset = z.infer<typeof insertCmdbAssetSchema>;
 export type CmdbAsset = typeof cmdbAssets.$inferSelect;
 
+export const cmdbAssetHistory = pgTable("cmdb_asset_history", {
+  id: serial("id").primaryKey(),
+  cmdbAssetId: varchar("cmdb_asset_id", { length: 50 }).notNull(),
+  configItem: text("config_item"),
+  version: text("version"),
+  environment: text("environment"),
+  status: text("status"),
+  owner: text("owner"),
+  lastUpdated: text("last_updated"),
+  startDate: timestamp("start_date").notNull().defaultNow(),
+  endDate: timestamp("end_date").notNull(),
+});
+
+export const insertCmdbAssetHistorySchema = createInsertSchema(cmdbAssetHistory).omit({
+  id: true,
+});
+export const selectCmdbAssetHistorySchema = createSelectSchema(cmdbAssetHistory);
+export type InsertCmdbAssetHistory = z.infer<typeof insertCmdbAssetHistorySchema>;
+export type CmdbAssetHistory = typeof cmdbAssetHistory.$inferSelect;
+
 export const subAssets = pgTable("sub_assets", {
   internalId: serial("internal_id").primaryKey(),
   parentAssetId: varchar("parent_asset_id", { length: 50 }).notNull().references(() => fastAssets.id),
