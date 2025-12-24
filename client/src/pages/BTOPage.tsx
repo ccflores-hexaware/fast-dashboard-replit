@@ -1,97 +1,111 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
-import { ViewToggle } from '@/components/ViewToggle';
-import { DataTable } from '@/components/DataTable';
-import { DataCard } from '@/components/DataCard';
-import { Pagination } from '@/components/Pagination';
 import { Button } from '@/components/ui/button';
-import { Download, Search, Check, ChevronsUpDown, Settings2 } from 'lucide-react';
-import { cn } from "@/lib/utils";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Input } from "@/components/ui/input";
+import { Download, ChevronRight, ChevronDown, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
-import { useUser } from "@/lib/userContext";
 import * as XLSX from 'xlsx';
-import { usePagination, useSorting, useColumnFilters, useViewToggle } from '@/hooks';
 
-const ALL_COLUMN_KEYS = ['higherLevelBTO', 'bto', 'division', 'totalAssets'];
-const DEFAULT_COLUMNS = ['higherLevelBTO', 'bto', 'division', 'totalAssets'];
-const DEFAULT_CARD_FIELDS = ['higherLevelBTO', 'bto', 'division', 'totalAssets'];
+interface BtoSummaryRow {
+  higherLevelBto: string;
+  bto: string | null;
+  division: string | null;
+  totalAssets: number;
+}
 
-const COLUMN_PRESETS = [
-  { name: 'Default', columns: 'default' as const },
-  { name: 'All Columns', columns: 'all' as const },
-];
+interface AggregatedBto {
+  higherLevelBto: string;
+  totalAssets: number;
+  breakdown: { bto: string; division: string; totalAssets: number }[];
+}
 
 export default function BTOPage() {
   const { toast } = useToast();
-  const { isAdmin } = useUser();
-  const { view, setView } = useViewToggle('table');
-  
-  const data: any[] = [];
-  
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchColumn, setSearchColumn] = useState('all');
-  const [openCombobox, setOpenCombobox] = useState(false);
-  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>(() => {
-    const v: Record<string, boolean> = {};
-    ALL_COLUMN_KEYS.forEach(k => { v[k] = DEFAULT_COLUMNS.includes(k); });
-    return v;
-  });
-  const [columnSearchQuery, setColumnSearchQuery] = useState('');
-  const [cardFieldVisibility, setCardFieldVisibility] = useState<Record<string, boolean>>(() => {
-    const v: Record<string, boolean> = {};
-    DEFAULT_CARD_FIELDS.forEach(k => { v[k] = true; });
-    return v;
-  });
+  const [data, setData] = useState<BtoSummaryRow[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
-  const columns = useMemo(() => [
-    { header: 'Higher Level BTO', accessorKey: 'higherLevelBTO' },
-    { header: 'BTO', accessorKey: 'bto' },
-    { header: 'Division', accessorKey: 'division' },
-    { header: 'Total Assets', accessorKey: 'totalAssets' },
-  ], []);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch('/api/bto/summary');
+        if (!response.ok) throw new Error('Failed to fetch');
+        const summary = await response.json();
+        setData(summary);
+      } catch (error) {
+        console.error('Error fetching BTO data:', error);
+        toast({ title: "Error", description: "Failed to load BTO data", variant: "destructive" });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
-  const cardFields = [
-    { label: 'Higher Level BTO', key: 'higherLevelBTO' },
-    { label: 'BTO', key: 'bto' },
-    { label: 'Division', key: 'division' },
-    { label: 'Total Assets', key: 'totalAssets' },
-  ];
+  const aggregatedData = useMemo(() => {
+    const grouped: Record<string, AggregatedBto> = {};
+    
+    for (const row of data) {
+      if (!grouped[row.higherLevelBto]) {
+        grouped[row.higherLevelBto] = {
+          higherLevelBto: row.higherLevelBto,
+          totalAssets: 0,
+          breakdown: []
+        };
+      }
+      grouped[row.higherLevelBto].totalAssets += row.totalAssets;
+      grouped[row.higherLevelBto].breakdown.push({
+        bto: row.bto || '(Not specified)',
+        division: row.division || '(Not specified)',
+        totalAssets: row.totalAssets
+      });
+    }
+    
+    return Object.values(grouped).sort((a, b) => a.higherLevelBto.localeCompare(b.higherLevelBto));
+  }, [data]);
 
-  const searchFilteredData = useMemo(() => {
-    if (!searchQuery.trim()) return data;
-    const query = searchQuery.toLowerCase();
-    return data.filter((item: any) => {
-      if (searchColumn === 'all') return columns.some(col => { const v = item[col.accessorKey]; return v && String(v).toLowerCase().includes(query); });
-      const v = item[searchColumn]; return v && String(v).toLowerCase().includes(query);
+  const toggleRow = (higherLevelBto: string) => {
+    setExpandedRows(prev => {
+      const next = new Set(prev);
+      if (next.has(higherLevelBto)) {
+        next.delete(higherLevelBto);
+      } else {
+        next.add(higherLevelBto);
+      }
+      return next;
     });
-  }, [data, searchQuery, searchColumn, columns]);
-
-  const { columnFilters, setColumnFilters, filteredData } = useColumnFilters(searchFilteredData);
-  const { sortConfig, handleSort, sortedData } = useSorting(filteredData);
-  const { currentPage, pageSize, setCurrentPage, setPageSize, paginatedData, totalPages, totalItems } = usePagination(sortedData);
-
-  const visibleColumns = useMemo(() => columns.filter(col => columnVisibility[col.accessorKey] !== false), [columns, columnVisibility]);
-  const visibleCardFields = useMemo(() => cardFields.filter(field => cardFieldVisibility[field.key]), [cardFieldVisibility]);
-  const visibleColumnCount = Object.values(columnVisibility).filter(Boolean).length;
-
-  const applyColumnPreset = (preset: { name: string; columns: string[] | 'all' | 'default' }) => {
-    let cols: string[];
-    if (preset.columns === 'all') cols = ALL_COLUMN_KEYS;
-    else if (preset.columns === 'default') cols = DEFAULT_COLUMNS;
-    else cols = preset.columns;
-    const v: Record<string, boolean> = {}; ALL_COLUMN_KEYS.forEach(k => { v[k] = cols.includes(k); }); setColumnVisibility(v);
   };
 
   const exportToExcel = () => {
-    const exportData = sortedData.map((item: any) => { const row: Record<string, any> = {}; visibleColumns.forEach(col => { row[col.header] = item[col.accessorKey] ?? ''; }); return row; });
-    const ws = XLSX.utils.json_to_sheet(exportData); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'BTO'); XLSX.writeFile(wb, `BTO_Export_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
-    toast({ title: "Export Complete", description: `Exported ${exportData.length} records.`, variant: "success" });
+    const exportData: any[] = [];
+    
+    for (const row of aggregatedData) {
+      exportData.push({
+        'Higher Level BTO': row.higherLevelBto,
+        'BTO': '',
+        'Division': '',
+        'Total Assets': row.totalAssets
+      });
+      
+      for (const breakdown of row.breakdown) {
+        exportData.push({
+          'Higher Level BTO': '',
+          'BTO': breakdown.bto,
+          'Division': breakdown.division,
+          'Total Assets': breakdown.totalAssets
+        });
+      }
+    }
+    
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    
+    const headerStyle = { fill: { fgColor: { rgb: "89c24b" } }, font: { color: { rgb: "FFFFFF" }, bold: true } };
+    ws['!cols'] = [{ wch: 20 }, { wch: 40 }, { wch: 40 }, { wch: 15 }];
+    
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'BTO Summary');
+    XLSX.writeFile(wb, `BTO_Export_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    toast({ title: "Export Complete", description: `Exported BTO summary data.`, variant: "success" });
   };
 
   return (
@@ -100,60 +114,100 @@ export default function BTOPage() {
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Business Technology Office (BTO)</h1>
-            <p className="text-muted-foreground mt-1">Align technology initiatives with business goals and organizational divisions.</p>
+            <p className="text-muted-foreground mt-1">Asset counts by Higher Level BTO, derived from TPI data.</p>
           </div>
-          <Button onClick={exportToExcel} className="gap-2 text-white" style={{ backgroundColor: '#89c24b' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#7ab043'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#89c24b'}><Download className="h-4 w-4" />Export to Excel</Button>
+          <Button 
+            onClick={exportToExcel} 
+            className="gap-2 text-white" 
+            style={{ backgroundColor: '#89c24b' }} 
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#7ab043'} 
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#89c24b'}
+          >
+            <Download className="h-4 w-4" />Export to Excel
+          </Button>
         </div>
 
-        <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-          <div className="flex items-center gap-2 flex-1">
-            <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
-              <PopoverTrigger asChild><Button variant="outline" role="combobox" className="w-[140px] justify-between">{searchColumn === 'all' ? 'All Columns' : columns.find(c => c.accessorKey === searchColumn)?.header || searchColumn}<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" /></Button></PopoverTrigger>
-              <PopoverContent className="w-[200px] p-0"><Command><CommandInput placeholder="Search column..." /><CommandList><CommandEmpty>No column found.</CommandEmpty><CommandGroup><CommandItem value="all" onSelect={() => { setSearchColumn('all'); setOpenCombobox(false); }}><Check className={cn("mr-2 h-4 w-4", searchColumn === 'all' ? "opacity-100" : "opacity-0")} />All Columns</CommandItem>{columns.map(col => (<CommandItem key={col.accessorKey} value={col.accessorKey} onSelect={() => { setSearchColumn(col.accessorKey); setOpenCombobox(false); }}><Check className={cn("mr-2 h-4 w-4", searchColumn === col.accessorKey ? "opacity-100" : "opacity-0")} />{col.header}</CommandItem>))}</CommandGroup></CommandList></Command></PopoverContent>
-            </Popover>
-            <div className="relative flex-1 min-w-[200px]"><Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Search across all fields..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9" /></div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild><Button variant="outline" className="gap-2"><Settings2 className="h-4 w-4" />Columns<span className="ml-1 px-1.5 py-0.5 text-xs bg-primary/10 text-primary rounded-full">{visibleColumnCount}/{ALL_COLUMN_KEYS.length}</span></Button></DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-72">
-                <DropdownMenuLabel>Column Visibility</DropdownMenuLabel><DropdownMenuSeparator />
-                <div className="p-2"><Input placeholder="Search columns..." value={columnSearchQuery} onChange={(e) => setColumnSearchQuery(e.target.value)} className="h-8" /></div><DropdownMenuSeparator />
-                <DropdownMenuLabel className="text-xs text-muted-foreground">Presets</DropdownMenuLabel>
-                <div className="flex flex-wrap gap-1 p-2">{COLUMN_PRESETS.map(preset => (<Button key={preset.name} variant="outline" size="sm" className="h-6 text-xs" onClick={() => applyColumnPreset(preset)}>{preset.name}</Button>))}</div><DropdownMenuSeparator />
-                <ScrollArea className="h-[300px]">{columns.filter(col => col.header.toLowerCase().includes(columnSearchQuery.toLowerCase())).map(col => (<DropdownMenuCheckboxItem key={col.accessorKey} checked={columnVisibility[col.accessorKey] !== false} onCheckedChange={(checked) => setColumnVisibility(prev => ({ ...prev, [col.accessorKey]: checked }))}>{col.header}</DropdownMenuCheckboxItem>))}</ScrollArea>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <ViewToggle view={view} setView={setView} />
+        {isLoading ? (
+          <div className="flex items-center justify-center py-16">
+            <div className="flex flex-col items-center gap-4">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-muted-foreground">Loading BTO summary...</p>
+            </div>
           </div>
-        </div>
-
-        {view === 'table' ? (
-          <DataTable 
-            data={paginatedData} 
-            columns={visibleColumns} 
-            onSort={handleSort} 
-            sortConfig={sortConfig} 
-            columnFilters={columnFilters} 
-            onColumnFiltersChange={(filters: Record<string, string[]>) => setColumnFilters(filters)} 
-            allData={searchFilteredData}
-            emptyStateTitle="No BTO Data"
-            emptyStateMessage="BTO data will be derived from other sources. Configuration pending."
-          />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {paginatedData.length === 0 ? (
-              <div className="col-span-full text-center py-16 text-muted-foreground">
-                <p className="text-lg font-medium">No BTO Data</p>
-                <p className="text-sm">BTO data will be derived from other sources. Configuration pending.</p>
+          <div className="rounded-lg border bg-card">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="text-left p-4 font-semibold w-10"></th>
+                  <th className="text-left p-4 font-semibold">Higher Level BTO</th>
+                  <th className="text-left p-4 font-semibold">BTO</th>
+                  <th className="text-left p-4 font-semibold">Division</th>
+                  <th className="text-right p-4 font-semibold">Total Assets</th>
+                </tr>
+              </thead>
+              <tbody>
+                {aggregatedData.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="text-center py-16 text-muted-foreground">
+                      <p className="text-lg font-medium">No BTO Data</p>
+                      <p className="text-sm">No matching assets found in TPI data.</p>
+                    </td>
+                  </tr>
+                ) : (
+                  aggregatedData.map((row) => (
+                    <React.Fragment key={row.higherLevelBto}>
+                      <tr 
+                        className="border-b hover:bg-muted/50 cursor-pointer transition-colors"
+                        onClick={() => toggleRow(row.higherLevelBto)}
+                      >
+                        <td className="p-4">
+                          {expandedRows.has(row.higherLevelBto) ? (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </td>
+                        <td className="p-4 font-semibold text-primary">{row.higherLevelBto}</td>
+                        <td className="p-4 text-muted-foreground italic">{row.breakdown.length} mappings</td>
+                        <td className="p-4 text-muted-foreground italic">-</td>
+                        <td className="p-4 text-right font-semibold">{row.totalAssets}</td>
+                      </tr>
+                      
+                      {expandedRows.has(row.higherLevelBto) && (
+                        row.breakdown.map((breakdown, idx) => (
+                          <tr 
+                            key={`${row.higherLevelBto}-${idx}`} 
+                            className="border-b bg-muted/30 hover:bg-muted/50"
+                          >
+                            <td className="p-4"></td>
+                            <td className="p-4"></td>
+                            <td className="p-4 pl-8">{breakdown.bto}</td>
+                            <td className="p-4">{breakdown.division}</td>
+                            <td className="p-4 text-right">{breakdown.totalAssets}</td>
+                          </tr>
+                        ))
+                      )}
+                    </React.Fragment>
+                  ))
+                )}
+              </tbody>
+            </table>
+            
+            {aggregatedData.length > 0 && (
+              <div className="p-4 border-t bg-muted/30">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">
+                    Total: {aggregatedData.length} Higher Level BTOs
+                  </span>
+                  <span className="font-semibold">
+                    Grand Total: {aggregatedData.reduce((sum, row) => sum + row.totalAssets, 0)} assets
+                  </span>
+                </div>
               </div>
-            ) : (
-              paginatedData.map((item: any, index: number) => (
-                <DataCard key={`${item.bto}-${index}`} item={item} titleKey="bto" fields={visibleCardFields as any} />
-              ))
             )}
           </div>
         )}
-
-        <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} pageSize={pageSize} onPageChange={setCurrentPage} onPageSizeChange={setPageSize} />
       </div>
     </DashboardLayout>
   );
