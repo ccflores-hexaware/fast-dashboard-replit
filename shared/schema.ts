@@ -284,3 +284,56 @@ export const insertCmdbAssetSchema = createInsertSchema(cmdbAssets).omit({
 export const selectCmdbAssetSchema = createSelectSchema(cmdbAssets);
 export type InsertCmdbAsset = z.infer<typeof insertCmdbAssetSchema>;
 export type CmdbAsset = typeof cmdbAssets.$inferSelect;
+
+export const subAssets = pgTable("sub_assets", {
+  internalId: serial("internal_id").primaryKey(),
+  parentAssetId: varchar("parent_asset_id", { length: 50 }).notNull(),
+  name: text("name"),
+  assetId: text("asset_id"),
+  btoAlignment: text("bto_alignment"),
+  version: text("version"),
+  cmdbStatus: text("cmdb_status"),
+  deploymentLifecyclePhase: text("deployment_lifecycle_phase"),
+  applicationTypeFinancial: text("application_type_financial"),
+  itOwner: text("it_owner"),
+  businessOwner: text("business_owner"),
+  businessOwnerSme: text("business_owner_sme"),
+  supportedBy: text("supported_by"),
+  supportSme: text("support_sme"),
+  architect: text("architect"),
+  division: text("division"),
+  blockFundingName: text("block_funding_name"),
+  blockFundingOwner: text("block_funding_owner"),
+  assessmentCategory: text("assessment_category"),
+  deploymentLifecycleStartDate: text("deployment_lifecycle_start_date"),
+  assetType: text("asset_type"),
+  hosted: text("hosted"),
+  sox: text("sox"),
+  customerFacing: text("customer_facing"),
+  sppi: text("sppi"),
+  ppiClassification: text("ppi_classification"),
+  foundational: text("foundational"),
+  missionCritical: text("mission_critical"),
+  businessCritical: text("business_critical"),
+  supporting: text("supporting"),
+  cotsOrInHouseBuilt: text("cots_or_in_house_built"),
+  isSaas: text("is_saas"),
+  maintenanceWindow: text("maintenance_window"),
+  operationalHours: text("operational_hours"),
+  description: text("description"),
+  externalFacing: text("external_facing"),
+  financialImpact4hrOutage: text("financial_impact_4hr_outage"),
+  assetTier: text("asset_tier"),
+  informationClassification: text("information_classification"),
+  createdAt: timestamp("created_at").defaultNow(),
+  lastModifiedBy: text("last_modified_by"),
+  lastModifiedDate: text("last_modified_date"),
+});
+
+export const insertSubAssetSchema = createInsertSchema(subAssets).omit({
+  internalId: true,
+  createdAt: true,
+});
+export const selectSubAssetSchema = createSelectSchema(subAssets);
+export type InsertSubAsset = z.infer<typeof insertSubAssetSchema>;
+export type SubAsset = typeof subAssets.$inferSelect;

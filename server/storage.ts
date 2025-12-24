@@ -5,7 +5,8 @@ import {
   type TpiAssetHistory, type InsertTpiAssetHistory, tpiAssetHistory,
   type BtoAsset, type InsertBtoAsset, btoAssets,
   type CmdbAsset, type InsertCmdbAsset, cmdbAssets,
-  type AssetActivity, type InsertAssetActivity, assetActivity
+  type AssetActivity, type InsertAssetActivity, assetActivity,
+  type SubAsset, type InsertSubAsset, subAssets
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql } from "drizzle-orm";
@@ -44,6 +45,14 @@ export interface IStorage {
   
   getTpiAssetHistory(tpiAssetId: string): Promise<TpiAssetHistory[]>;
   getTpiAssetHistoryCount(tpiAssetId: string): Promise<number>;
+  
+  getAllSubAssets(): Promise<SubAsset[]>;
+  getSubAssetById(internalId: number): Promise<SubAsset | undefined>;
+  getSubAssetsByParentId(parentAssetId: string): Promise<SubAsset[]>;
+  createSubAsset(asset: InsertSubAsset): Promise<SubAsset>;
+  updateSubAsset(internalId: number, asset: Partial<InsertSubAsset>): Promise<SubAsset | undefined>;
+  getNextSubAssetNumber(baseAssetId: string): Promise<number>;
+  getSubAssetCounts(): Promise<Record<string, number>>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -191,6 +200,61 @@ export class DatabaseStorage implements IStorage {
       .from(tpiAssetHistory)
       .where(eq(tpiAssetHistory.tpiAssetId, tpiAssetId));
     return Number(result[0]?.count || 0);
+  }
+
+  async getAllSubAssets(): Promise<SubAsset[]> {
+    return db.select().from(subAssets).orderBy(desc(subAssets.createdAt));
+  }
+
+  async getSubAssetById(internalId: number): Promise<SubAsset | undefined> {
+    const [asset] = await db.select().from(subAssets).where(eq(subAssets.internalId, internalId));
+    return asset;
+  }
+
+  async getSubAssetsByParentId(parentAssetId: string): Promise<SubAsset[]> {
+    return db.select().from(subAssets).where(eq(subAssets.parentAssetId, parentAssetId));
+  }
+
+  async createSubAsset(asset: InsertSubAsset): Promise<SubAsset> {
+    const [newAsset] = await db.insert(subAssets).values(asset).returning();
+    return newAsset;
+  }
+
+  async updateSubAsset(internalId: number, asset: Partial<InsertSubAsset>): Promise<SubAsset | undefined> {
+    const [updated] = await db.update(subAssets)
+      .set(asset)
+      .where(eq(subAssets.internalId, internalId))
+      .returning();
+    return updated;
+  }
+
+  async getNextSubAssetNumber(baseAssetId: string): Promise<number> {
+    const allFastAssets = await db.select({ id: fastAssets.id }).from(fastAssets);
+    const subPattern = new RegExp(`^${baseAssetId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}-SUB(\\d+)$`);
+    let maxNum = 0;
+    for (const asset of allFastAssets) {
+      const match = asset.id.match(subPattern);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > maxNum) maxNum = num;
+      }
+    }
+    return maxNum + 1;
+  }
+
+  async getSubAssetCounts(): Promise<Record<string, number>> {
+    const results = await db.select({
+      parentAssetId: subAssets.parentAssetId,
+      count: sql<number>`count(*)`
+    })
+    .from(subAssets)
+    .groupBy(subAssets.parentAssetId);
+    
+    const counts: Record<string, number> = {};
+    for (const row of results) {
+      counts[row.parentAssetId] = Number(row.count);
+    }
+    return counts;
   }
 }
 
