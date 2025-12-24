@@ -831,7 +831,7 @@ export default function FASTPage() {
             sortConfig={sortConfig}
             columnFilters={columnFilters}
             onColumnFiltersChange={(filters: Record<string, string[]>) => setColumnFilters(filters)}
-            allData={sortedData}
+            allData={searchFilteredData}
             onRowClick={handleItemClick}
           />
         ) : (
