@@ -63,6 +63,10 @@ export default function BTOPage() {
     
     return Object.values(grouped)
       .filter(row => row.totalAssets >= 1)
+      .map(row => ({
+        ...row,
+        breakdown: row.breakdown.filter(b => b.totalAssets >= 1)
+      }))
       .sort((a, b) => a.higherLevelBto.localeCompare(b.higherLevelBto));
   }, [data]);
 
