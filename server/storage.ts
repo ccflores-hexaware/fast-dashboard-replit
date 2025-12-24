@@ -5,6 +5,7 @@ import {
   type TpiAssetHistory, type InsertTpiAssetHistory, tpiAssetHistory,
   type BtoAsset, type InsertBtoAsset, btoAssets,
   type CmdbAsset, type InsertCmdbAsset, cmdbAssets,
+  type CmdbAssetHistory, type InsertCmdbAssetHistory, cmdbAssetHistory,
   type AssetActivity, type InsertAssetActivity, assetActivity,
   type SubAsset, type InsertSubAsset, subAssets
 } from "@shared/schema";
@@ -45,6 +46,9 @@ export interface IStorage {
   
   getTpiAssetHistory(tpiAssetId: string): Promise<TpiAssetHistory[]>;
   getTpiAssetHistoryCount(tpiAssetId: string): Promise<number>;
+  
+  getCmdbAssetHistory(cmdbAssetId: string): Promise<CmdbAssetHistory[]>;
+  getCmdbAssetHistoryCount(cmdbAssetId: string): Promise<number>;
   
   getAllSubAssets(): Promise<SubAsset[]>;
   getSubAssetById(internalId: number): Promise<SubAsset | undefined>;
@@ -211,6 +215,19 @@ export class DatabaseStorage implements IStorage {
     const result = await db.select({ count: sql<number>`count(*)` })
       .from(tpiAssetHistory)
       .where(eq(tpiAssetHistory.tpiAssetId, tpiAssetId));
+    return Number(result[0]?.count || 0);
+  }
+
+  async getCmdbAssetHistory(cmdbAssetId: string): Promise<CmdbAssetHistory[]> {
+    return db.select().from(cmdbAssetHistory)
+      .where(eq(cmdbAssetHistory.cmdbAssetId, cmdbAssetId))
+      .orderBy(desc(cmdbAssetHistory.endDate), desc(cmdbAssetHistory.startDate));
+  }
+
+  async getCmdbAssetHistoryCount(cmdbAssetId: string): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` })
+      .from(cmdbAssetHistory)
+      .where(eq(cmdbAssetHistory.cmdbAssetId, cmdbAssetId));
     return Number(result[0]?.count || 0);
   }
 
