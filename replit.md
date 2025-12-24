@@ -99,8 +99,9 @@ Preferred communication style: Simple, everyday language.
 - **Table**: `sub_assets` stores extended asset details with 38+ columns
 - **Parent Relationship**: `parentAssetId` foreign key links to FAST asset ID
 - **ID Pattern**: Sub-assets use `{parentId}-SUB1`, `-SUB2` incrementing pattern
+- **Nested Prevention**: Sub-assets are limited to one level deep. The GET /api/fast endpoint includes an `isSubAsset` computed flag via left join with sub_assets table. The "Create Sub-asset" button is hidden when viewing a sub-asset.
 - **Creation Workflow**: 
-  1. Admin clicks "Create Sub-asset" button in FAST asset detail dialog
+  1. Admin clicks "Create Sub-asset" button in FAST asset detail dialog (only visible for parent assets)
   2. System generates new FAST asset with ID like `AST-0001-SUB1`
   3. System creates corresponding sub-asset record linking to parent
   4. User fills in sub-asset specific fields on Sub-assets page
