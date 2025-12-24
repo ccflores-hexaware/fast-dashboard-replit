@@ -506,11 +506,12 @@ export default function FASTPage() {
     delete updatedItem.createdAt;
     delete updatedItem.version;
     delete updatedItem.isLatestVersion;
+    delete updatedItem.isSubAsset;
 
     // Detect field changes for activity tracking
     const fieldChanges: Record<string, { old: any; new: any }> = {};
     if (originalItem) {
-      const excludeFields = ['internalId', 'createdAt', 'version', 'isLatestVersion', 'lastModifiedBy', 'lastModifiedDate'];
+      const excludeFields = ['internalId', 'createdAt', 'version', 'isLatestVersion', 'lastModifiedBy', 'lastModifiedDate', 'isSubAsset'];
       Object.keys(editFormData).forEach(key => {
         if (!excludeFields.includes(key)) {
           const oldVal = originalItem[key];
@@ -630,6 +631,7 @@ export default function FASTPage() {
       };
       delete duplicatedItem.internalId;
       delete duplicatedItem.createdAt;
+      delete duplicatedItem.isSubAsset;
       
       const response = await fetch('/api/fast', {
         method: 'POST',
