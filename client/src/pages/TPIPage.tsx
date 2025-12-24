@@ -5,9 +5,9 @@ import { DataTable } from '@/components/DataTable';
 import { DataCard } from '@/components/DataCard';
 import { Pagination } from '@/components/Pagination';
 import { Button } from '@/components/ui/button';
-import { Download, Search, Check, ChevronsUpDown, Settings2, Loader2, ChevronDown, ChevronRight, History } from 'lucide-react';
+import { Download, Search, Check, ChevronsUpDown, Settings2, Loader2, ChevronDown, ChevronRight, History, Filter, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { cn } from "@/lib/utils";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -221,6 +221,49 @@ export default function TPIPage() {
 
   const handleItemClick = (item: any) => { setSelectedItem(item); setIsDialogOpen(true); };
 
+  const getUniqueValues = (key: string) => {
+    const values = Array.from(new Set(data.map((item: any) => String(item[key] || ''))));
+    return values.sort();
+  };
+
+  const handleFilterChange = (key: string, value: string, uniqueValues: string[]) => {
+    const currentFilters = columnFilters[key];
+    let newFilters: string[];
+    if (currentFilters === undefined) {
+      newFilters = uniqueValues.filter(v => v !== value);
+    } else {
+      if (currentFilters.includes(value)) {
+        newFilters = currentFilters.filter(v => v !== value);
+      } else {
+        newFilters = [...currentFilters, value];
+      }
+    }
+    const updatedFilters = { ...columnFilters };
+    if (newFilters.length === uniqueValues.length) {
+      delete updatedFilters[key];
+    } else {
+      updatedFilters[key] = newFilters;
+    }
+    setColumnFilters(updatedFilters);
+  };
+
+  const handleSelectAll = (key: string) => {
+    const currentFilters = columnFilters[key];
+    const updatedFilters = { ...columnFilters };
+    if (currentFilters === undefined) {
+      updatedFilters[key] = [];
+    } else {
+      delete updatedFilters[key];
+    }
+    setColumnFilters(updatedFilters);
+  };
+
+  const handleClearColumnFilter = (key: string) => {
+    const updatedFilters = { ...columnFilters };
+    delete updatedFilters[key];
+    setColumnFilters(updatedFilters);
+  };
+
   const applyColumnPreset = (preset: { name: string; columns: string[] | 'all' | 'default' }) => {
     let cols: string[];
     if (preset.columns === 'all') cols = ALL_COLUMN_KEYS;
@@ -279,16 +322,74 @@ export default function TPIPage() {
             <table className="w-full caption-bottom text-sm">
               <thead className="bg-muted/50">
                 <tr className="border-b border-border">
-                  {visibleColumns.map((col, index) => (
-                    <th key={col.accessorKey} className={cn("font-bold text-primary whitespace-nowrap border-r border-border px-4 py-3 h-auto select-none cursor-pointer hover:bg-muted/80 text-left", index === 0 && "sticky left-0 z-30 bg-slate-200", index === visibleColumns.length - 1 && "border-r-0")} onClick={() => handleSort(col.accessorKey)}>
-                      <div className="flex items-center gap-1">
-                        {col.header}
-                        {sortConfig?.key === col.accessorKey && (
-                          <span className="text-xs">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
-                        )}
-                      </div>
-                    </th>
-                  ))}
+                  {visibleColumns.map((col, index) => {
+                    const key = col.accessorKey;
+                    const isFiltered = !!columnFilters[key];
+                    const uniqueValues = getUniqueValues(key);
+                    const currentFilterValues = columnFilters[key];
+                    const isSelectAll = currentFilterValues === undefined;
+                    const isSorted = sortConfig?.key === key;
+                    const SortIcon = isSorted ? (sortConfig?.direction === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown;
+                    
+                    return (
+                      <th key={key} className={cn("font-bold text-primary whitespace-nowrap border-r border-border px-4 py-3 h-auto select-none", index === 0 && "sticky left-0 z-30 bg-slate-200", index === visibleColumns.length - 1 && "border-r-0")}>
+                        <div className="flex items-center justify-between gap-1.5">
+                          <div 
+                            className="flex items-center gap-1.5 rounded cursor-pointer hover:bg-black/5 -ml-1 pl-1 pr-1.5 py-0.5 transition-colors"
+                            onClick={() => handleSort(key)}
+                          >
+                            {col.header}
+                            <SortIcon className={cn("h-3.5 w-3.5", isSorted ? "opacity-100" : "opacity-30")} />
+                          </div>
+                          
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className={cn("h-6 w-6 p-0 hover:bg-muted/80 data-[state=open]:bg-muted/80", isFiltered && "text-primary bg-primary/10")}
+                              >
+                                <Filter className={cn("h-3.5 w-3.5", isFiltered && "fill-current")} />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[220px] p-0" align="start">
+                              <Command>
+                                <CommandInput placeholder={`Filter ${col.header}...`} />
+                                <CommandList>
+                                  <CommandEmpty>No results found.</CommandEmpty>
+                                  <CommandGroup>
+                                    <CommandItem onSelect={() => handleSelectAll(key)} className="flex items-center gap-2 cursor-pointer font-medium border-b">
+                                      <div className={cn("flex h-4 w-4 items-center justify-center rounded-sm border border-primary", isSelectAll ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible")}>
+                                        <Check className="h-3 w-3" />
+                                      </div>
+                                      <span>(Select All)</span>
+                                    </CommandItem>
+                                    <CommandItem onSelect={() => handleClearColumnFilter(key)} className="justify-center text-center font-medium text-destructive cursor-pointer my-1">
+                                      Clear Filter
+                                    </CommandItem>
+                                  </CommandGroup>
+                                  <CommandSeparator />
+                                  <CommandGroup className="max-h-[200px] overflow-auto">
+                                    {uniqueValues.map((val) => {
+                                      const isSelected = !currentFilterValues || currentFilterValues.includes(val);
+                                      return (
+                                        <CommandItem key={val} onSelect={() => handleFilterChange(key, val, uniqueValues)} className="flex items-center gap-2 cursor-pointer">
+                                          <div className={cn("flex h-4 w-4 items-center justify-center rounded-sm border border-primary", isSelected ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible")}>
+                                            <Check className="h-3 w-3" />
+                                          </div>
+                                          <span>{val || "(Empty)"}</span>
+                                        </CommandItem>
+                                      );
+                                    })}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
               <tbody className="[&_tr:last-child]:border-0">
