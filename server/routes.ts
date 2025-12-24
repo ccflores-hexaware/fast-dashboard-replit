@@ -261,5 +261,83 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/sub-assets", async (req: Request, res: Response) => {
+    try {
+      const assets = await storage.getAllSubAssets();
+      res.json(assets);
+    } catch (error) {
+      console.error("Error fetching sub-assets:", error);
+      res.status(500).json({ error: "Failed to fetch sub-assets" });
+    }
+  });
+
+  app.get("/api/sub-assets/counts", async (req: Request, res: Response) => {
+    try {
+      const counts = await storage.getSubAssetCounts();
+      res.json(counts);
+    } catch (error) {
+      console.error("Error fetching sub-asset counts:", error);
+      res.status(500).json({ error: "Failed to fetch sub-asset counts" });
+    }
+  });
+
+  app.get("/api/sub-assets/:internalId", async (req: Request, res: Response) => {
+    try {
+      const internalId = parseInt(req.params.internalId);
+      const asset = await storage.getSubAssetById(internalId);
+      if (!asset) {
+        return res.status(404).json({ error: "Sub-asset not found" });
+      }
+      res.json(asset);
+    } catch (error) {
+      console.error("Error fetching sub-asset:", error);
+      res.status(500).json({ error: "Failed to fetch sub-asset" });
+    }
+  });
+
+  app.get("/api/sub-assets/by-parent/:parentAssetId", async (req: Request, res: Response) => {
+    try {
+      const assets = await storage.getSubAssetsByParentId(req.params.parentAssetId);
+      res.json(assets);
+    } catch (error) {
+      console.error("Error fetching sub-assets by parent:", error);
+      res.status(500).json({ error: "Failed to fetch sub-assets" });
+    }
+  });
+
+  app.post("/api/sub-assets", async (req: Request, res: Response) => {
+    try {
+      const asset = await storage.createSubAsset(req.body);
+      res.status(201).json(asset);
+    } catch (error) {
+      console.error("Error creating sub-asset:", error);
+      res.status(500).json({ error: "Failed to create sub-asset" });
+    }
+  });
+
+  app.put("/api/sub-assets/:internalId", async (req: Request, res: Response) => {
+    try {
+      const internalId = parseInt(req.params.internalId);
+      const asset = await storage.updateSubAsset(internalId, req.body);
+      if (!asset) {
+        return res.status(404).json({ error: "Sub-asset not found" });
+      }
+      res.json(asset);
+    } catch (error) {
+      console.error("Error updating sub-asset:", error);
+      res.status(500).json({ error: "Failed to update sub-asset" });
+    }
+  });
+
+  app.get("/api/fast/next-sub-id/:baseAssetId", async (req: Request, res: Response) => {
+    try {
+      const nextNum = await storage.getNextSubAssetNumber(req.params.baseAssetId);
+      res.json({ nextId: `${req.params.baseAssetId}-SUB${nextNum}` });
+    } catch (error) {
+      console.error("Error getting next sub-asset ID:", error);
+      res.status(500).json({ error: "Failed to get next sub-asset ID" });
+    }
+  });
+
   return httpServer;
 }
