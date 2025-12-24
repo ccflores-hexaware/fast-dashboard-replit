@@ -16,7 +16,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   
-  getAllFastAssets(): Promise<FastAsset[]>;
+  getAllFastAssets(): Promise<(FastAsset & { isSubAsset: boolean })[]>;
   getFastAssetById(id: string): Promise<FastAsset[]>;
   createFastAsset(asset: InsertFastAsset): Promise<FastAsset>;
   updateFastAsset(internalId: number, asset: Partial<InsertFastAsset>): Promise<FastAsset | undefined>;
@@ -71,8 +71,20 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async getAllFastAssets(): Promise<FastAsset[]> {
-    return db.select().from(fastAssets).orderBy(desc(fastAssets.createdAt));
+  async getAllFastAssets(): Promise<(FastAsset & { isSubAsset: boolean })[]> {
+    const results = await db
+      .select({
+        asset: fastAssets,
+        subAssetId: subAssets.assetId,
+      })
+      .from(fastAssets)
+      .leftJoin(subAssets, eq(fastAssets.id, subAssets.assetId))
+      .orderBy(desc(fastAssets.createdAt));
+    
+    return results.map(row => ({
+      ...row.asset,
+      isSubAsset: row.subAssetId !== null,
+    }));
   }
 
   async getFastAssetById(id: string): Promise<FastAsset[]> {
