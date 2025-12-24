@@ -241,6 +241,17 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/cmdb/history/:cmdbAssetId", async (req: Request, res: Response) => {
+    try {
+      const history = await storage.getCmdbAssetHistory(req.params.cmdbAssetId);
+      const count = await storage.getCmdbAssetHistoryCount(req.params.cmdbAssetId);
+      res.json({ history, total: count });
+    } catch (error) {
+      console.error("Error fetching CMDB asset history:", error);
+      res.status(500).json({ error: "Failed to fetch CMDB asset history" });
+    }
+  });
+
   app.get("/api/activity/:assetId", async (req: Request, res: Response) => {
     try {
       const activities = await storage.getAssetActivities(req.params.assetId);
