@@ -104,9 +104,6 @@ Preferred communication style: Simple, everyday language.
   2. System generates new FAST asset with ID like `AST-0001-SUB1`
   3. System creates corresponding sub-asset record linking to parent
   4. User fills in sub-asset specific fields on Sub-assets page
-- **Visual Indicators**: 
-  - Orange badge for sub-assets in FAST table
-  - Blue badge showing sub-asset count for parent assets
 - **Navigation**: Sub-assets tab between FAST and TPI in header
 - **API Endpoints**:
   - `GET /api/sub-assets` - List all sub-assets

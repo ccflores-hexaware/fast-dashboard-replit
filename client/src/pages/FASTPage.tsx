@@ -287,51 +287,25 @@ export default function FASTPage() {
     return data;
   }, [data]);
 
-  const isSubAsset = (id: string) => /-SUB\d+$/.test(id);
-  const getParentId = (id: string) => id.replace(/-SUB\d+$/, '');
-  const getSubAssetCount = (id: string) => subAssetCounts[id] || 0;
-
   const columns = useMemo(() => [
     { 
       header: 'Asset ID', 
       accessorKey: 'id',
-      cell: (item: any) => {
-        const isSub = isSubAsset(item.id);
-        const parentId = isSub ? getParentId(item.id) : null;
-        const subCount = !isSub ? getSubAssetCount(item.id) : 0;
-        
-        return (
-          <div className="flex flex-col gap-1">
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                if (isAdmin) {
-                  handleEditClick(item);
-                } else {
-                  handleItemClick(item);
-                }
-              }}
-              className="text-primary hover:underline font-bold underline decoration-2 underline-offset-2 hover:text-primary/80 transition-colors text-left"
-            >
-              {item.id}
-            </button>
-            <div className="flex gap-1 flex-wrap">
-              {isSub && (
-                <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800">
-                  <Layers className="h-3 w-3 mr-1" />
-                  Sub-asset
-                </Badge>
-              )}
-              {subCount > 0 && (
-                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800">
-                  <Layers className="h-3 w-3 mr-1" />
-                  {subCount} sub-asset{subCount > 1 ? 's' : ''}
-                </Badge>
-              )}
-            </div>
-          </div>
-        );
-      }
+      cell: (item: any) => (
+        <button 
+          onClick={(e) => {
+            e.stopPropagation();
+            if (isAdmin) {
+              handleEditClick(item);
+            } else {
+              handleItemClick(item);
+            }
+          }}
+          className="text-primary hover:underline font-bold underline decoration-2 underline-offset-2 hover:text-primary/80 transition-colors"
+        >
+          {item.id}
+        </button>
+      )
     },
     { header: 'Name', accessorKey: 'name', cell: (item: any) => <span className="font-semibold text-primary">{item.name}</span> },
     { header: 'KALM Assignee', accessorKey: 'kalmAssignee' },
@@ -381,7 +355,7 @@ export default function FASTPage() {
     { header: 'Comments', accessorKey: 'comments' },
     { header: 'Last Modified By', accessorKey: 'lastModifiedBy' },
     { header: 'Last Modified Date', accessorKey: 'lastModifiedDate' },
-  ], [isAdmin, subAssetCounts]);
+  ], [isAdmin]);
 
   const cardFields = [
     { label: 'Asset ID', key: 'id' },
