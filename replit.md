@@ -52,6 +52,7 @@ Preferred communication style: Simple, everyday language.
           DashboardContainer.tsx  # Shared dashboard logic (~1770 lines)
       pages/
         FASTPage.tsx      # FAST module entry point
+        SubAssetsPage.tsx # Sub-assets module entry point
         TPIPage.tsx       # TPI module entry point
         BTOPage.tsx       # BTO module entry point
         CMDBPage.tsx      # CMDB module entry point
@@ -89,9 +90,30 @@ Preferred communication style: Simple, everyday language.
 | Module | Version Column | History Auditing |
 |--------|----------------|------------------|
 | FAST | No | Activity log (user edits) |
+| Sub-assets | No | None |
 | TPI | Yes | SCD Type 2 history (external system updates) |
 | BTO | No | None |
 | CMDB | Yes | None |
+
+### Sub-assets Feature
+- **Table**: `sub_assets` stores extended asset details with 38+ columns
+- **Parent Relationship**: `parentAssetId` foreign key links to FAST asset ID
+- **ID Pattern**: Sub-assets use `{parentId}-SUB1`, `-SUB2` incrementing pattern
+- **Creation Workflow**: 
+  1. Admin clicks "Create Sub-asset" button in FAST asset detail dialog
+  2. System generates new FAST asset with ID like `AST-0001-SUB1`
+  3. System creates corresponding sub-asset record linking to parent
+  4. User fills in sub-asset specific fields on Sub-assets page
+- **Visual Indicators**: 
+  - Orange badge for sub-assets in FAST table
+  - Blue badge showing sub-asset count for parent assets
+- **Navigation**: Sub-assets tab between FAST and TPI in header
+- **API Endpoints**:
+  - `GET /api/sub-assets` - List all sub-assets
+  - `POST /api/sub-assets` - Create new sub-asset
+  - `PUT /api/sub-assets/:internalId` - Update sub-asset
+  - `GET /api/fast/next-sub-id/:baseAssetId` - Get next sub-asset ID
+  - `GET /api/sub-assets/counts` - Get sub-asset counts per parent
 
 ### TPI History Auditing
 - **Table**: `tpi_asset_history` stores full snapshots of TPI records with start/end dates

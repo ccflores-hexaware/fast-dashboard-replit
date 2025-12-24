@@ -670,7 +670,8 @@ export default function FASTPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          parentAssetId: nextId,
+          assetId: nextId,
+          parentAssetId: selectedItem.id,
           lastModifiedBy: user?.name || 'Unknown User',
           lastModifiedDate: format(new Date(), 'MMM d, yyyy HH:mm'),
         })
