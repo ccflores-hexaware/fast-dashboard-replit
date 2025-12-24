@@ -243,27 +243,6 @@ export const selectTpiAssetHistorySchema = createSelectSchema(tpiAssetHistory);
 export type InsertTpiAssetHistory = z.infer<typeof insertTpiAssetHistorySchema>;
 export type TpiAssetHistory = typeof tpiAssetHistory.$inferSelect;
 
-export const btoAssets = pgTable("bto_assets", {
-  internalId: serial("internal_id").primaryKey(),
-  id: varchar("id", { length: 50 }).notNull().unique(),
-  higherLevelBTO: text("higher_level_bto"),
-  bto: text("bto"),
-  division: text("division"),
-  concatValue: text("concat_value"),
-  owner: text("owner"),
-  deadline: text("deadline"),
-  status: text("status"),
-  progress: integer("progress").default(0),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const insertBtoAssetSchema = createInsertSchema(btoAssets).omit({
-  internalId: true,
-  createdAt: true,
-});
-export const selectBtoAssetSchema = createSelectSchema(btoAssets);
-export type InsertBtoAsset = z.infer<typeof insertBtoAssetSchema>;
-export type BtoAsset = typeof btoAssets.$inferSelect;
 
 export const cmdbAssets = pgTable("cmdb_assets", {
   internalId: serial("internal_id").primaryKey(),

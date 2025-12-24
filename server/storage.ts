@@ -3,7 +3,6 @@ import {
   type FastAsset, type InsertFastAsset, fastAssets,
   type TpiAsset, type InsertTpiAsset, tpiAssets,
   type TpiAssetHistory, type InsertTpiAssetHistory, tpiAssetHistory,
-  type BtoAsset, type InsertBtoAsset, btoAssets,
   type CmdbAsset, type InsertCmdbAsset, cmdbAssets,
   type CmdbAssetHistory, type InsertCmdbAssetHistory, cmdbAssetHistory,
   type AssetActivity, type InsertAssetActivity, assetActivity,
@@ -29,11 +28,6 @@ export interface IStorage {
   updateTpiAsset(id: string, asset: Partial<InsertTpiAsset>): Promise<TpiAsset | undefined>;
   deleteTpiAsset(id: string): Promise<boolean>;
   
-  getAllBtoAssets(): Promise<BtoAsset[]>;
-  getBtoAssetById(id: string): Promise<BtoAsset | undefined>;
-  createBtoAsset(asset: InsertBtoAsset): Promise<BtoAsset>;
-  updateBtoAsset(id: string, asset: Partial<InsertBtoAsset>): Promise<BtoAsset | undefined>;
-  deleteBtoAsset(id: string): Promise<boolean>;
   
   getAllCmdbAssets(): Promise<CmdbAsset[]>;
   getCmdbAssetById(id: string): Promise<CmdbAsset | undefined>;
@@ -137,33 +131,6 @@ export class DatabaseStorage implements IStorage {
 
   async deleteTpiAsset(id: string): Promise<boolean> {
     await db.delete(tpiAssets).where(eq(tpiAssets.id, id));
-    return true;
-  }
-
-  async getAllBtoAssets(): Promise<BtoAsset[]> {
-    return db.select().from(btoAssets).orderBy(desc(btoAssets.createdAt));
-  }
-
-  async getBtoAssetById(id: string): Promise<BtoAsset | undefined> {
-    const [asset] = await db.select().from(btoAssets).where(eq(btoAssets.id, id));
-    return asset;
-  }
-
-  async createBtoAsset(asset: InsertBtoAsset): Promise<BtoAsset> {
-    const [newAsset] = await db.insert(btoAssets).values(asset).returning();
-    return newAsset;
-  }
-
-  async updateBtoAsset(id: string, asset: Partial<InsertBtoAsset>): Promise<BtoAsset | undefined> {
-    const [updated] = await db.update(btoAssets)
-      .set(asset)
-      .where(eq(btoAssets.id, id))
-      .returning();
-    return updated;
-  }
-
-  async deleteBtoAsset(id: string): Promise<boolean> {
-    await db.delete(btoAssets).where(eq(btoAssets.id, id));
     return true;
   }
 
