@@ -61,7 +61,9 @@ export default function BTOPage() {
       });
     }
     
-    return Object.values(grouped).sort((a, b) => a.higherLevelBto.localeCompare(b.higherLevelBto));
+    return Object.values(grouped)
+      .filter(row => row.totalAssets >= 1)
+      .sort((a, b) => a.higherLevelBto.localeCompare(b.higherLevelBto));
   }, [data]);
 
   const toggleRow = (higherLevelBto: string) => {
