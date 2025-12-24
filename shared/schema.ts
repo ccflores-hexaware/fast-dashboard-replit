@@ -336,3 +336,17 @@ export const insertSubAssetSchema = createInsertSchema(subAssets).omit({
 export const selectSubAssetSchema = createSelectSchema(subAssets);
 export type InsertSubAsset = z.infer<typeof insertSubAssetSchema>;
 export type SubAsset = typeof subAssets.$inferSelect;
+
+export const btoMapping = pgTable("bto_mapping", {
+  id: serial("id").primaryKey(),
+  higherLevelBto: text("higher_level_bto").notNull(),
+  bto: text("bto"),
+  division: text("division"),
+});
+
+export const insertBtoMappingSchema = createInsertSchema(btoMapping).omit({
+  id: true,
+});
+export const selectBtoMappingSchema = createSelectSchema(btoMapping);
+export type InsertBtoMapping = z.infer<typeof insertBtoMappingSchema>;
+export type BtoMapping = typeof btoMapping.$inferSelect;
