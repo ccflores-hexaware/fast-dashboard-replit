@@ -470,12 +470,10 @@ export default function SubAssetsPage() {
             data={paginatedData}
             columns={visibleColumns}
             onRowClick={handleItemClick}
-            sortColumn={sortConfig.key}
-            sortDirection={sortConfig.direction}
+            sortConfig={sortConfig}
             onSort={handleSort}
             columnFilters={columnFilters}
-            onColumnFilter={(key, values) => setColumnFilters(prev => ({ ...prev, [key]: values }))}
-            onClearFilters={() => setColumnFilters({})}
+            onColumnFiltersChange={(filters: Record<string, string[]>) => setColumnFilters(filters)}
             allData={baseData}
           />
         ) : (
