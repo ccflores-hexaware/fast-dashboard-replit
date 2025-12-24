@@ -608,7 +608,7 @@ export default function SubAssetsPage() {
                     <Button variant="outline" onClick={handleCancelEdit} disabled={isSaving}>
                       <X className="h-4 w-4 mr-1" /> Cancel
                     </Button>
-                    <Button onClick={handleSave} disabled={isSaving} className="gap-1 text-white" style={{ backgroundColor: '#89c24b' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#7ab043'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#89c24b'}>
+                    <Button onClick={handleSave} disabled={isSaving} className="gap-1">
                       {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                       {isSaving ? 'Saving...' : 'Save Changes'}
                     </Button>
