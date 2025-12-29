@@ -1,665 +1,124 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React from 'react';
+import { Loader2 } from 'lucide-react';
 import { DashboardLayout } from '@/components/DashboardLayout';
-import { ViewToggle } from '@/components/ViewToggle';
-import { DataCard } from '@/components/DataCard';
 import { Pagination } from '@/components/Pagination';
-import { Button } from '@/components/ui/button';
-import { Download, Search, Check, ChevronsUpDown, Settings2, Loader2, ChevronDown, ChevronRight, History, Filter, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
-import { cn } from "@/lib/utils";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { format } from 'date-fns';
-import { useToast } from "@/hooks/use-toast";
-import { useUser } from "@/lib/userContext";
-import * as XLSX from 'xlsx';
-import { usePagination, useSorting, useColumnFilters, useViewToggle } from '@/hooks';
-
-const ALL_COLUMN_KEYS = ['id', 'configItem', 'status', 'environment', 'owner', 'version', 'lastUpdated'];
-const DEFAULT_COLUMNS = ['id', 'configItem', 'status', 'environment', 'owner', 'version'];
-const DEFAULT_CARD_FIELDS = ['id', 'version', 'environment', 'owner', 'status', 'lastUpdated'];
-
-const COLUMN_PRESETS = [
-  { name: 'Default', columns: 'default' as const },
-  { name: 'All Columns', columns: 'all' as const },
-];
+import { useCMDBPage } from '@/features/CMDB/hooks/useCMDBPage';
+import { CMDBHeader } from '@/features/CMDB/components/CMDBHeader';
+import { CMDBToolbar } from '@/features/CMDB/components/CMDBToolbar';
+import { CMDBTable } from '@/features/CMDB/components/table/CMDBTable';
+import { CMDBCardGrid } from '@/features/CMDB/components/CMDBCardGrid';
+import { CMDBDetailsDialog } from '@/features/CMDB/components/CMDBDetailsDialog';
+import { CMDBHistorySnapshotDialog } from '@/features/CMDB/components/CMDBHistorySnapshotDialog';
 
 export default function CMDBPage() {
-  const { toast } = useToast();
-  const { isAdmin } = useUser();
-  const { view, setView } = useViewToggle('table');
-  
-  const [data, setData] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch('/api/cmdb');
-        if (!response.ok) throw new Error('Failed to fetch');
-        const assets = await response.json();
-        setData(assets);
-      } catch (error) {
-        console.error('Error fetching CMDB data:', error);
-        toast({ title: "Error", description: "Failed to load CMDB data", variant: "destructive" });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
-  const [selectedItem, setSelectedItem] = useState<any>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [dialogTab, setDialogTab] = useState<'details' | 'history'>('details');
-  const [dialogHistoryData, setDialogHistoryData] = useState<{ assetId: string, history: any[], total: number } | null>(null);
-  const [dialogHistoryLoading, setDialogHistoryLoading] = useState(false);
-  const [dialogHistoryPage, setDialogHistoryPage] = useState(1);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchColumn, setSearchColumn] = useState('all');
-  const [openCombobox, setOpenCombobox] = useState(false);
-  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({});
-  const [columnSearchQuery, setColumnSearchQuery] = useState('');
-  const [cardFieldVisibility, setCardFieldVisibility] = useState<Record<string, boolean>>({});
-
-  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
-  const [historyData, setHistoryData] = useState<Record<string, { history: any[], total: number }>>({});
-  const [historyLoading, setHistoryLoading] = useState<Record<string, boolean>>({});
-  const [historyPage, setHistoryPage] = useState<Record<string, number>>({});
-  const [selectedHistoryItem, setSelectedHistoryItem] = useState<any>(null);
-  const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
-  const HISTORY_PAGE_SIZE = 5;
-
-  const fetchHistory = useCallback(async (assetId: string) => {
-    if (historyData[assetId]) return;
-    setHistoryLoading(prev => ({ ...prev, [assetId]: true }));
-    try {
-      const response = await fetch(`/api/cmdb/history/${assetId}`);
-      if (!response.ok) throw new Error('Failed to fetch history');
-      const data = await response.json();
-      setHistoryData(prev => ({ ...prev, [assetId]: data }));
-      setHistoryPage(prev => ({ ...prev, [assetId]: 1 }));
-    } catch (error) {
-      console.error('Error fetching CMDB history:', error);
-      toast({ title: "Error", description: "Failed to load history", variant: "destructive" });
-    } finally {
-      setHistoryLoading(prev => ({ ...prev, [assetId]: false }));
-    }
-  }, [historyData, toast]);
-
-  const toggleRow = useCallback((assetId: string) => {
-    setExpandedRows(prev => {
-      const next = new Set(prev);
-      if (next.has(assetId)) {
-        next.delete(assetId);
-      } else {
-        next.add(assetId);
-        fetchHistory(assetId);
-      }
-      return next;
-    });
-  }, [fetchHistory]);
-
-  const formatHistoryDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    if (date.getFullYear() === 9999) return 'Present';
-    return format(date, 'MMM d, yyyy HH:mm');
-  };
-
-  const isCurrentRecord = (endDate: string) => {
-    return new Date(endDate).getFullYear() === 9999;
-  };
-
-  useEffect(() => {
-    const storageKey = `cmdb-column-visibility-${isAdmin ? 'admin' : 'viewer'}`;
-    const saved = localStorage.getItem(storageKey);
-    if (saved) { try { setColumnVisibility(JSON.parse(saved)); } catch { const v: Record<string, boolean> = {}; ALL_COLUMN_KEYS.forEach(k => { v[k] = DEFAULT_COLUMNS.includes(k); }); setColumnVisibility(v); } }
-    else { const v: Record<string, boolean> = {}; ALL_COLUMN_KEYS.forEach(k => { v[k] = DEFAULT_COLUMNS.includes(k); }); setColumnVisibility(v); }
-    const cardSaved = localStorage.getItem('cmdb-card-field-visibility');
-    if (cardSaved) { try { setCardFieldVisibility(JSON.parse(cardSaved)); } catch { const v: Record<string, boolean> = {}; DEFAULT_CARD_FIELDS.forEach(k => { v[k] = true; }); setCardFieldVisibility(v); } }
-    else { const v: Record<string, boolean> = {}; DEFAULT_CARD_FIELDS.forEach(k => { v[k] = true; }); setCardFieldVisibility(v); }
-  }, [isAdmin]);
-
-  useEffect(() => { if (Object.keys(columnVisibility).length > 0) localStorage.setItem(`cmdb-column-visibility-${isAdmin ? 'admin' : 'viewer'}`, JSON.stringify(columnVisibility)); }, [columnVisibility, isAdmin]);
-  useEffect(() => { if (Object.keys(cardFieldVisibility).length > 0) localStorage.setItem('cmdb-card-field-visibility', JSON.stringify(cardFieldVisibility)); }, [cardFieldVisibility]);
-
-  const columns = useMemo(() => [
-    { header: 'CI ID', accessorKey: 'id' },
-    { header: 'Config Item', accessorKey: 'configItem', cell: (item: any) => <span className="font-semibold text-primary">{item.configItem}</span> },
-    { header: 'Status', accessorKey: 'status' },
-    { header: 'Environment', accessorKey: 'environment' },
-    { header: 'Owner', accessorKey: 'owner' },
-    { header: 'Version', accessorKey: 'version' },
-    { header: 'Last Updated', accessorKey: 'lastUpdated' },
-  ], []);
-
-  const cardFields = [{ label: 'CI ID', key: 'id' }, { label: 'Version', key: 'version' }, { label: 'Environment', key: 'environment' }, { label: 'Owner', key: 'owner' }, { label: 'Status', key: 'status' }, { label: 'Last Updated', key: 'lastUpdated' }];
-
-  const searchFilteredData = useMemo(() => {
-    if (!searchQuery.trim()) return data;
-    const query = searchQuery.toLowerCase();
-    return data.filter((item: any) => {
-      if (searchColumn === 'all') return columns.some(col => { const v = item[col.accessorKey]; return v && String(v).toLowerCase().includes(query); });
-      const v = item[searchColumn]; return v && String(v).toLowerCase().includes(query);
-    });
-  }, [data, searchQuery, searchColumn, columns]);
-
-  const { columnFilters, setColumnFilters, filteredData } = useColumnFilters(searchFilteredData);
-  const { sortConfig, handleSort, sortedData } = useSorting(filteredData);
-  const { currentPage, pageSize, setCurrentPage, setPageSize, paginatedData, totalPages, totalItems } = usePagination(sortedData);
-
-  const visibleColumns = useMemo(() => columns.filter(col => columnVisibility[col.accessorKey] !== false), [columns, columnVisibility]);
-  const visibleCardFields = useMemo(() => cardFields.filter(field => cardFieldVisibility[field.key]), [cardFieldVisibility]);
-  const visibleColumnCount = Object.values(columnVisibility).filter(Boolean).length;
-
-  const handleItemClick = (item: any) => { 
-    setSelectedItem(item); 
-    setDialogTab('details'); 
-    setDialogHistoryData(null); 
-    setDialogHistoryPage(1); 
-    setIsDialogOpen(true); 
-  };
-
-  const fetchDialogHistory = useCallback(async (assetId: string) => {
-    if (dialogHistoryData && dialogHistoryData.assetId === assetId) return;
-    setDialogHistoryLoading(true);
-    try {
-      const response = await fetch(`/api/cmdb/history/${assetId}`);
-      if (!response.ok) throw new Error('Failed to fetch history');
-      const data = await response.json();
-      setDialogHistoryData({ assetId, ...data });
-    } catch (error) {
-      console.error('Error fetching CMDB history:', error);
-      toast({ title: "Error", description: "Failed to load history", variant: "destructive" });
-    } finally {
-      setDialogHistoryLoading(false);
-    }
-  }, [dialogHistoryData, toast]);
+  const {
+    data,
+    history,
+    columns,
+    dialogs,
+    search,
+    table,
+    pagination,
+    view,
+    exportToExcel,
+    allColumns,
+  } = useCMDBPage();
 
   const handleDialogTabChange = (tab: string) => {
-    setDialogTab(tab as 'details' | 'history');
-    if (tab === 'history' && selectedItem && (!dialogHistoryData || dialogHistoryData.assetId !== selectedItem.id)) {
-      fetchDialogHistory(selectedItem.id);
+    dialogs.setDialogTab(tab as 'details' | 'history');
+    if (tab === 'history' && dialogs.selectedItem && 
+        (!history.dialogHistoryData || history.dialogHistoryData.assetId !== dialogs.selectedItem.id)) {
+      history.fetchDialogHistory(dialogs.selectedItem.id);
     }
-  };
-
-  const allUniqueValues = useMemo(() => {
-    const result: Record<string, string[]> = {};
-    columns.forEach(col => {
-      const key = col.accessorKey;
-      const values = Array.from(new Set(data.map((item: any) => String(item[key] || ''))));
-      result[key] = values.sort();
-    });
-    return result;
-  }, [data, columns]);
-
-  const getUniqueValues = (key: string) => {
-    return allUniqueValues[key] || [];
-  };
-
-  const handleFilterChange = (key: string, value: string, uniqueValues: string[]) => {
-    const currentFilters = columnFilters[key];
-    let newFilters: string[];
-    if (currentFilters === undefined) {
-      newFilters = uniqueValues.filter(v => v !== value);
-    } else {
-      if (currentFilters.includes(value)) {
-        newFilters = currentFilters.filter(v => v !== value);
-      } else {
-        newFilters = [...currentFilters, value];
-      }
-    }
-    const updatedFilters = { ...columnFilters };
-    if (newFilters.length === uniqueValues.length) {
-      delete updatedFilters[key];
-    } else {
-      updatedFilters[key] = newFilters;
-    }
-    setColumnFilters(updatedFilters);
-  };
-
-  const handleSelectAll = (key: string) => {
-    const currentFilters = columnFilters[key];
-    const updatedFilters = { ...columnFilters };
-    if (currentFilters === undefined) {
-      updatedFilters[key] = [];
-    } else {
-      delete updatedFilters[key];
-    }
-    setColumnFilters(updatedFilters);
-  };
-
-  const handleClearColumnFilter = (key: string) => {
-    const updatedFilters = { ...columnFilters };
-    delete updatedFilters[key];
-    setColumnFilters(updatedFilters);
-  };
-
-  const applyColumnPreset = (preset: { name: string; columns: string[] | 'all' | 'default' }) => {
-    let cols: string[];
-    if (preset.columns === 'all') cols = ALL_COLUMN_KEYS;
-    else if (preset.columns === 'default') cols = DEFAULT_COLUMNS;
-    else cols = preset.columns;
-    const v: Record<string, boolean> = {}; ALL_COLUMN_KEYS.forEach(k => { v[k] = cols.includes(k); }); setColumnVisibility(v);
-  };
-
-  const exportToExcel = () => {
-    const exportData = sortedData.map((item: any) => { const row: Record<string, any> = {}; visibleColumns.forEach(col => { row[col.header] = item[col.accessorKey] ?? ''; }); return row; });
-    const ws = XLSX.utils.json_to_sheet(exportData); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'CMDB'); XLSX.writeFile(wb, `CMDB_Export_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
-    toast({ title: "Export Complete", description: `Exported ${exportData.length} records.`, variant: "success" });
   };
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Configuration Management Database (CMDB)</h1>
-            <p className="text-muted-foreground mt-1">View configuration items, versions, and operational status.</p>
-          </div>
-          <Button onClick={exportToExcel} className="gap-2 text-white" style={{ backgroundColor: '#89c24b' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#7ab043'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#89c24b'}><Download className="h-4 w-4" />Export to Excel</Button>
-        </div>
+        <CMDBHeader onExport={exportToExcel} />
 
-        <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-          <div className="flex items-center gap-2 flex-1">
-            <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
-              <PopoverTrigger asChild><Button variant="outline" role="combobox" className="w-[140px] justify-between">{searchColumn === 'all' ? 'All Columns' : columns.find(c => c.accessorKey === searchColumn)?.header || searchColumn}<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" /></Button></PopoverTrigger>
-              <PopoverContent className="w-[200px] p-0"><Command><CommandInput placeholder="Search column..." /><CommandList><CommandEmpty>No column found.</CommandEmpty><CommandGroup><CommandItem value="all" onSelect={() => { setSearchColumn('all'); setOpenCombobox(false); }}><Check className={cn("mr-2 h-4 w-4", searchColumn === 'all' ? "opacity-100" : "opacity-0")} />All Columns</CommandItem>{columns.map(col => (<CommandItem key={col.accessorKey} value={col.accessorKey} onSelect={() => { setSearchColumn(col.accessorKey); setOpenCombobox(false); }}><Check className={cn("mr-2 h-4 w-4", searchColumn === col.accessorKey ? "opacity-100" : "opacity-0")} />{col.header}</CommandItem>))}</CommandGroup></CommandList></Command></PopoverContent>
-            </Popover>
-            <div className="relative flex-1 min-w-[200px]"><Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Search across all fields..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9" /></div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild><Button variant="outline" className="gap-2"><Settings2 className="h-4 w-4" />Columns<span className="ml-1 px-1.5 py-0.5 text-xs bg-primary/10 text-primary rounded-full">{visibleColumnCount}/{ALL_COLUMN_KEYS.length}</span></Button></DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-72">
-                <DropdownMenuLabel>Column Visibility</DropdownMenuLabel><DropdownMenuSeparator />
-                <div className="p-2"><Input placeholder="Search columns..." value={columnSearchQuery} onChange={(e) => setColumnSearchQuery(e.target.value)} className="h-8" /></div><DropdownMenuSeparator />
-                <DropdownMenuLabel className="text-xs text-muted-foreground">Presets</DropdownMenuLabel>
-                <div className="flex flex-wrap gap-1 p-2">{COLUMN_PRESETS.map(preset => (<Button key={preset.name} variant="outline" size="sm" className="h-6 text-xs" onClick={() => applyColumnPreset(preset)}>{preset.name}</Button>))}</div><DropdownMenuSeparator />
-                <ScrollArea className="h-[300px]">{columns.filter(col => col.header.toLowerCase().includes(columnSearchQuery.toLowerCase())).map(col => (<DropdownMenuCheckboxItem key={col.accessorKey} checked={columnVisibility[col.accessorKey] !== false} onCheckedChange={(checked) => setColumnVisibility(prev => ({ ...prev, [col.accessorKey]: checked }))}>{col.header}</DropdownMenuCheckboxItem>))}</ScrollArea>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <ViewToggle view={view} setView={setView} />
-          </div>
-        </div>
+        <CMDBToolbar
+          searchQuery={search.searchQuery}
+          onSearchQueryChange={search.setSearchQuery}
+          searchColumn={search.searchColumn}
+          onSearchColumnChange={search.setSearchColumn}
+          openCombobox={search.openCombobox}
+          onOpenComboboxChange={search.setOpenCombobox}
+          columns={allColumns}
+          columnVisibility={columns.columnVisibility}
+          onColumnVisibilityChange={columns.setColumnVisibility}
+          columnSearchQuery={columns.columnSearchQuery}
+          onColumnSearchQueryChange={columns.setColumnSearchQuery}
+          visibleColumnCount={columns.visibleColumnCount}
+          onApplyPreset={columns.applyPreset}
+          view={view.view}
+          onViewChange={view.setView}
+        />
 
-        {isLoading ? (
+        {data.isLoading ? (
           <div className="flex items-center justify-center py-16">
             <div className="flex flex-col items-center gap-4">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <p className="text-muted-foreground">Loading assets...</p>
             </div>
           </div>
-        ) : view === 'table' ? (
-          <div className="rounded-md border border-border bg-card shadow-sm overflow-x-auto overflow-y-hidden">
-            <table className="w-full caption-bottom text-sm">
-              <thead className="bg-muted/50">
-                <tr className="border-b border-border">
-                  {visibleColumns.map((col, index) => {
-                    const key = col.accessorKey;
-                    const isFiltered = !!columnFilters[key];
-                    const uniqueValues = getUniqueValues(key);
-                    const currentFilterValues = columnFilters[key];
-                    const isSelectAll = currentFilterValues === undefined;
-                    const isSorted = sortConfig?.key === key;
-                    const SortIcon = isSorted ? (sortConfig?.direction === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown;
-                    
-                    return (
-                      <th key={key} className={cn("font-bold text-primary whitespace-nowrap border-r border-border px-4 py-3 h-auto select-none", index === 0 && "sticky left-0 z-30 bg-slate-200", index === visibleColumns.length - 1 && "border-r-0")}>
-                        <div className="flex items-center justify-between gap-1.5">
-                          <div 
-                            className="flex items-center gap-1.5 rounded cursor-pointer hover:bg-black/5 -ml-1 pl-1 pr-1.5 py-0.5 transition-colors"
-                            onClick={() => handleSort(key)}
-                          >
-                            {col.header}
-                            <SortIcon className={cn("h-3.5 w-3.5", isSorted ? "opacity-100" : "opacity-30")} />
-                          </div>
-                          
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className={cn("h-6 w-6 p-0 hover:bg-muted/80 data-[state=open]:bg-muted/80", isFiltered && "text-primary bg-primary/10")}
-                              >
-                                <Filter className={cn("h-3.5 w-3.5", isFiltered && "fill-current")} />
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-[220px] p-0" align="start">
-                              <Command>
-                                <CommandInput placeholder={`Filter ${col.header}...`} />
-                                <CommandList>
-                                  <CommandEmpty>No results found.</CommandEmpty>
-                                  <CommandGroup>
-                                    <CommandItem onSelect={() => handleSelectAll(key)} className="flex items-center gap-2 cursor-pointer font-medium border-b">
-                                      <div className={cn("flex h-4 w-4 items-center justify-center rounded-sm border border-primary", isSelectAll ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible")}>
-                                        <Check className="h-3 w-3" />
-                                      </div>
-                                      <span>(Select All)</span>
-                                    </CommandItem>
-                                    <CommandItem onSelect={() => handleClearColumnFilter(key)} className="justify-center text-center font-medium text-destructive cursor-pointer my-1">
-                                      Clear Filter
-                                    </CommandItem>
-                                  </CommandGroup>
-                                  <CommandSeparator />
-                                  <CommandGroup className="max-h-[200px] overflow-auto">
-                                    {uniqueValues.map((val) => {
-                                      const isSelected = !currentFilterValues || currentFilterValues.includes(val);
-                                      return (
-                                        <CommandItem key={val} onSelect={() => handleFilterChange(key, val, uniqueValues)} className="flex items-center gap-2 cursor-pointer">
-                                          <div className={cn("flex h-4 w-4 items-center justify-center rounded-sm border border-primary", isSelected ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible")}>
-                                            <Check className="h-3 w-3" />
-                                          </div>
-                                          <span>{val || "(Empty)"}</span>
-                                        </CommandItem>
-                                      );
-                                    })}
-                                  </CommandGroup>
-                                </CommandList>
-                              </Command>
-                            </PopoverContent>
-                          </Popover>
-                        </div>
-                      </th>
-                    );
-                  })}
-                </tr>
-              </thead>
-              <tbody className="[&_tr:last-child]:border-0">
-                {paginatedData.map((item: any, index: number) => {
-                  const isExpanded = expandedRows.has(item.id);
-                  const assetHistory = historyData[item.id];
-                  const isLoadingHistory = historyLoading[item.id];
-                  const currentHistoryPage = historyPage[item.id] || 1;
-                  const totalHistoryPages = assetHistory ? Math.ceil(assetHistory.total / HISTORY_PAGE_SIZE) : 0;
-                  const paginatedHistory = assetHistory?.history.slice((currentHistoryPage - 1) * HISTORY_PAGE_SIZE, currentHistoryPage * HISTORY_PAGE_SIZE) || [];
-                  
-                  return (
-                    <React.Fragment key={`${item.id}-${index}`}>
-                      <tr className="hover:bg-muted/30 transition-colors border-b border-border cursor-pointer">
-                        {visibleColumns.map((col, colIndex) => (
-                          <td key={col.accessorKey} className={cn("text-sm border-r border-border px-4 py-3 whitespace-nowrap", colIndex === 0 && "sticky left-0 z-20 bg-slate-100", colIndex === visibleColumns.length - 1 && "border-r-0")} onClick={() => handleItemClick(item)}>
-                            {colIndex === 0 ? (
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); toggleRow(item.id); }}
-                                  className="p-0.5 hover:bg-muted rounded transition-colors"
-                                  aria-label={isExpanded ? "Collapse history" : "Expand history"}
-                                >
-                                  {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-                                </button>
-                                <span>{col.cell ? col.cell(item) : (item[col.accessorKey] ?? '—')}</span>
-                              </div>
-                            ) : (
-                              col.cell ? col.cell(item) : (item[col.accessorKey] ?? '—')
-                            )}
-                          </td>
-                        ))}
-                      </tr>
-                      {isExpanded && (
-                        <>
-                          {isLoadingHistory ? (
-                            <tr className="bg-muted/5 border-b border-border">
-                              <td colSpan={visibleColumns.length} className="px-4 py-3">
-                                <div className="flex items-center justify-center gap-2">
-                                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                                  <span className="text-sm text-muted-foreground">Loading history...</span>
-                                </div>
-                              </td>
-                            </tr>
-                          ) : paginatedHistory.length === 0 ? (
-                            <tr className="bg-muted/5 border-b border-border">
-                              <td colSpan={visibleColumns.length} className="px-4 py-3">
-                                <div className="flex items-center justify-center gap-2">
-                                  <History className="h-4 w-4 text-muted-foreground" />
-                                  <span className="text-sm text-muted-foreground">No history available</span>
-                                </div>
-                              </td>
-                            </tr>
-                          ) : (
-                            <>
-                              {paginatedHistory.map((historyItem: any) => (
-                                <tr 
-                                  key={`history-${historyItem.id}`}
-                                  className="border-b border-border cursor-pointer hover:bg-muted/20 transition-colors bg-muted/5"
-                                  onClick={() => { setSelectedHistoryItem(historyItem); setIsHistoryDialogOpen(true); }}
-                                >
-                                  {visibleColumns.map((col, colIndex) => (
-                                    <td 
-                                      key={col.accessorKey} 
-                                      className={cn(
-                                        "text-sm border-r border-border px-4 py-3 whitespace-nowrap text-muted-foreground",
-                                        colIndex === 0 && "sticky left-0 z-20 bg-slate-50",
-                                        colIndex === visibleColumns.length - 1 && "border-r-0"
-                                      )}
-                                    >
-                                      {colIndex === 0 ? (
-                                        <div className="flex items-center gap-2">
-                                          <span className="text-xs text-muted-foreground/60">└</span>
-                                          <History className="h-3 w-3 text-muted-foreground/50" />
-                                          {isCurrentRecord(historyItem.endDate) && (
-                                            <Badge className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">Current</Badge>
-                                          )}
-                                          <span className="text-xs text-muted-foreground/70">
-                                            ({formatHistoryDate(historyItem.startDate)} → {formatHistoryDate(historyItem.endDate)})
-                                          </span>
-                                        </div>
-                                      ) : (
-                                        <span>{historyItem[col.accessorKey] ?? '—'}</span>
-                                      )}
-                                    </td>
-                                  ))}
-                                </tr>
-                              ))}
-                              {(totalHistoryPages > 1 || assetHistory) && (
-                                <tr className="bg-muted/5 border-b border-border">
-                                  <td colSpan={visibleColumns.length} className="px-4 py-2">
-                                    <div className="flex items-center gap-3">
-                                      <span className="text-xs text-muted-foreground">
-                                        {assetHistory?.total} history record{assetHistory?.total !== 1 ? 's' : ''}
-                                        {totalHistoryPages > 1 && ` • Page ${currentHistoryPage} of ${totalHistoryPages}`}
-                                      </span>
-                                      {totalHistoryPages > 1 && (
-                                        <div className="flex items-center gap-1">
-                                          <Button 
-                                            variant="ghost" 
-                                            size="sm" 
-                                            className="h-6 px-2 text-xs" 
-                                            disabled={currentHistoryPage === 1} 
-                                            onClick={(e) => { e.stopPropagation(); setHistoryPage(prev => ({ ...prev, [item.id]: currentHistoryPage - 1 })); }}
-                                          >
-                                            Prev
-                                          </Button>
-                                          <Button 
-                                            variant="ghost" 
-                                            size="sm" 
-                                            className="h-6 px-2 text-xs" 
-                                            disabled={currentHistoryPage === totalHistoryPages} 
-                                            onClick={(e) => { e.stopPropagation(); setHistoryPage(prev => ({ ...prev, [item.id]: currentHistoryPage + 1 })); }}
-                                          >
-                                            Next
-                                          </Button>
-                                        </div>
-                                      )}
-                                    </div>
-                                  </td>
-                                </tr>
-                              )}
-                            </>
-                          )}
-                        </>
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+        ) : view.view === 'table' ? (
+          <CMDBTable
+            data={pagination.paginatedData}
+            visibleColumns={columns.visibleColumns}
+            sortConfig={table.sortConfig}
+            onSort={table.handleSort}
+            columnFilters={table.columnFilters}
+            getUniqueValues={table.getUniqueValues}
+            onFilterChange={table.handleFilterChange}
+            onSelectAll={table.handleSelectAll}
+            onClearFilter={table.handleClearColumnFilter}
+            expandedRows={history.expandedRows}
+            onToggleRowExpansion={history.toggleRowExpansion}
+            historyCache={history.historyCache}
+            historyLoading={history.historyLoading}
+            historyPage={history.historyPage}
+            onHistoryPageChange={history.setHistoryPageForAsset}
+            onItemClick={dialogs.openDetailsDialog}
+            onHistoryItemClick={dialogs.openHistorySnapshotDialog}
+          />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">{paginatedData.map((item: any, index: number) => (<DataCard key={`${item.id}-${index}`} item={item} titleKey="configItem" statusKey="status" fields={visibleCardFields as any} onClick={handleItemClick} />))}</div>
+          <CMDBCardGrid
+            data={pagination.paginatedData}
+            fields={columns.visibleCardFields}
+            onItemClick={dialogs.openDetailsDialog}
+          />
         )}
 
-        <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} pageSize={pageSize} onPageChange={setCurrentPage} onPageSizeChange={setPageSize} />
+        <Pagination
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.totalItems}
+          pageSize={pagination.pageSize}
+          onPageChange={pagination.setCurrentPage}
+          onPageSizeChange={pagination.setPageSize}
+        />
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="w-full sm:max-w-4xl max-h-[90vh] flex flex-col p-0 gap-0">
-            <DialogHeader className="p-6 pb-4 border-b">
-              <DialogTitle className="text-xl">{selectedItem?.configItem || 'Details'}</DialogTitle>
-              <DialogDescription>{selectedItem?.id}</DialogDescription>
-            </DialogHeader>
-            <Tabs value={dialogTab} onValueChange={handleDialogTabChange} className="flex-1 flex flex-col min-h-0">
-              <TabsList className="mx-6 mt-4 w-fit">
-                <TabsTrigger value="details">Details</TabsTrigger>
-                <TabsTrigger value="history" className="flex items-center gap-1">
-                  <History className="h-4 w-4" />
-                  History
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="details" className="flex-1 overflow-y-auto px-6 min-h-0 m-0">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1 py-4">
-                  {selectedItem && columns.map(col => (
-                    <div key={col.accessorKey} className="flex flex-col space-y-1 py-3 border-b border-border/50">
-                      <span className="text-sm font-medium text-muted-foreground">{col.header}</span>
-                      <span className="text-base font-semibold text-foreground">{String(selectedItem[col.accessorKey] ?? '—')}</span>
-                    </div>
-                  ))}
-                  {selectedItem?.createdAt && (
-                    <div className="flex flex-col space-y-1 py-3 border-b border-border/50">
-                      <span className="text-sm font-medium text-muted-foreground">Created At</span>
-                      <span className="text-base font-semibold text-foreground">{format(new Date(selectedItem.createdAt), 'MMM d, yyyy HH:mm')}</span>
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
-              <TabsContent value="history" className="flex-1 overflow-y-auto px-6 min-h-0 m-0">
-                {dialogHistoryLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  </div>
-                ) : dialogHistoryData && dialogHistoryData.history.length > 0 ? (
-                  <div className="py-4 space-y-2">
-                    <div className="text-sm text-muted-foreground mb-4">
-                      {dialogHistoryData.total} historical record{dialogHistoryData.total !== 1 ? 's' : ''}
-                    </div>
-                    <div className="rounded-md border">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b bg-muted/50">
-                            <th className="px-4 py-2 text-left font-medium">Start Date</th>
-                            <th className="px-4 py-2 text-left font-medium">End Date</th>
-                            <th className="px-4 py-2 text-left font-medium">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {dialogHistoryData.history
-                            .slice((dialogHistoryPage - 1) * HISTORY_PAGE_SIZE, dialogHistoryPage * HISTORY_PAGE_SIZE)
-                            .map((record: any, idx: number) => (
-                              <tr 
-                                key={idx} 
-                                className="border-b hover:bg-muted/30 cursor-pointer"
-                                onClick={() => { setSelectedHistoryItem(record); setIsHistoryDialogOpen(true); }}
-                              >
-                                <td className="px-4 py-2">
-                                  {isCurrentRecord(record.endDate) && (
-                                    <Badge className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100 mr-2">Current</Badge>
-                                  )}
-                                  {formatHistoryDate(record.startDate)}
-                                </td>
-                                <td className="px-4 py-2">{formatHistoryDate(record.endDate)}</td>
-                                <td className="px-4 py-2">{record.status || '—'}</td>
-                              </tr>
-                            ))}
-                        </tbody>
-                      </table>
-                    </div>
-                    {dialogHistoryData.total > HISTORY_PAGE_SIZE && (
-                      <div className="flex items-center justify-between pt-2">
-                        <span className="text-xs text-muted-foreground">
-                          Page {dialogHistoryPage} of {Math.ceil(dialogHistoryData.total / HISTORY_PAGE_SIZE)}
-                        </span>
-                        <div className="flex gap-1">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-7 px-2 text-xs"
-                            disabled={dialogHistoryPage === 1}
-                            onClick={() => setDialogHistoryPage(p => p - 1)}
-                          >
-                            Previous
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-7 px-2 text-xs"
-                            disabled={dialogHistoryPage >= Math.ceil(dialogHistoryData.total / HISTORY_PAGE_SIZE)}
-                            onClick={() => setDialogHistoryPage(p => p + 1)}
-                          >
-                            Next
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center py-8 text-muted-foreground">
-                    No history records available
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
-            <div className="flex justify-end p-6 pt-4 border-t"><Button variant="outline" onClick={() => setIsDialogOpen(false)}>Close</Button></div>
-          </DialogContent>
-        </Dialog>
+        <CMDBDetailsDialog
+          isOpen={dialogs.isDialogOpen}
+          onClose={dialogs.closeDetailsDialog}
+          selectedItem={dialogs.selectedItem}
+          columns={allColumns}
+          dialogTab={dialogs.dialogTab}
+          onTabChange={handleDialogTabChange}
+          dialogHistoryData={history.dialogHistoryData}
+          dialogHistoryLoading={history.dialogHistoryLoading}
+          dialogHistoryPage={history.dialogHistoryPage}
+          onDialogHistoryPageChange={history.setDialogHistoryPage}
+          onHistoryRecordClick={dialogs.openHistorySnapshotDialog}
+        />
 
-        <Dialog open={isHistoryDialogOpen} onOpenChange={setIsHistoryDialogOpen}>
-          <DialogContent className="w-full sm:max-w-4xl max-h-[90vh] flex flex-col p-0 gap-0">
-            <DialogHeader className="p-6 pb-4 border-b">
-              <DialogTitle className="text-xl flex items-center gap-2">
-                Historical Snapshot
-                {selectedHistoryItem && isCurrentRecord(selectedHistoryItem.endDate) && (
-                  <Badge className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">Current</Badge>
-                )}
-              </DialogTitle>
-              <DialogDescription>
-                {selectedHistoryItem && (
-                  <>
-                    {formatHistoryDate(selectedHistoryItem.startDate)} → {formatHistoryDate(selectedHistoryItem.endDate)}
-                  </>
-                )}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex-1 overflow-y-auto px-6 min-h-0">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1 py-4">
-                {selectedHistoryItem && (
-                  <>
-                    <div className="flex flex-col space-y-1 py-3 border-b border-border/50">
-                      <span className="text-sm font-medium text-muted-foreground">Start Date</span>
-                      <span className="text-base font-semibold text-foreground">{formatHistoryDate(selectedHistoryItem.startDate)}</span>
-                    </div>
-                    <div className="flex flex-col space-y-1 py-3 border-b border-border/50">
-                      <span className="text-sm font-medium text-muted-foreground">End Date</span>
-                      <span className="text-base font-semibold text-foreground">{formatHistoryDate(selectedHistoryItem.endDate)}</span>
-                    </div>
-                    <div className="flex flex-col space-y-1 py-3 border-b border-border/50">
-                      <span className="text-sm font-medium text-muted-foreground">CI ID</span>
-                      <span className="text-base font-semibold text-foreground">{String(selectedHistoryItem.cmdbAssetId ?? '—')}</span>
-                    </div>
-                    {columns.filter(col => col.accessorKey !== 'id').map(col => (
-                      <div key={col.accessorKey} className="flex flex-col space-y-1 py-3 border-b border-border/50">
-                        <span className="text-sm font-medium text-muted-foreground">{col.header}</span>
-                        <span className="text-base font-semibold text-foreground">{String(selectedHistoryItem[col.accessorKey] ?? '—')}</span>
-                      </div>
-                    ))}
-                  </>
-                )}
-              </div>
-            </div>
-            <div className="flex justify-end p-6 pt-4 border-t"><Button variant="outline" onClick={() => setIsHistoryDialogOpen(false)}>Close</Button></div>
-          </DialogContent>
-        </Dialog>
+        <CMDBHistorySnapshotDialog
+          isOpen={dialogs.isHistoryDialogOpen}
+          onClose={dialogs.closeHistorySnapshotDialog}
+          selectedHistoryItem={dialogs.selectedHistoryItem}
+          columns={allColumns}
+        />
       </div>
     </DashboardLayout>
   );
