@@ -5,3 +5,5 @@ export { useSearch } from './useSearch';
 export { useViewToggle } from './useViewToggle';
 export { useColumnVisibility } from './useColumnVisibility';
 export { useCardFieldVisibility } from './useCardFieldVisibility';
+export { useDataFetch } from './useDataFetch';
+export { useHistoryManager } from './useHistoryManager';

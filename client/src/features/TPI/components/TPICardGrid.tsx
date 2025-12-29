@@ -1,5 +1,5 @@
 import React from 'react';
-import { DataCard } from '@/components/DataCard';
+import { CardGrid } from '@/components/CardGrid';
 import type { TPIAsset } from '../types/asset.types';
 import type { CardFieldDefinition } from '../types/column.types';
 
@@ -10,18 +10,20 @@ interface TPICardGridProps {
 }
 
 export function TPICardGrid({ data, fields, onItemClick }: TPICardGridProps) {
+  const cardFields = fields.map(f => ({ label: f.label, key: f.key }));
+  
+  const handleItemClick = (item: { id: string }) => {
+    onItemClick(item as TPIAsset);
+  };
+  
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      {data.map((item: TPIAsset, index: number) => (
-        <DataCard 
-          key={`${item.id}-${index}`} 
-          item={item as any} 
-          titleKey={"name" as any}
-          statusKey={"cmdbStatus" as any}
-          fields={fields as any} 
-          onClick={onItemClick as any} 
-        />
-      ))}
-    </div>
+    <CardGrid
+      data={data}
+      fields={cardFields}
+      onItemClick={handleItemClick}
+      titleKey="name"
+      statusKey="cmdbStatus"
+      gridCols={4}
+    />
   );
 }

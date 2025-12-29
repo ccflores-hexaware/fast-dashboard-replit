@@ -35,18 +35,54 @@ Preferred communication style: Simple, everyday language.
 - **Activity Tracking**: Unified activity log tracks field changes and comments for FAST assets with JSONB storage
 - **Responsive Layout**: Mobile-first design with consistent navigation header
 
+### Shared Code Architecture
+The application uses shared utilities and components to reduce code duplication between CMDB and TPI modules:
+
+**Shared Types** (`client/src/types/`):
+- `table.types.ts` - Column definitions, visibility, presets, sort/filter configs
+- `history.types.ts` - History record interfaces, dialog data types
+
+**Shared Utilities** (`client/src/lib/formatters.ts`):
+- `formatHistoryDate()` - Formats dates for history display
+- `isCurrentRecord()` - Checks if a record is the current version
+- `formatDisplayValue()` - Formats values for display in dialogs
+
+**Shared Hooks** (`client/src/hooks/`):
+- `useDataFetch` - Generic data fetching with loading/error states
+- `useHistoryManager` - History state management with pagination
+
+**Shared Components** (`client/src/components/`):
+- `PageHeader` - Consistent page headers with export functionality
+- `DataToolbar` - Search, column visibility, view toggle controls
+- `DetailsDialog` - Generic detail dialog with history tab
+- `HistorySnapshotDialog` - Historical snapshot viewer
+- `CardGrid` - Grid layout for card view with configurable columns
+
 ### Project Structure
 ```
 /
   client/                 # React frontend (Vite)
     src/
-      components/         # UI components
+      components/         # Shared UI components
         ui/               # shadcn/ui primitives
         DashboardLayout.tsx
         DataTable.tsx     # Table view component
         DataCard.tsx      # Card view component
+        CardGrid.tsx      # Shared card grid component
+        DataToolbar.tsx   # Shared search/filter toolbar
+        PageHeader.tsx    # Shared page header
+        DetailsDialog.tsx # Shared detail dialog
+        HistorySnapshotDialog.tsx  # Shared history viewer
         FilterMenu.tsx    # Column filtering
         Pagination.tsx
+      types/              # Shared type definitions
+        table.types.ts
+        history.types.ts
+      hooks/              # Shared custom hooks
+        useDataFetch.ts
+        useHistoryManager.ts
+      lib/
+        formatters.ts     # Shared formatting utilities
       features/
         dashboard/
           DashboardContainer.tsx  # Shared dashboard logic
