@@ -1087,7 +1087,7 @@ export default function FASTPage() {
               ) : (
                 <>
                   <div className="flex gap-2">
-                    {isAdmin && selectedItem && !selectedItem.isSubAsset && (
+                    {isAdmin && selectedItem && !selectedItem.isSubAsset && activeTab === 'details' && (
                       <Button size="sm" onClick={() => setIsDuplicateConfirmOpen(true)} className="gap-1 text-white" style={{ backgroundColor: '#f59e0b' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d97706'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#f59e0b'}>
                         <Layers className="h-4 w-4" /> Create Sub-asset
                       </Button>
