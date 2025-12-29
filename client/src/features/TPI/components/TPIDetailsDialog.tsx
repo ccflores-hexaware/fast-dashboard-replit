@@ -42,7 +42,6 @@ export function TPIDetailsDialog({
     (dialogHistoryPage - 1) * HISTORY_PAGE_SIZE,
     dialogHistoryPage * HISTORY_PAGE_SIZE
   ) || [];
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-full sm:max-w-4xl max-h-[90vh] flex flex-col p-0 gap-0">
