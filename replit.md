@@ -49,7 +49,19 @@ Preferred communication style: Simple, everyday language.
         Pagination.tsx
       features/
         dashboard/
-          DashboardContainer.tsx  # Shared dashboard logic (~1770 lines)
+          DashboardContainer.tsx  # Shared dashboard logic
+        TPI/                      # Refactored TPI feature module (~125 line page)
+          types/                  # Asset, column, and state type definitions
+          constants/              # Column headers, defaults, presets
+          utils/                  # Formatters and utility functions
+          hooks/                  # useTPI* composition hooks (data, history, dialogs)
+          components/             # TPITable, TPICardGrid, dialogs, etc.
+        CMDB/                     # Refactored CMDB feature module (~125 line page)
+          types/                  # Asset, column, and state type definitions
+          constants/              # Column headers, defaults, presets
+          utils/                  # Formatters and utility functions
+          hooks/                  # useCMDB* composition hooks (data, history, dialogs)
+          components/             # CMDBTable, CMDBCardGrid, dialogs, etc.
       pages/
         FASTPage.tsx      # FAST module entry point
         SubAssetsPage.tsx # Sub-assets module entry point
