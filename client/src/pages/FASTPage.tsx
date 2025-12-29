@@ -1012,10 +1012,9 @@ export default function FASTPage() {
                           <table className="w-full text-sm">
                             <thead className="bg-muted/50 border-b">
                               <tr>
-                                <th className="text-left p-3 font-semibold text-muted-foreground w-[180px]">Comment</th>
+                                <th className="text-left p-3 font-semibold text-muted-foreground min-w-[200px]">Comment</th>
                                 <th className="text-left p-3 font-semibold text-muted-foreground">Field Changes</th>
-                                <th className="text-left p-3 font-semibold text-muted-foreground w-[120px]">Modified By</th>
-                                <th className="text-left p-3 font-semibold text-muted-foreground w-[160px]">Modified Date</th>
+                                <th className="text-left p-3 font-semibold text-muted-foreground w-[140px]">Last Modified</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
@@ -1023,7 +1022,7 @@ export default function FASTPage() {
                                 <tr key={activity.id} className={idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
                                   <td className="p-3 align-top">
                                     {activity.text ? (
-                                      <span className="text-sm">{activity.text}</span>
+                                      <span className="text-sm break-words">{activity.text}</span>
                                     ) : (
                                       <span className="text-muted-foreground/50">—</span>
                                     )}
@@ -1045,12 +1044,12 @@ export default function FASTPage() {
                                     )}
                                   </td>
                                   <td className="p-3 align-top">
-                                    <span className="text-sm font-medium">{activity.modifiedBy || '—'}</span>
-                                  </td>
-                                  <td className="p-3 align-top">
-                                    <span className="text-sm text-muted-foreground">
-                                      {activity.modifiedDate ? format(new Date(activity.modifiedDate), 'MMM d, yyyy h:mm a') : '—'}
-                                    </span>
+                                    <div className="flex flex-col">
+                                      <span className="text-sm font-medium">{activity.modifiedBy || '—'}</span>
+                                      <span className="text-xs text-muted-foreground">
+                                        {activity.modifiedDate ? format(new Date(activity.modifiedDate), 'MMM d, yyyy h:mm a') : '—'}
+                                      </span>
+                                    </div>
                                   </td>
                                 </tr>
                               ))}
