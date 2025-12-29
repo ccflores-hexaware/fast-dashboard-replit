@@ -604,7 +604,7 @@ export default function SubAssetsPage() {
             <div className="flex items-center justify-between p-6 pt-4 border-t">
               <div className="flex gap-2">
                 {isAdmin && !isEditing && selectedItem && (
-                  <Button onClick={handleEdit} className="gap-1" variant="outline">
+                  <Button onClick={handleEdit} className="gap-2">
                     <Pencil className="h-4 w-4" /> Edit
                   </Button>
                 )}
