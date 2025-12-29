@@ -1009,20 +1009,20 @@ export default function FASTPage() {
                     ) : (
                       <div className="space-y-3">
                         <div className="border rounded-lg overflow-hidden">
-                          <table className="w-full text-sm">
+                          <table className="w-full text-sm" style={{ tableLayout: 'fixed' }}>
                             <thead className="bg-muted/50 border-b">
                               <tr>
-                                <th className="text-left p-3 font-semibold text-muted-foreground min-w-[200px]">Comment</th>
-                                <th className="text-left p-3 font-semibold text-muted-foreground">Field Changes</th>
-                                <th className="text-left p-3 font-semibold text-muted-foreground w-[140px]">Last Modified</th>
+                                <th className="text-left p-3 font-semibold text-muted-foreground" style={{ width: '30%' }}>Comment</th>
+                                <th className="text-left p-3 font-semibold text-muted-foreground" style={{ width: '50%' }}>Field Changes</th>
+                                <th className="text-left p-3 font-semibold text-muted-foreground" style={{ width: '20%' }}>Last Modified</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
                               {activities.slice(0, activityDisplayLimit).map((activity: any, idx: number) => (
                                 <tr key={activity.id} className={idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
-                                  <td className="p-3 align-top">
+                                  <td className="p-3 align-top" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                                     {activity.text ? (
-                                      <span className="text-sm break-words">{activity.text}</span>
+                                      <span className="text-sm">{activity.text}</span>
                                     ) : (
                                       <span className="text-muted-foreground/50">—</span>
                                     )}
