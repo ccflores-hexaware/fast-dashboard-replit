@@ -1,7 +1,7 @@
 import React from 'react';
-import { Loader2 } from 'lucide-react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Pagination } from '@/components/Pagination';
+import { LoadingState } from '@/components/LoadingState';
 import { useTPIPage } from '@/features/TPI/hooks/useTPIPage';
 import { TPIHeader } from '@/features/TPI/components/TPIHeader';
 import { TPIToolbar } from '@/features/TPI/components/TPIToolbar';
@@ -56,12 +56,7 @@ export default function TPIPage() {
         />
 
         {data.isLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <div className="flex flex-col items-center gap-4">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-muted-foreground">Loading assets...</p>
-            </div>
-          </div>
+          <LoadingState />
         ) : view.view === 'table' ? (
           <TPITable
             data={pagination.paginatedData}

@@ -1,7 +1,7 @@
 import React from 'react';
-import { Loader2 } from 'lucide-react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Pagination } from '@/components/Pagination';
+import { LoadingState } from '@/components/LoadingState';
 import { useCMDBPage } from '@/features/CMDB/hooks/useCMDBPage';
 import { CMDBHeader } from '@/features/CMDB/components/CMDBHeader';
 import { CMDBToolbar } from '@/features/CMDB/components/CMDBToolbar';
@@ -56,12 +56,7 @@ export default function CMDBPage() {
         />
 
         {data.isLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <div className="flex flex-col items-center gap-4">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-muted-foreground">Loading assets...</p>
-            </div>
-          </div>
+          <LoadingState />
         ) : view.view === 'table' ? (
           <CMDBTable
             data={pagination.paginatedData}
@@ -98,7 +93,6 @@ export default function CMDBPage() {
           onPageChange={pagination.setCurrentPage}
           onPageSizeChange={pagination.setPageSize}
         />
-
         <CMDBDetailsDialog
           isOpen={dialogs.isDialogOpen}
           onClose={dialogs.closeDetailsDialog}
