@@ -1,6 +1,6 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { CMDBHistoryRecord } from '../types/asset.types';
 import type { ColumnDefinition } from '../types/column.types';
@@ -19,43 +19,53 @@ export function CMDBHistorySnapshotDialog({
   selectedHistoryItem,
   columns,
 }: CMDBHistorySnapshotDialogProps) {
-  if (!selectedHistoryItem) return null;
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
-        <DialogHeader>
-          <div className="flex items-center gap-2">
-            <DialogTitle className="text-xl">{selectedHistoryItem.configItem}</DialogTitle>
-            {isCurrentRecord(selectedHistoryItem.endDate) && (
-              <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
-                Current
-              </Badge>
+      <DialogContent className="w-full sm:max-w-4xl max-h-[90vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="p-6 pb-4 border-b">
+          <DialogTitle className="text-xl flex items-center gap-2">
+            {selectedHistoryItem?.configItem || 'Historical Snapshot'}
+            {selectedHistoryItem && isCurrentRecord(selectedHistoryItem.endDate) && (
+              <Badge className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">Current</Badge>
             )}
-          </div>
+          </DialogTitle>
           <DialogDescription>
-            Historical snapshot: {formatHistoryDate(selectedHistoryItem.startDate)} - {formatHistoryDate(selectedHistoryItem.endDate)}
+            {selectedHistoryItem && (
+              <>
+                Historical snapshot: {formatHistoryDate(selectedHistoryItem.startDate)} - {formatHistoryDate(selectedHistoryItem.endDate)}
+              </>
+            )}
           </DialogDescription>
         </DialogHeader>
-
-        <ScrollArea className="flex-1 h-[60vh]">
-          <div className="grid grid-cols-2 gap-4 p-4">
-            {columns.map((col) => (
-              <div key={col.accessorKey} className="space-y-1">
-                <p className="text-sm font-medium text-muted-foreground">{col.header}</p>
-                <p className="text-sm">{formatDisplayValue(selectedHistoryItem[col.accessorKey as keyof CMDBHistoryRecord])}</p>
-              </div>
-            ))}
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-muted-foreground">Start Date</p>
-              <p className="text-sm">{formatHistoryDate(selectedHistoryItem.startDate)}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-muted-foreground">End Date</p>
-              <p className="text-sm">{formatHistoryDate(selectedHistoryItem.endDate)}</p>
-            </div>
+        <div className="flex-1 overflow-y-auto px-6 min-h-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1 py-4">
+            {selectedHistoryItem && (
+              <>
+                <div className="flex flex-col space-y-1 py-3 border-b border-border/50">
+                  <span className="text-sm font-medium text-muted-foreground">CI ID</span>
+                  <span className="text-base font-semibold text-foreground">{String(selectedHistoryItem.historyId ?? '—')}</span>
+                </div>
+                {columns.map((col) => (
+                  <div key={col.accessorKey} className="flex flex-col space-y-1 py-3 border-b border-border/50">
+                    <span className="text-sm font-medium text-muted-foreground">{col.header}</span>
+                    <span className="text-base font-semibold text-foreground">{formatDisplayValue(selectedHistoryItem[col.accessorKey as keyof CMDBHistoryRecord])}</span>
+                  </div>
+                ))}
+                <div className="flex flex-col space-y-1 py-3 border-b border-border/50">
+                  <span className="text-sm font-medium text-muted-foreground">Start Date</span>
+                  <span className="text-base font-semibold text-foreground">{formatHistoryDate(selectedHistoryItem.startDate)}</span>
+                </div>
+                <div className="flex flex-col space-y-1 py-3 border-b border-border/50">
+                  <span className="text-sm font-medium text-muted-foreground">End Date</span>
+                  <span className="text-base font-semibold text-foreground">{formatHistoryDate(selectedHistoryItem.endDate)}</span>
+                </div>
+              </>
+            )}
           </div>
-        </ScrollArea>
+        </div>
+        <div className="flex justify-end p-6 pt-4 border-t">
+          <Button variant="outline" onClick={onClose}>Close</Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
