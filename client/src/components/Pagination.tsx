@@ -4,6 +4,11 @@ import { Input } from '@/components/ui/input';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
+export const TABLE_PAGE_SIZE_OPTIONS = [10, 20, 30, 50];
+export const CARD_PAGE_SIZE_OPTIONS = [8, 12, 16, 20];
+export const DEFAULT_TABLE_PAGE_SIZE = 10;
+export const DEFAULT_CARD_PAGE_SIZE = 8;
+
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
@@ -12,6 +17,7 @@ interface PaginationProps {
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
   pageSizeOptions?: number[];
+  view?: 'table' | 'card';
 }
 
 export function Pagination({
@@ -21,9 +27,12 @@ export function Pagination({
   totalItems,
   onPageChange,
   onPageSizeChange,
-  pageSizeOptions = [10, 20, 30, 50],
+  pageSizeOptions,
+  view = 'table',
 }: PaginationProps) {
   const [inputPage, setInputPage] = useState(currentPage.toString());
+
+  const effectivePageSizeOptions = pageSizeOptions || (view === 'card' ? CARD_PAGE_SIZE_OPTIONS : TABLE_PAGE_SIZE_OPTIONS);
 
   useEffect(() => {
     setInputPage(currentPage.toString());
@@ -62,7 +71,7 @@ export function Pagination({
             <SelectValue placeholder={pageSize.toString()} />
           </SelectTrigger>
           <SelectContent side="top">
-            {pageSizeOptions.map((size) => (
+            {effectivePageSizeOptions.map((size) => (
               <SelectItem key={size} value={size.toString()}>
                 {size}
               </SelectItem>
@@ -107,8 +116,6 @@ export function Pagination({
             <ChevronLeft className="h-4 w-4" />
           </Button>
           
-          {/* Removed the static number display for mobile since we have the input now */}
-
           <Button
             variant="outline"
             className="h-8 w-8 p-0"

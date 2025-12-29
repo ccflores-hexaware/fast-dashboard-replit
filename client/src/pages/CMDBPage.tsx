@@ -92,6 +92,7 @@ export default function CMDBPage() {
           pageSize={pagination.pageSize}
           onPageChange={pagination.setCurrentPage}
           onPageSizeChange={pagination.setPageSize}
+          view={view.view}
         />
         <CMDBDetailsDialog
           isOpen={dialogs.isDialogOpen}

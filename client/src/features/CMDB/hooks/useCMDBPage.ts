@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { CMDBAsset } from '../types/asset.types';
 import type { SortConfig } from '../types/column.types';
 import type { PaginationParams } from '@/types/table.types';
+import { DEFAULT_TABLE_PAGE_SIZE, DEFAULT_CARD_PAGE_SIZE } from '@/components/Pagination';
 
 export function useCMDBPage() {
   const { toast } = useToast();
@@ -17,15 +18,21 @@ export function useCMDBPage() {
   const dataHook = useCMDBData();
   const history = useCMDBHistory();
   const dialogs = useCMDBDialogs();
-  const { view, setView } = useViewToggle('table');
+  const { view, setView: baseSetView } = useViewToggle('table');
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchColumn, setSearchColumn] = useState('all');
   const [openCombobox, setOpenCombobox] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(DEFAULT_TABLE_PAGE_SIZE);
   const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
   const [columnFilters, setColumnFilters] = useState<Record<string, string[]>>({});
+
+  const handleViewChange = useCallback((newView: 'table' | 'card') => {
+    baseSetView(newView);
+    setPageSize(newView === 'card' ? DEFAULT_CARD_PAGE_SIZE : DEFAULT_TABLE_PAGE_SIZE);
+    setCurrentPage(1);
+  }, [baseSetView]);
 
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -179,7 +186,7 @@ export function useCMDBPage() {
     },
     view: {
       view,
-      setView,
+      setView: handleViewChange,
     },
     exportToExcel,
     allColumns: columns.allColumns,

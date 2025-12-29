@@ -3,7 +3,7 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { ViewToggle } from '@/components/ViewToggle';
 import { DataTable, StatusBadge } from '@/components/DataTable';
 import { DataCard } from '@/components/DataCard';
-import { Pagination } from '@/components/Pagination';
+import { Pagination, DEFAULT_TABLE_PAGE_SIZE, DEFAULT_CARD_PAGE_SIZE } from '@/components/Pagination';
 import { Button } from '@/components/ui/button';
 import { Download, Save, X, Pencil, Search, Check, ChevronsUpDown, Settings2, RotateCcw, Eye, EyeOff, Loader2, ExternalLink } from 'lucide-react';
 import { cn } from "@/lib/utils";
@@ -152,7 +152,7 @@ export default function SubAssetsPage() {
   const { toast } = useToast();
   const [baseData, setBaseData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { view, setView } = useViewToggle('table');
+  const { view, setView: baseSetView } = useViewToggle('table');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchColumn, setSearchColumn] = useState('all');
   const [openCombobox, setOpenCombobox] = useState(false);
@@ -253,6 +253,12 @@ export default function SubAssetsPage() {
   const { columnFilters, setColumnFilters, filteredData } = useColumnFilters(searchFilteredData);
   const { sortConfig, handleSort, sortedData } = useSorting(filteredData);
   const { currentPage, pageSize, setCurrentPage, setPageSize, paginatedData, totalPages, totalItems } = usePagination(sortedData);
+
+  const handleViewChange = (newView: 'table' | 'card') => {
+    baseSetView(newView);
+    setPageSize(newView === 'card' ? DEFAULT_CARD_PAGE_SIZE : DEFAULT_TABLE_PAGE_SIZE);
+    setCurrentPage(1);
+  };
 
   const visibleColumns = useMemo(() => {
     return columns.filter(col => columnVisibility[col.accessorKey] !== false);
@@ -457,7 +463,7 @@ export default function SubAssetsPage() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <ViewToggle view={view} setView={setView} />
+            <ViewToggle view={view} setView={handleViewChange} />
           </div>
         </div>
 
@@ -498,6 +504,7 @@ export default function SubAssetsPage() {
           pageSize={pageSize}
           onPageChange={setCurrentPage}
           onPageSizeChange={setPageSize}
+          view={view}
         />
 
         <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) handleCancelEdit(); setIsDialogOpen(open); }}>

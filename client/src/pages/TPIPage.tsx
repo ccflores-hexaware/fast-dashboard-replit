@@ -92,6 +92,7 @@ export default function TPIPage() {
           pageSize={pagination.pageSize}
           onPageChange={pagination.setCurrentPage}
           onPageSizeChange={pagination.setPageSize}
+          view={view.view}
         />
 
         <TPIDetailsDialog

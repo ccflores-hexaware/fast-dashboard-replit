@@ -3,7 +3,7 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { ViewToggle } from '@/components/ViewToggle';
 import { DataTable, StatusBadge } from '@/components/DataTable';
 import { DataCard } from '@/components/DataCard';
-import { Pagination } from '@/components/Pagination';
+import { Pagination, DEFAULT_TABLE_PAGE_SIZE, DEFAULT_CARD_PAGE_SIZE } from '@/components/Pagination';
 import { Button } from '@/components/ui/button';
 import { Download, Save, X, Pencil, Search, Check, ChevronsUpDown, Copy, ArrowRight, Settings2, RotateCcw, Eye, EyeOff, Loader2, MessageSquare, History, Layers } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -167,7 +167,7 @@ const getFieldLabel = (key: string): string => {
 export default function FASTPage() {
   const { toast } = useToast();
   const { isAdmin, user } = useUser();
-  const { view, setView } = useViewToggle('table');
+  const { view, setView: baseSetView } = useViewToggle('table');
   
   const [data, setData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -387,6 +387,12 @@ export default function FASTPage() {
   const { columnFilters, setColumnFilters, filteredData } = useColumnFilters(searchFilteredData);
   const { sortConfig, handleSort, sortedData } = useSorting(filteredData);
   const { currentPage, pageSize, setCurrentPage, setPageSize, paginatedData, totalPages, totalItems } = usePagination(sortedData);
+
+  const handleViewChange = (newView: 'table' | 'card') => {
+    baseSetView(newView);
+    setPageSize(newView === 'card' ? DEFAULT_CARD_PAGE_SIZE : DEFAULT_TABLE_PAGE_SIZE);
+    setCurrentPage(1);
+  };
 
   const visibleColumns = useMemo(() => {
     return columns.filter(col => {
@@ -812,7 +818,7 @@ export default function FASTPage() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <ViewToggle view={view} setView={setView} />
+            <ViewToggle view={view} setView={handleViewChange} />
           </div>
         </div>
 
@@ -856,6 +862,7 @@ export default function FASTPage() {
           pageSize={pageSize}
           onPageChange={setCurrentPage}
           onPageSizeChange={setPageSize}
+          view={view}
         />
 
         <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) handleCancelEdit(); setIsDialogOpen(open); }}>
