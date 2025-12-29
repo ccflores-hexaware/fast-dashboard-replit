@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Loader2, History, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader2, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -27,6 +27,12 @@ export const CMDBHistoryRows = memo(function CMDBHistoryRows({
   onPageChange,
   onHistoryItemClick,
 }: CMDBHistoryRowsProps) {
+  const totalPages = historyData ? Math.ceil(historyData.total / HISTORY_PAGE_SIZE) : 0;
+  const paginatedHistory = historyData?.history.slice(
+    (currentPage - 1) * HISTORY_PAGE_SIZE, 
+    currentPage * HISTORY_PAGE_SIZE
+  ) || [];
+
   if (isLoading) {
     return (
       <tr className="bg-muted/5 border-b border-border">
@@ -40,7 +46,7 @@ export const CMDBHistoryRows = memo(function CMDBHistoryRows({
     );
   }
 
-  if (!historyData || historyData.history.length === 0) {
+  if (paginatedHistory.length === 0) {
     return (
       <tr className="bg-muted/5 border-b border-border">
         <td colSpan={columns.length} className="px-4 py-3">
@@ -53,86 +59,75 @@ export const CMDBHistoryRows = memo(function CMDBHistoryRows({
     );
   }
 
-  const totalPages = Math.ceil(historyData.total / HISTORY_PAGE_SIZE);
-  const paginatedHistory = historyData.history.slice(
-    (currentPage - 1) * HISTORY_PAGE_SIZE, 
-    currentPage * HISTORY_PAGE_SIZE
-  );
-
   return (
     <>
-      <tr className="bg-muted/10 border-b border-border">
-        <td colSpan={columns.length} className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/30">
-                <tr>
-                  {columns.filter(c => c.accessorKey !== 'version').map((col, idx) => (
-                    <th key={col.accessorKey} className={cn(
-                      "px-3 py-2 text-left text-xs font-medium text-muted-foreground",
-                      idx === 0 && "pl-12"
-                    )}>
-                      {col.header}
-                    </th>
-                  ))}
-                  <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">Start Date</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">End Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedHistory.map((record, idx) => (
-                  <tr 
-                    key={record.historyId} 
-                    className="hover:bg-muted/20 cursor-pointer border-t border-border/50"
-                    onClick={() => onHistoryItemClick(record)}
-                  >
-                    {columns.filter(c => c.accessorKey !== 'version').map((col, colIdx) => (
-                      <td key={col.accessorKey} className={cn("px-3 py-2", colIdx === 0 && "pl-12")}>
-                        {colIdx === 0 && isCurrentRecord(record.endDate) && (
-                          <Badge variant="outline" className="mr-2 text-xs bg-green-50 text-green-700 border-green-200">
-                            Current
-                          </Badge>
-                        )}
-                        {formatDisplayValue(record[col.accessorKey as keyof CMDBHistoryRecord])}
-                      </td>
-                    ))}
-                    <td className="px-3 py-2 text-muted-foreground">{formatHistoryDate(record.startDate)}</td>
-                    <td className="px-3 py-2 text-muted-foreground">{formatHistoryDate(record.endDate)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 py-2 bg-muted/20 border-t border-border/50">
+      {paginatedHistory.map((historyItem: CMDBHistoryRecord, index: number) => (
+        <tr 
+          key={`history-${historyItem.historyId || historyItem.cmdbAssetId}-${index}`}
+          className="border-b border-border cursor-pointer hover:bg-muted/20 transition-colors bg-muted/5"
+          onClick={() => onHistoryItemClick(historyItem)}
+        >
+          {columns.map((col, colIndex) => (
+            <td 
+              key={col.accessorKey} 
+              className={cn(
+                "text-sm border-r border-border px-4 py-3 whitespace-nowrap text-muted-foreground",
+                colIndex === 0 && "sticky left-0 z-20 bg-slate-50",
+                colIndex === columns.length - 1 && "border-r-0"
+              )}
+            >
+              {colIndex === 0 ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground/60">└</span>
+                  <History className="h-3 w-3 text-muted-foreground/50" />
+                  {isCurrentRecord(historyItem.endDate) && (
+                    <Badge className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">Current</Badge>
+                  )}
+                  <span className="text-xs text-muted-foreground/70">
+                    ({formatHistoryDate(historyItem.startDate)} → {formatHistoryDate(historyItem.endDate)})
+                  </span>
+                </div>
+              ) : (
+                <span>{formatDisplayValue(historyItem[col.accessorKey as keyof CMDBHistoryRecord])}</span>
+              )}
+            </td>
+          ))}
+        </tr>
+      ))}
+      {(totalPages > 1 || historyData) && (
+        <tr className="bg-muted/5 border-b border-border">
+          <td colSpan={columns.length} className="px-4 py-2">
+            <div className="flex items-center gap-3">
               <span className="text-xs text-muted-foreground">
-                Page {currentPage} of {totalPages} ({historyData.total} records)
+                {historyData?.total} history record{historyData?.total !== 1 ? 's' : ''}
+                {totalPages > 1 && ` • Page ${currentPage} of ${totalPages}`}
               </span>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0"
-                  disabled={currentPage === 1}
-                  onClick={(e) => { e.stopPropagation(); onPageChange(assetId, currentPage - 1); }}
-                >
-                  <ChevronLeft className="h-3 w-3" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0"
-                  disabled={currentPage >= totalPages}
-                  onClick={(e) => { e.stopPropagation(); onPageChange(assetId, currentPage + 1); }}
-                >
-                  <ChevronRight className="h-3 w-3" />
-                </Button>
-              </div>
+              {totalPages > 1 && (
+                <div className="flex items-center gap-1">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-6 px-2 text-xs" 
+                    disabled={currentPage === 1} 
+                    onClick={(e) => { e.stopPropagation(); onPageChange(assetId, currentPage - 1); }}
+                  >
+                    Prev
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-6 px-2 text-xs" 
+                    disabled={currentPage === totalPages} 
+                    onClick={(e) => { e.stopPropagation(); onPageChange(assetId, currentPage + 1); }}
+                  >
+                    Next
+                  </Button>
+                </div>
+              )}
             </div>
-          )}
-        </td>
-      </tr>
+          </td>
+        </tr>
+      )}
     </>
   );
 });
