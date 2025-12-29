@@ -1,16 +1,17 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
 import * as XLSX from 'xlsx';
 import type { TPIAsset } from '../types/asset.types';
 import type { ColumnDefinition, CardFieldDefinition } from '../types/column.types';
-import type { UseTPIPageReturn } from '../types/state.types';
+import type { UseTPIPageReturn, SortConfig } from '../types/state.types';
 import { useTPIData } from './useTPIData';
 import { useTPIHistory } from './useTPIHistory';
 import { useTPIColumnVisibility } from './useTPIColumnVisibility';
 import { useTPIDialogs } from './useTPIDialogs';
 import { ALL_COLUMN_KEYS, COLUMN_HEADERS, CARD_FIELDS } from '../constants/columns';
-import { usePagination, useSorting, useColumnFilters, useViewToggle } from '@/hooks';
+import { useViewToggle } from '@/hooks';
 import { useToast } from '@/hooks/use-toast';
+import type { PaginationParams } from '@/types/table.types';
 
 export function useTPIPage(): UseTPIPageReturn {
   const { toast } = useToast();
@@ -23,6 +24,12 @@ export function useTPIPage(): UseTPIPageReturn {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchColumn, setSearchColumn] = useState('all');
   const [openCombobox, setOpenCombobox] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ key: null, direction: 'desc' });
+  const [columnFilters, setColumnFilters] = useState<Record<string, string[]>>({});
+
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const allColumns: ColumnDefinition[] = useMemo(() => 
     ALL_COLUMN_KEYS.map(key => ({
@@ -31,38 +38,63 @@ export function useTPIPage(): UseTPIPageReturn {
     })), 
   []);
 
-  const searchFilteredData = useMemo(() => {
-    if (!searchQuery.trim()) return data.assets;
-    const query = searchQuery.toLowerCase();
-    return data.assets.filter((item: TPIAsset) => {
-      if (searchColumn === 'all') {
-        return allColumns.some(col => {
-          const v = item[col.accessorKey];
-          return v && String(v).toLowerCase().includes(query);
-        });
+  const fetchDataRef = useRef(data.fetchData);
+  fetchDataRef.current = data.fetchData;
+
+  useEffect(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    debounceTimerRef.current = setTimeout(() => {
+      const params: PaginationParams = {
+        page: currentPage,
+        limit: pageSize,
+        search: searchQuery || undefined,
+        searchColumn: searchColumn !== 'all' ? searchColumn : undefined,
+        sortBy: sortConfig.key || undefined,
+        sortOrder: sortConfig.direction,
+        filters: Object.keys(columnFilters).length > 0 ? columnFilters : undefined,
+      };
+      fetchDataRef.current(params);
+    }, 300);
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
       }
-      const v = item[searchColumn as keyof TPIAsset];
-      return v && String(v).toLowerCase().includes(query);
-    });
-  }, [data.assets, searchQuery, searchColumn, allColumns]);
+    };
+  }, [currentPage, pageSize, searchQuery, searchColumn, sortConfig, columnFilters]);
 
-  const { columnFilters, setColumnFilters, filteredData } = useColumnFilters(searchFilteredData);
-  const { sortConfig, handleSort, sortedData } = useSorting(filteredData);
-  const { currentPage, pageSize, setCurrentPage, setPageSize, paginatedData, totalPages, totalItems } = usePagination(sortedData);
+  const handleSort = useCallback((key: string) => {
+    setSortConfig(prev => ({
+      key,
+      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc',
+    }));
+    setCurrentPage(1);
+  }, []);
 
-  const allUniqueValues = useMemo(() => {
-    const result: Record<string, string[]> = {};
-    allColumns.forEach(col => {
-      const key = col.accessorKey;
-      const values = Array.from(new Set(data.assets.map((item: TPIAsset) => String(item[key] || ''))));
-      result[key] = values.sort();
-    });
-    return result;
-  }, [data.assets, allColumns]);
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+  }, []);
+
+  const handlePageSizeChange = useCallback((size: number) => {
+    setPageSize(size);
+    setCurrentPage(1);
+  }, []);
+
+  const handleSearchQueryChange = useCallback((query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1);
+  }, []);
+
+  const handleSearchColumnChange = useCallback((column: string) => {
+    setSearchColumn(column);
+    setCurrentPage(1);
+  }, []);
 
   const getUniqueValues = useCallback((key: string) => {
-    return allUniqueValues[key] || [];
-  }, [allUniqueValues]);
+    return data.filterOptions[key] || [];
+  }, [data.filterOptions]);
 
   const handleFilterChange = useCallback((key: string, value: string, uniqueValues: string[]) => {
     const currentFilters = columnFilters[key];
@@ -83,7 +115,8 @@ export function useTPIPage(): UseTPIPageReturn {
       updatedFilters[key] = newFilters;
     }
     setColumnFilters(updatedFilters);
-  }, [columnFilters, setColumnFilters]);
+    setCurrentPage(1);
+  }, [columnFilters]);
 
   const handleSelectAll = useCallback((key: string) => {
     const currentFilters = columnFilters[key];
@@ -94,16 +127,18 @@ export function useTPIPage(): UseTPIPageReturn {
       delete updatedFilters[key];
     }
     setColumnFilters(updatedFilters);
-  }, [columnFilters, setColumnFilters]);
+    setCurrentPage(1);
+  }, [columnFilters]);
 
   const handleClearColumnFilter = useCallback((key: string) => {
     const updatedFilters = { ...columnFilters };
     delete updatedFilters[key];
     setColumnFilters(updatedFilters);
-  }, [columnFilters, setColumnFilters]);
+    setCurrentPage(1);
+  }, [columnFilters]);
 
   const exportToExcel = useCallback(() => {
-    const exportData = sortedData.map((item: TPIAsset) => {
+    const exportData = data.assets.map((item: TPIAsset) => {
       const row: Record<string, string> = {};
       columns.visibleColumns.forEach(col => {
         row[col.header] = String(item[col.accessorKey] ?? '');
@@ -115,7 +150,7 @@ export function useTPIPage(): UseTPIPageReturn {
     XLSX.utils.book_append_sheet(wb, ws, 'TPI');
     XLSX.writeFile(wb, `TPI_Export_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
     toast({ title: "Export Complete", description: `Exported ${exportData.length} records.`, variant: "success" });
-  }, [sortedData, columns.visibleColumns, toast]);
+  }, [data.assets, columns.visibleColumns, toast]);
 
   return {
     data,
@@ -124,9 +159,9 @@ export function useTPIPage(): UseTPIPageReturn {
     dialogs,
     search: {
       searchQuery,
-      setSearchQuery,
+      setSearchQuery: handleSearchQueryChange,
       searchColumn,
-      setSearchColumn,
+      setSearchColumn: handleSearchColumnChange,
       openCombobox,
       setOpenCombobox,
     },
@@ -143,11 +178,11 @@ export function useTPIPage(): UseTPIPageReturn {
     pagination: {
       currentPage,
       pageSize,
-      totalPages,
-      totalItems,
-      setCurrentPage,
-      setPageSize,
-      paginatedData: paginatedData as TPIAsset[],
+      totalPages: data.totalPages,
+      totalItems: data.totalCount,
+      setCurrentPage: handlePageChange,
+      setPageSize: handlePageSizeChange,
+      paginatedData: data.assets,
     },
     view: {
       view: view as 'table' | 'card',

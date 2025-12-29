@@ -10,7 +10,24 @@ import {
   type BtoMapping, btoMapping
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, and, sql, or, ilike, SQL, asc } from "drizzle-orm";
+
+export interface PaginationParams {
+  page: number;
+  limit: number;
+  search?: string;
+  searchColumn?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  filters?: Record<string, string[]>;
+}
+
+export interface PaginatedResult<T> {
+  data: T[];
+  totalCount: number;
+  totalPages: number;
+  currentPage: number;
+}
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -24,17 +41,20 @@ export interface IStorage {
   deleteFastAsset(internalId: number): Promise<boolean>;
   
   getAllTpiAssets(): Promise<TpiAsset[]>;
+  getTpiAssetsPaginated(params: PaginationParams): Promise<PaginatedResult<TpiAsset>>;
   getTpiAssetById(id: string): Promise<TpiAsset | undefined>;
   createTpiAsset(asset: InsertTpiAsset): Promise<TpiAsset>;
   updateTpiAsset(id: string, asset: Partial<InsertTpiAsset>): Promise<TpiAsset | undefined>;
   deleteTpiAsset(id: string): Promise<boolean>;
-  
+  getTpiFilterOptions(): Promise<Record<string, string[]>>;
   
   getAllCmdbAssets(): Promise<CmdbAsset[]>;
+  getCmdbAssetsPaginated(params: PaginationParams): Promise<PaginatedResult<CmdbAsset>>;
   getCmdbAssetById(id: string): Promise<CmdbAsset | undefined>;
   createCmdbAsset(asset: InsertCmdbAsset): Promise<CmdbAsset>;
   updateCmdbAsset(id: string, asset: Partial<InsertCmdbAsset>): Promise<CmdbAsset | undefined>;
   deleteCmdbAsset(id: string): Promise<boolean>;
+  getCmdbFilterOptions(): Promise<Record<string, string[]>>;
   
   getAssetActivities(assetId: string): Promise<AssetActivity[]>;
   createAssetActivity(activity: InsertAssetActivity): Promise<AssetActivity>;
@@ -114,6 +134,103 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(tpiAssets).orderBy(desc(tpiAssets.createdAt));
   }
 
+  async getTpiAssetsPaginated(params: PaginationParams): Promise<PaginatedResult<TpiAsset>> {
+    const { page, limit, search, searchColumn, sortBy, sortOrder, filters } = params;
+    const offset = (page - 1) * limit;
+
+    const conditions: SQL[] = [];
+
+    if (search && search.trim()) {
+      const searchPattern = `%${search.toLowerCase()}%`;
+      if (searchColumn && searchColumn !== 'all') {
+        const column = (tpiAssets as any)[searchColumn];
+        if (column) {
+          conditions.push(ilike(column, searchPattern));
+        }
+      } else {
+        conditions.push(
+          or(
+            ilike(tpiAssets.id, searchPattern),
+            ilike(tpiAssets.name, searchPattern),
+            ilike(tpiAssets.cmdbStatus, searchPattern),
+            ilike(tpiAssets.affinityGroup, searchPattern),
+            ilike(tpiAssets.btoAlignment, searchPattern),
+            ilike(tpiAssets.itOwnerManagedBy, searchPattern),
+            ilike(tpiAssets.businessOwnerOwnedBy, searchPattern),
+            ilike(tpiAssets.supportedBy, searchPattern),
+            ilike(tpiAssets.owningInternalOrg, searchPattern),
+            ilike(tpiAssets.status, searchPattern)
+          )!
+        );
+      }
+    }
+
+    if (filters) {
+      for (const [key, values] of Object.entries(filters)) {
+        if (values && values.length > 0) {
+          const column = (tpiAssets as any)[key];
+          if (column) {
+            conditions.push(
+              or(...values.map(v => eq(column, v)))!
+            );
+          }
+        }
+      }
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    let orderByClause;
+    if (sortBy) {
+      const column = (tpiAssets as any)[sortBy];
+      if (column) {
+        orderByClause = sortOrder === 'asc' ? asc(column) : desc(column);
+      }
+    }
+    if (!orderByClause) {
+      orderByClause = desc(tpiAssets.createdAt);
+    }
+
+    const countResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(tpiAssets)
+      .where(whereClause);
+    const totalCount = Number(countResult[0]?.count || 0);
+
+    const data = await db
+      .select()
+      .from(tpiAssets)
+      .where(whereClause)
+      .orderBy(orderByClause)
+      .limit(limit)
+      .offset(offset);
+
+    return {
+      data,
+      totalCount,
+      totalPages: Math.ceil(totalCount / limit),
+      currentPage: page,
+    };
+  }
+
+  async getTpiFilterOptions(): Promise<Record<string, string[]>> {
+    const filterableColumns = ['cmdbStatus', 'affinityGroup', 'btoAlignment', 'owningInternalOrg', 'status', 'assetType'];
+    const result: Record<string, string[]> = {};
+
+    for (const columnName of filterableColumns) {
+      const column = (tpiAssets as any)[columnName];
+      if (column) {
+        const values = await db
+          .selectDistinct({ value: column })
+          .from(tpiAssets)
+          .where(sql`${column} IS NOT NULL AND ${column} != ''`);
+        result[columnName] = values.map(v => v.value).filter(Boolean).sort();
+      }
+    }
+
+    return result;
+  }
+
   async getTpiAssetById(id: string): Promise<TpiAsset | undefined> {
     const [asset] = await db.select().from(tpiAssets).where(eq(tpiAssets.id, id));
     return asset;
@@ -139,6 +256,99 @@ export class DatabaseStorage implements IStorage {
 
   async getAllCmdbAssets(): Promise<CmdbAsset[]> {
     return db.select().from(cmdbAssets).orderBy(desc(cmdbAssets.createdAt));
+  }
+
+  async getCmdbAssetsPaginated(params: PaginationParams): Promise<PaginatedResult<CmdbAsset>> {
+    const { page, limit, search, searchColumn, sortBy, sortOrder, filters } = params;
+    const offset = (page - 1) * limit;
+
+    const conditions: SQL[] = [];
+
+    if (search && search.trim()) {
+      const searchPattern = `%${search.toLowerCase()}%`;
+      if (searchColumn && searchColumn !== 'all') {
+        const column = (cmdbAssets as any)[searchColumn];
+        if (column) {
+          conditions.push(ilike(column, searchPattern));
+        }
+      } else {
+        conditions.push(
+          or(
+            ilike(cmdbAssets.id, searchPattern),
+            ilike(cmdbAssets.configItem, searchPattern),
+            ilike(cmdbAssets.version, searchPattern),
+            ilike(cmdbAssets.environment, searchPattern),
+            ilike(cmdbAssets.status, searchPattern),
+            ilike(cmdbAssets.owner, searchPattern)
+          )!
+        );
+      }
+    }
+
+    if (filters) {
+      for (const [key, values] of Object.entries(filters)) {
+        if (values && values.length > 0) {
+          const column = (cmdbAssets as any)[key];
+          if (column) {
+            conditions.push(
+              or(...values.map(v => eq(column, v)))!
+            );
+          }
+        }
+      }
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    let orderByClause;
+    if (sortBy) {
+      const column = (cmdbAssets as any)[sortBy];
+      if (column) {
+        orderByClause = sortOrder === 'asc' ? asc(column) : desc(column);
+      }
+    }
+    if (!orderByClause) {
+      orderByClause = desc(cmdbAssets.createdAt);
+    }
+
+    const countResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(cmdbAssets)
+      .where(whereClause);
+    const totalCount = Number(countResult[0]?.count || 0);
+
+    const data = await db
+      .select()
+      .from(cmdbAssets)
+      .where(whereClause)
+      .orderBy(orderByClause)
+      .limit(limit)
+      .offset(offset);
+
+    return {
+      data,
+      totalCount,
+      totalPages: Math.ceil(totalCount / limit),
+      currentPage: page,
+    };
+  }
+
+  async getCmdbFilterOptions(): Promise<Record<string, string[]>> {
+    const filterableColumns = ['status', 'environment', 'owner'];
+    const result: Record<string, string[]> = {};
+
+    for (const columnName of filterableColumns) {
+      const column = (cmdbAssets as any)[columnName];
+      if (column) {
+        const values = await db
+          .selectDistinct({ value: column })
+          .from(cmdbAssets)
+          .where(sql`${column} IS NOT NULL AND ${column} != ''`);
+        result[columnName] = values.map(v => v.value).filter(Boolean).sort();
+      }
+    }
+
+    return result;
   }
 
   async getCmdbAssetById(id: string): Promise<CmdbAsset | undefined> {

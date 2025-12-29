@@ -223,6 +223,34 @@ The application uses shared utilities and components to reduce code duplication 
 - **tsx**: TypeScript execution for server
 - **esbuild**: Production bundling for server code
 - **Vite**: Frontend development server with HMR
+- **Vitest**: Unit testing framework with jsdom support
+
+## Recent Changes (December 2025)
+
+### Server-Side Pagination Refactor
+Refactored TPI and CMDB modules from client-side to server-side pagination:
+
+**Backend Changes** (`server/storage.ts`, `server/routes.ts`):
+- Added `getTpiAssetsPaginated()` and `getCmdbAssetsPaginated()` storage methods
+- Implemented PostgreSQL OFFSET/LIMIT for database-level pagination
+- Added ILIKE-based full-text search across multiple columns
+- Added dynamic column filtering with JSON filter parameter
+- Added sortBy/sortOrder parameters with SQL injection protection
+- Updated `/api/tpi` and `/api/cmdb` endpoints to return `PaginatedResponse<T>` structure with metadata (totalCount, totalPages, currentPage)
+- Added `/api/tpi/filter-options` and `/api/cmdb/filter-options` endpoints
+
+**Frontend Changes**:
+- Created shared pagination types in `client/src/types/table.types.ts`:
+  - `PaginatedResponse<T>` - API response structure
+  - `PaginationParams` - Request parameters interface
+- Rewrote `useTPIData` and `useCMDBData` hooks for on-demand server fetching
+- Refactored `useTPIPage` and `useCMDBPage` to trigger API calls on page/search/filter changes
+- Implemented 300ms debounce on search queries to reduce API load
+- Used refs to stabilize dependencies and prevent infinite render loops
+
+**Test Files** (`server/tests/pagination.test.ts`, `client/src/features/TPI/__tests__/pagination.test.tsx`):
+- Created unit tests for paginated API endpoints
+- Created integration tests for frontend pagination URL construction
 
 ### Branding
 - Custom color scheme based on Freddie Mac corporate identity (Deep Blue primary, accent colors)

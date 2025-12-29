@@ -33,3 +33,20 @@ export interface PaginationState {
   totalPages: number;
   totalItems: number;
 }
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  totalCount: number;
+  totalPages: number;
+  currentPage: number;
+}
+
+export interface PaginationParams {
+  page: number;
+  limit: number;
+  search?: string;
+  searchColumn?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  filters?: Record<string, string[]>;
+}

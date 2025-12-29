@@ -64,11 +64,46 @@ export async function registerRoutes(
 
   app.get("/api/tpi", async (req: Request, res: Response) => {
     try {
-      const assets = await storage.getAllTpiAssets();
-      res.json(assets);
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const search = req.query.search as string | undefined;
+      const searchColumn = req.query.searchColumn as string | undefined;
+      const sortBy = req.query.sortBy as string | undefined;
+      const sortOrder = (req.query.sortOrder as 'asc' | 'desc') || 'desc';
+      const filtersParam = req.query.filters as string | undefined;
+      
+      let filters: Record<string, string[]> | undefined;
+      if (filtersParam) {
+        try {
+          filters = JSON.parse(filtersParam);
+        } catch (e) {
+          filters = undefined;
+        }
+      }
+
+      const result = await storage.getTpiAssetsPaginated({
+        page,
+        limit,
+        search,
+        searchColumn,
+        sortBy,
+        sortOrder,
+        filters,
+      });
+      res.json(result);
     } catch (error) {
       console.error("Error fetching TPI assets:", error);
       res.status(500).json({ error: "Failed to fetch TPI assets" });
+    }
+  });
+
+  app.get("/api/tpi/filter-options", async (req: Request, res: Response) => {
+    try {
+      const options = await storage.getTpiFilterOptions();
+      res.json(options);
+    } catch (error) {
+      console.error("Error fetching TPI filter options:", error);
+      res.status(500).json({ error: "Failed to fetch TPI filter options" });
     }
   });
 
@@ -131,11 +166,46 @@ export async function registerRoutes(
 
   app.get("/api/cmdb", async (req: Request, res: Response) => {
     try {
-      const assets = await storage.getAllCmdbAssets();
-      res.json(assets);
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const search = req.query.search as string | undefined;
+      const searchColumn = req.query.searchColumn as string | undefined;
+      const sortBy = req.query.sortBy as string | undefined;
+      const sortOrder = (req.query.sortOrder as 'asc' | 'desc') || 'desc';
+      const filtersParam = req.query.filters as string | undefined;
+      
+      let filters: Record<string, string[]> | undefined;
+      if (filtersParam) {
+        try {
+          filters = JSON.parse(filtersParam);
+        } catch (e) {
+          filters = undefined;
+        }
+      }
+
+      const result = await storage.getCmdbAssetsPaginated({
+        page,
+        limit,
+        search,
+        searchColumn,
+        sortBy,
+        sortOrder,
+        filters,
+      });
+      res.json(result);
     } catch (error) {
       console.error("Error fetching CMDB assets:", error);
       res.status(500).json({ error: "Failed to fetch CMDB assets" });
+    }
+  });
+
+  app.get("/api/cmdb/filter-options", async (req: Request, res: Response) => {
+    try {
+      const options = await storage.getCmdbFilterOptions();
+      res.json(options);
+    } catch (error) {
+      console.error("Error fetching CMDB filter options:", error);
+      res.status(500).json({ error: "Failed to fetch CMDB filter options" });
     }
   });
 

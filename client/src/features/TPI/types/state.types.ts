@@ -5,6 +5,11 @@ export interface UseTPIDataReturn {
   assets: TPIAsset[];
   isLoading: boolean;
   error: Error | null;
+  totalCount: number;
+  totalPages: number;
+  currentPage: number;
+  filterOptions: Record<string, string[]>;
+  fetchData: (params: import('@/types/table.types').PaginationParams) => Promise<void>;
   refetch: () => Promise<void>;
 }
 
@@ -63,9 +68,9 @@ export interface UseTPIPageReturn {
   dialogs: UseTPIDialogsReturn;
   search: {
     searchQuery: string;
-    setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
+    setSearchQuery: (query: string) => void;
     searchColumn: string;
-    setSearchColumn: React.Dispatch<React.SetStateAction<string>>;
+    setSearchColumn: (column: string) => void;
     openCombobox: boolean;
     setOpenCombobox: React.Dispatch<React.SetStateAction<boolean>>;
   };

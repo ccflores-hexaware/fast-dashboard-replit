@@ -4,7 +4,13 @@ import type { ColumnDefinition, ColumnVisibility, CardFieldVisibility, CardField
 export interface UseCMDBDataReturn {
   data: CMDBAsset[];
   isLoading: boolean;
-  searchFilteredData: CMDBAsset[];
+  error: Error | null;
+  totalCount: number;
+  totalPages: number;
+  currentPage: number;
+  filterOptions: Record<string, string[]>;
+  fetchData: (params: import('@/types/table.types').PaginationParams) => Promise<void>;
+  refetch: () => Promise<void>;
 }
 
 export interface UseCMDBHistoryReturn {
