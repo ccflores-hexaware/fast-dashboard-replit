@@ -55,9 +55,7 @@ export default function TPIPage() {
           onViewChange={view.setView}
         />
 
-        {data.isLoading ? (
-          <LoadingState />
-        ) : view.view === 'table' ? (
+        {view.view === 'table' ? (
           <TPITable
             data={pagination.paginatedData}
             visibleColumns={columns.visibleColumns}
@@ -76,7 +74,10 @@ export default function TPIPage() {
             onHistoryPageChange={history.setHistoryPageForAsset}
             onItemClick={dialogs.openDetailsDialog}
             onHistoryItemClick={dialogs.openHistorySnapshotDialog}
+            isLoading={data.isLoading}
           />
+        ) : data.isLoading ? (
+          <LoadingState />
         ) : (
           <TPICardGrid
             data={pagination.paginatedData}

@@ -55,9 +55,7 @@ export default function CMDBPage() {
           onViewChange={view.setView}
         />
 
-        {data.isLoading ? (
-          <LoadingState />
-        ) : view.view === 'table' ? (
+        {view.view === 'table' ? (
           <CMDBTable
             data={pagination.paginatedData}
             visibleColumns={columns.visibleColumns}
@@ -76,7 +74,10 @@ export default function CMDBPage() {
             onHistoryPageChange={history.setHistoryPageForAsset}
             onItemClick={dialogs.openDetailsDialog}
             onHistoryItemClick={dialogs.openHistorySnapshotDialog}
+            isLoading={data.isLoading}
           />
+        ) : data.isLoading ? (
+          <LoadingState />
         ) : (
           <CMDBCardGrid
             data={pagination.paginatedData}

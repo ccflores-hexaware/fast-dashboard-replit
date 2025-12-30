@@ -1,4 +1,5 @@
 import React from 'react';
+import { Loader2 } from 'lucide-react';
 import type { CMDBAsset, CMDBHistoryRecord, CMDBHistoryCache } from '../../types/asset.types';
 import type { ColumnDefinition, SortConfig } from '../../types/column.types';
 import { CMDBTableHeader } from './CMDBTableHeader';
@@ -23,6 +24,7 @@ interface CMDBTableProps {
   onHistoryPageChange: (assetId: string, page: number) => void;
   onItemClick: (item: CMDBAsset) => void;
   onHistoryItemClick: (item: CMDBHistoryRecord) => void;
+  isLoading?: boolean;
 }
 
 export function CMDBTable({
@@ -43,6 +45,7 @@ export function CMDBTable({
   onHistoryPageChange,
   onItemClick,
   onHistoryItemClick,
+  isLoading = false,
 }: CMDBTableProps) {
   return (
     <div className="rounded-md border border-border bg-card shadow-sm overflow-x-auto overflow-y-hidden">
@@ -58,31 +61,44 @@ export function CMDBTable({
           onClearFilter={onClearFilter}
         />
         <tbody className="[&_tr:last-child]:border-0">
-          {data.map((item, index) => {
-            const isExpanded = expandedRows.has(item.id);
-            return (
-              <React.Fragment key={`${item.id}-${index}`}>
-                <CMDBTableRow
-                  item={item}
-                  columns={visibleColumns}
-                  isExpanded={isExpanded}
-                  onToggleExpand={onToggleRowExpansion}
-                  onItemClick={onItemClick}
-                />
-                {isExpanded && (
-                  <CMDBHistoryRows
-                    assetId={item.id}
+          {isLoading ? (
+            <tr>
+              <td colSpan={visibleColumns.length} className="py-16">
+                <div className="flex items-center justify-center">
+                  <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <p className="text-muted-foreground">Loading assets...</p>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          ) : (
+            data.map((item, index) => {
+              const isExpanded = expandedRows.has(item.id);
+              return (
+                <React.Fragment key={`${item.id}-${index}`}>
+                  <CMDBTableRow
+                    item={item}
                     columns={visibleColumns}
-                    historyData={historyCache[item.id]}
-                    isLoading={historyLoading[item.id] || false}
-                    currentPage={historyPage[item.id] || 1}
-                    onPageChange={onHistoryPageChange}
-                    onHistoryItemClick={onHistoryItemClick}
+                    isExpanded={isExpanded}
+                    onToggleExpand={onToggleRowExpansion}
+                    onItemClick={onItemClick}
                   />
-                )}
-              </React.Fragment>
-            );
-          })}
+                  {isExpanded && (
+                    <CMDBHistoryRows
+                      assetId={item.id}
+                      columns={visibleColumns}
+                      historyData={historyCache[item.id]}
+                      isLoading={historyLoading[item.id] || false}
+                      currentPage={historyPage[item.id] || 1}
+                      onPageChange={onHistoryPageChange}
+                      onHistoryItemClick={onHistoryItemClick}
+                    />
+                  )}
+                </React.Fragment>
+              );
+            })
+          )}
         </tbody>
       </table>
     </div>

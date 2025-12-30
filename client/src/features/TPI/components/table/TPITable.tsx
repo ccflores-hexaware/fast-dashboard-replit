@@ -1,4 +1,5 @@
 import React from 'react';
+import { Loader2 } from 'lucide-react';
 import type { TPIAsset, TPIHistoryRecord, TPIHistoryResponse } from '../../types/asset.types';
 import type { ColumnDefinition } from '../../types/column.types';
 import type { SortConfig } from '../../types/state.types';
@@ -24,6 +25,7 @@ interface TPITableProps {
   onHistoryPageChange: (assetId: string, page: number) => void;
   onItemClick: (item: TPIAsset) => void;
   onHistoryItemClick: (record: TPIHistoryRecord) => void;
+  isLoading?: boolean;
 }
 
 export function TPITable({
@@ -44,6 +46,7 @@ export function TPITable({
   onHistoryPageChange,
   onItemClick,
   onHistoryItemClick,
+  isLoading = false,
 }: TPITableProps) {
   return (
     <div className="rounded-md border border-border bg-card shadow-sm overflow-x-auto overflow-y-hidden">
@@ -59,32 +62,45 @@ export function TPITable({
           onClearFilter={onClearFilter}
         />
         <tbody className="[&_tr:last-child]:border-0">
-          {data.map((item: TPIAsset, index: number) => {
-            const isExpanded = expandedRows.has(item.id);
-            
-            return (
-              <React.Fragment key={`${item.id}-${index}`}>
-                <TPITableRow
-                  item={item}
-                  visibleColumns={visibleColumns}
-                  isExpanded={isExpanded}
-                  onToggleExpand={onToggleRowExpansion}
-                  onItemClick={onItemClick}
-                />
-                {isExpanded && (
-                  <TPIHistoryRows
-                    assetId={item.id}
+          {isLoading ? (
+            <tr>
+              <td colSpan={visibleColumns.length} className="py-16">
+                <div className="flex items-center justify-center">
+                  <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <p className="text-muted-foreground">Loading assets...</p>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          ) : (
+            data.map((item: TPIAsset, index: number) => {
+              const isExpanded = expandedRows.has(item.id);
+              
+              return (
+                <React.Fragment key={`${item.id}-${index}`}>
+                  <TPITableRow
+                    item={item}
                     visibleColumns={visibleColumns}
-                    historyData={historyCache[item.id]}
-                    isLoading={historyLoading[item.id] || false}
-                    currentPage={historyPage[item.id] || 1}
-                    onPageChange={onHistoryPageChange}
-                    onHistoryItemClick={onHistoryItemClick}
+                    isExpanded={isExpanded}
+                    onToggleExpand={onToggleRowExpansion}
+                    onItemClick={onItemClick}
                   />
-                )}
-              </React.Fragment>
-            );
-          })}
+                  {isExpanded && (
+                    <TPIHistoryRows
+                      assetId={item.id}
+                      visibleColumns={visibleColumns}
+                      historyData={historyCache[item.id]}
+                      isLoading={historyLoading[item.id] || false}
+                      currentPage={historyPage[item.id] || 1}
+                      onPageChange={onHistoryPageChange}
+                      onHistoryItemClick={onHistoryItemClick}
+                    />
+                  )}
+                </React.Fragment>
+              );
+            })
+          )}
         </tbody>
       </table>
     </div>
