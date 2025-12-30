@@ -2,6 +2,7 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { tpiRouter } from "./features/tpi/tpi.routes";
+import { cmdbRouter } from "./features/cmdb/cmdb.routes";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -9,6 +10,7 @@ export async function registerRoutes(
 ): Promise<Server> {
   
   app.use("/api/tpi", tpiRouter);
+  app.use("/api/cmdb", cmdbRouter);
 
   app.get("/api/fast", async (req: Request, res: Response) => {
     try {
@@ -65,107 +67,6 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/cmdb", async (req: Request, res: Response) => {
-    try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 10;
-      const search = req.query.search as string | undefined;
-      const searchColumn = req.query.searchColumn as string | undefined;
-      const sortBy = req.query.sortBy as string | undefined;
-      const sortOrder = (req.query.sortOrder as 'asc' | 'desc') || 'desc';
-      const filtersParam = req.query.filters as string | undefined;
-      
-      let filters: Record<string, string[]> | undefined;
-      if (filtersParam) {
-        try {
-          filters = JSON.parse(filtersParam);
-        } catch (e) {
-          filters = undefined;
-        }
-      }
-
-      const result = await storage.getCmdbAssetsPaginated({
-        page,
-        limit,
-        search,
-        searchColumn,
-        sortBy,
-        sortOrder,
-        filters,
-      });
-      res.json(result);
-    } catch (error) {
-      console.error("Error fetching CMDB assets:", error);
-      res.status(500).json({ error: "Failed to fetch CMDB assets" });
-    }
-  });
-
-  app.get("/api/cmdb/filter-options", async (req: Request, res: Response) => {
-    try {
-      const options = await storage.getCmdbFilterOptions();
-      res.json(options);
-    } catch (error) {
-      console.error("Error fetching CMDB filter options:", error);
-      res.status(500).json({ error: "Failed to fetch CMDB filter options" });
-    }
-  });
-
-  app.get("/api/cmdb/:id", async (req: Request, res: Response) => {
-    try {
-      const asset = await storage.getCmdbAssetById(req.params.id);
-      if (!asset) {
-        return res.status(404).json({ error: "Asset not found" });
-      }
-      res.json(asset);
-    } catch (error) {
-      console.error("Error fetching CMDB asset:", error);
-      res.status(500).json({ error: "Failed to fetch CMDB asset" });
-    }
-  });
-
-  app.post("/api/cmdb", async (req: Request, res: Response) => {
-    try {
-      const asset = await storage.createCmdbAsset(req.body);
-      res.status(201).json(asset);
-    } catch (error) {
-      console.error("Error creating CMDB asset:", error);
-      res.status(500).json({ error: "Failed to create CMDB asset" });
-    }
-  });
-
-  app.put("/api/cmdb/:id", async (req: Request, res: Response) => {
-    try {
-      const asset = await storage.updateCmdbAsset(req.params.id, req.body);
-      if (!asset) {
-        return res.status(404).json({ error: "Asset not found" });
-      }
-      res.json(asset);
-    } catch (error) {
-      console.error("Error updating CMDB asset:", error);
-      res.status(500).json({ error: "Failed to update CMDB asset" });
-    }
-  });
-
-  app.delete("/api/cmdb/:id", async (req: Request, res: Response) => {
-    try {
-      await storage.deleteCmdbAsset(req.params.id);
-      res.status(204).send();
-    } catch (error) {
-      console.error("Error deleting CMDB asset:", error);
-      res.status(500).json({ error: "Failed to delete CMDB asset" });
-    }
-  });
-
-  app.get("/api/cmdb/history/:cmdbAssetId", async (req: Request, res: Response) => {
-    try {
-      const history = await storage.getCmdbAssetHistory(req.params.cmdbAssetId);
-      const count = await storage.getCmdbAssetHistoryCount(req.params.cmdbAssetId);
-      res.json({ history, total: count });
-    } catch (error) {
-      console.error("Error fetching CMDB asset history:", error);
-      res.status(500).json({ error: "Failed to fetch CMDB asset history" });
-    }
-  });
 
   app.get("/api/activity/:assetId", async (req: Request, res: Response) => {
     try {
