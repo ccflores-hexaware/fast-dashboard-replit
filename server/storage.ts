@@ -214,7 +214,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTpiFilterOptions(): Promise<Record<string, string[]>> {
-    const filterableColumns = ['cmdbStatus', 'affinityGroup', 'btoAlignment', 'owningInternalOrg', 'status', 'assetType'];
+    const filterableColumns = [
+      'id', 'name', 'cmdbStatus', 'affinityGroup', 'btoAlignment', 'owningInternalOrg', 'status', 'assetType',
+      'appApprModernDelivery', 'applicationTypeFinancial', 'architect', 'assetIdInFAST',
+      'assetIdInSchedule', 'assetIdInWeeklyStatusReport', 'assetTier', 'blockFunding',
+      'businessOwnerCommsCheck', 'businessOwnerOwnedBy', 'businessOwnerSME', 'cashPaymentSystems',
+      'cmdbBeingRetired', 'cmdbLegalHold', 'concatinatedBTOandDivision', 'connectorStatus',
+      'cotsOrInHouseBuilt', 'customerFacing', 'defaultTier', 'description', 'disposition', 'externalFacing',
+      'financialImpact4hrOutage', 'foundational', 'highLevelBTO', 'hosted', 'infoSecCritical',
+      'informationClassification', 'isSaas', 'itOwnerCommsCheck', 'itOwnerManagedBy',
+      'keyChainOnboardingStatus', 'maintenanceWindow', 'mdAssetDesignation', 'multiFactorAuthentication',
+      'nfr9', 'nfr10', 'nonDefaultTier1', 'nonDefaultTier2', 'nonDefaultTier3', 'nonDefaultTier4',
+      'onboardingStatus', 'operationalHours', 'ppiClassification', 'privilegedAccess', 'sox',
+      'spof', 'sppi', 'supportSME', 'supportedBy', 'supportedByCommsCheck', 'version'
+    ];
     const result: Record<string, string[]> = {};
 
     for (const columnName of filterableColumns) {
@@ -334,7 +347,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCmdbFilterOptions(): Promise<Record<string, string[]>> {
-    const filterableColumns = ['status', 'environment', 'owner'];
+    const filterableColumns = ['id', 'status', 'environment', 'owner', 'configItem', 'version'];
     const result: Record<string, string[]> = {};
 
     for (const columnName of filterableColumns) {
