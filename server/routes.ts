@@ -1,12 +1,15 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { tpiRouter } from "./features/tpi/tpi.routes";
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
   
+  app.use("/api/tpi", tpiRouter);
+
   app.get("/api/fast", async (req: Request, res: Response) => {
     try {
       const assets = await storage.getAllFastAssets();
@@ -59,108 +62,6 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error deleting FAST asset:", error);
       res.status(500).json({ error: "Failed to delete FAST asset" });
-    }
-  });
-
-  app.get("/api/tpi", async (req: Request, res: Response) => {
-    try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 10;
-      const search = req.query.search as string | undefined;
-      const searchColumn = req.query.searchColumn as string | undefined;
-      const sortBy = req.query.sortBy as string | undefined;
-      const sortOrder = (req.query.sortOrder as 'asc' | 'desc') || 'desc';
-      const filtersParam = req.query.filters as string | undefined;
-      
-      let filters: Record<string, string[]> | undefined;
-      if (filtersParam) {
-        try {
-          filters = JSON.parse(filtersParam);
-        } catch (e) {
-          filters = undefined;
-        }
-      }
-
-      const result = await storage.getTpiAssetsPaginated({
-        page,
-        limit,
-        search,
-        searchColumn,
-        sortBy,
-        sortOrder,
-        filters,
-      });
-      res.json(result);
-    } catch (error) {
-      console.error("Error fetching TPI assets:", error);
-      res.status(500).json({ error: "Failed to fetch TPI assets" });
-    }
-  });
-
-  app.get("/api/tpi/filter-options", async (req: Request, res: Response) => {
-    try {
-      const options = await storage.getTpiFilterOptions();
-      res.json(options);
-    } catch (error) {
-      console.error("Error fetching TPI filter options:", error);
-      res.status(500).json({ error: "Failed to fetch TPI filter options" });
-    }
-  });
-
-  app.get("/api/tpi/:id", async (req: Request, res: Response) => {
-    try {
-      const asset = await storage.getTpiAssetById(req.params.id);
-      if (!asset) {
-        return res.status(404).json({ error: "Asset not found" });
-      }
-      res.json(asset);
-    } catch (error) {
-      console.error("Error fetching TPI asset:", error);
-      res.status(500).json({ error: "Failed to fetch TPI asset" });
-    }
-  });
-
-  app.post("/api/tpi", async (req: Request, res: Response) => {
-    try {
-      const asset = await storage.createTpiAsset(req.body);
-      res.status(201).json(asset);
-    } catch (error) {
-      console.error("Error creating TPI asset:", error);
-      res.status(500).json({ error: "Failed to create TPI asset" });
-    }
-  });
-
-  app.put("/api/tpi/:id", async (req: Request, res: Response) => {
-    try {
-      const asset = await storage.updateTpiAsset(req.params.id, req.body);
-      if (!asset) {
-        return res.status(404).json({ error: "Asset not found" });
-      }
-      res.json(asset);
-    } catch (error) {
-      console.error("Error updating TPI asset:", error);
-      res.status(500).json({ error: "Failed to update TPI asset" });
-    }
-  });
-
-  app.delete("/api/tpi/:id", async (req: Request, res: Response) => {
-    try {
-      await storage.deleteTpiAsset(req.params.id);
-      res.status(204).send();
-    } catch (error) {
-      console.error("Error deleting TPI asset:", error);
-      res.status(500).json({ error: "Failed to delete TPI asset" });
-    }
-  });
-
-  app.get("/api/tpi/history/:tpiAssetId", async (req: Request, res: Response) => {
-    try {
-      const history = await storage.getTpiAssetHistory(req.params.tpiAssetId);
-      const count = await storage.getTpiAssetHistoryCount(req.params.tpiAssetId);
-      res.json({ history, total: count });
-    } catch (error) {
-      console.error("Error fetching TPI asset history:", error);
-      res.status(500).json({ error: "Failed to fetch TPI asset history" });
     }
   });
 
