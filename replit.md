@@ -1,257 +1,63 @@
 # FAST Dashboard
 
 ## Overview
-
-The FAST Dashboard is an enterprise IT asset management prototype built for Freddie Mac. It provides a unified interface for viewing and managing technology portfolios across multiple data domains including Assets, TPI (Technology Portfolio Insight), BTO (Business Technology Office), and CMDB (Configuration Management Database). The application supports two user personas: Admins with full CRUD capabilities and Viewers with read-only access.
+The FAST Dashboard is an enterprise IT asset management prototype developed for Freddie Mac. It offers a unified platform for managing technology portfolios across various data domains, including Assets, TPI (Technology Portfolio Insight), BTO (Business Technology Office), and CMDB (Configuration Management Database). The application supports two user roles: Admins with full CRUD capabilities and Viewers with read-only access. The business vision is to streamline IT asset visibility and management within the organization.
 
 ## User Preferences
-
 Preferred communication style: Simple, everyday language.
 
 ## System Architecture
 
-### Frontend Architecture
+### Frontend
 - **Framework**: React 18 with TypeScript
-- **Routing**: Wouter for lightweight client-side routing
-- **State Management**: TanStack React Query for server state, React Context for user/theme state
-- **UI Components**: shadcn/ui component library built on Radix UI primitives
-- **Styling**: Tailwind CSS with CSS variables for theming (light/dark mode support)
-- **Build Tool**: Vite with custom plugins for Replit integration
+- **Routing**: Wouter
+- **State Management**: TanStack React Query for server state, React Context for UI state
+- **UI Components**: shadcn/ui built on Radix UI
+- **Styling**: Tailwind CSS with CSS variables for theming (light/dark mode)
+- **Build Tool**: Vite
 
-### Backend Architecture
+### Backend
 - **Runtime**: Node.js with Express
-- **API Pattern**: RESTful endpoints prefixed with `/api`
+- **API Pattern**: RESTful endpoints
 - **Database ORM**: Drizzle ORM with PostgreSQL dialect
-- **Schema Validation**: Zod with drizzle-zod integration
-- **Storage Pattern**: Interface-based storage abstraction with PostgreSQL database
+- **Schema Validation**: Zod
+- **Storage Pattern**: Interface-based abstraction
 
 ### Key Design Patterns
-- **Role-Based Access Control**: User context provides `isAdmin` flag to conditionally render edit controls
-- **View Toggle Pattern**: Users can switch between table and card views for data display
-- **Column Filtering**: Excel-style multi-select filters on table columns
-- **Column Visibility**: Configurable column visibility with presets and localStorage persistence (Table view only)
-- **Card Field Visibility**: Configurable card field display with 7-field maximum limit and localStorage persistence (Card view only)
-- **Standard CRUD Operations**: All modules support create, read, update, delete operations without versioning
-- **Activity Tracking**: Unified activity log tracks field changes and comments for FAST assets with JSONB storage
-- **Responsive Layout**: Mobile-first design with consistent navigation header
-
-### Shared Code Architecture
-The application uses shared utilities and components to reduce code duplication between CMDB and TPI modules:
-
-**Shared Types** (`client/src/types/`):
-- `table.types.ts` - Column definitions, visibility, presets, sort/filter configs
-- `history.types.ts` - History record interfaces, dialog data types
-
-**Shared Utilities** (`client/src/lib/formatters.ts`):
-- `formatHistoryDate()` - Formats dates for history display
-- `isCurrentRecord()` - Checks if a record is the current version
-- `formatDisplayValue()` - Formats values for display in dialogs
-
-**Shared Hooks** (`client/src/hooks/`):
-- `useDataFetch` - Generic data fetching with loading/error states
-- `useHistoryManager` - History state management with pagination
-
-**Shared Components** (`client/src/components/`):
-- `PageHeader` - Consistent page headers with export functionality
-- `DataToolbar` - Search, column visibility, view toggle controls
-- `DetailsDialog` - Generic detail dialog with history tab
-- `HistorySnapshotDialog` - Historical snapshot viewer
-- `CardGrid` - Grid layout for card view with configurable columns
-
-### Project Structure
-```
-/
-  client/                 # React frontend (Vite)
-    src/
-      components/         # Shared UI components
-        ui/               # shadcn/ui primitives
-        DashboardLayout.tsx
-        DataTable.tsx     # Table view component
-        DataCard.tsx      # Card view component
-        CardGrid.tsx      # Shared card grid component
-        DataToolbar.tsx   # Shared search/filter toolbar
-        PageHeader.tsx    # Shared page header
-        DetailsDialog.tsx # Shared detail dialog
-        HistorySnapshotDialog.tsx  # Shared history viewer
-        FilterMenu.tsx    # Column filtering
-        Pagination.tsx
-      types/              # Shared type definitions
-        table.types.ts
-        history.types.ts
-      hooks/              # Shared custom hooks
-        useDataFetch.ts
-        useHistoryManager.ts
-      lib/
-        formatters.ts     # Shared formatting utilities
-      features/
-        dashboard/
-          DashboardContainer.tsx  # Shared dashboard logic
-        TPI/                      # Refactored TPI feature module (~125 line page)
-          types/                  # Asset, column, and state type definitions
-          constants/              # Column headers, defaults, presets
-          utils/                  # Formatters and utility functions
-          hooks/                  # useTPI* composition hooks (data, history, dialogs)
-          components/             # TPITable, TPICardGrid, dialogs, etc.
-        CMDB/                     # Refactored CMDB feature module (~125 line page)
-          types/                  # Asset, column, and state type definitions
-          constants/              # Column headers, defaults, presets
-          utils/                  # Formatters and utility functions
-          hooks/                  # useCMDB* composition hooks (data, history, dialogs)
-          components/             # CMDBTable, CMDBCardGrid, dialogs, etc.
-      pages/
-        FASTPage.tsx      # FAST module entry point
-        SubAssetsPage.tsx # Sub-assets module entry point
-        TPIPage.tsx       # TPI module entry point
-        BTOPage.tsx       # BTO module entry point
-        CMDBPage.tsx      # CMDB module entry point
-      lib/                # Utilities, context providers
-        userContext.tsx   # User/admin context
-        queryClient.ts    # TanStack Query setup
-        mockData.ts       # Sample data generation
-      hooks/              # Custom React hooks
-      App.tsx             # App entry with routing
-    index.html            # HTML entry point
-  server/                 # Express backend
-    index.ts              # Server entry point
-    routes.ts             # API route registration
-    storage.ts            # Data access layer interface
-    vite.ts               # Vite dev server integration
-  shared/                 # Shared types and schemas
-    schema.ts             # Drizzle database schema and Zod types
-  docs/                   # Documentation
-    FAST_Module_Documentation.md
-    Functionality_Documentation.md
-    Libraries_and_Dependencies.md
-    UI_UX_Standards.md
-  script/                 # Build scripts
-    build.ts              # Production build script
-  attached_assets/        # Branding and reference images
-  package.json            # Dependencies and scripts
-  vite.config.ts          # Vite configuration
-  tsconfig.json           # TypeScript configuration
-  drizzle.config.ts       # Database ORM configuration
-  replit.md               # Project documentation
-```
+- **Role-Based Access Control**: Admin flag for conditional UI.
+- **View Toggle**: Switch between table and card views.
+- **Column Filtering & Visibility**: Excel-style multi-select filters and configurable column visibility with persistence.
+- **Card Field Visibility**: Configurable display with a 7-field limit and persistence.
+- **Standard CRUD Operations**: Create, Read, Update, Delete across modules.
+- **Activity Tracking**: Unified activity log for FAST assets using JSONB.
+- **Responsive Layout**: Mobile-first design.
+- **SCD Type 2 History**: TPI and CMDB modules utilize Slowly Changing Dimension Type 2 for historical data auditing, employing PostgreSQL triggers to capture full record snapshots with start and end dates.
 
 ### Module-Specific Features
+- **FAST**: Activity log for user edits.
+- **Sub-assets**: One-level deep sub-asset creation linked to parent FAST assets.
+- **TPI & CMDB**: SCD Type 2 history for external system updates.
+- **BTO**: Data derived from TPI assets and BTO mapping, displayed with hierarchical aggregation and Excel export.
+- **Recon**: Read-only module with server-side pagination, search, filter, and sort, but no history tracking.
 
-| Module | Version Column | History Auditing |
-|--------|----------------|------------------|
-| FAST | No | Activity log (user edits) |
-| Sub-assets | No | None |
-| TPI | Yes | SCD Type 2 history (external system updates) |
-| BTO | No | Derived data from TPI |
-| CMDB | Yes | SCD Type 2 history (matching TPI pattern) |
-
-### BTO Module (Derived Data)
-- **Data Source**: BTO page data is derived by joining `tpi_assets` with `bto_mapping` table
-- **Mapping Logic**: 
-  - `tpi_assets.bto_alignment` = `bto_mapping.bto` AND
-  - `tpi_assets.owning_internal_org` = `bto_mapping.division`
-  - This combination maps to `bto_mapping.higher_level_bto`
-- **Lookup Table**: `bto_mapping` stores static mapping with columns:
-  - `higher_level_bto` (EBTO, EDO, EO&T)
-  - `bto` (Business Technology Office name)
-  - `division` (Division name)
-- **UI Features**:
-  - Expandable rows showing breakdown by BTO and Division
-  - Aggregated totals by Higher Level BTO
-  - Grand total of all matched assets
-  - Export to Excel with hierarchical structure
-- **API**: `GET /api/bto/summary` returns aggregated asset counts
-
-### CMDB History Auditing
-- **Table**: `cmdb_asset_history` stores full snapshots of CMDB records with start/end dates
-- **Trigger**: PostgreSQL trigger `log_cmdb_asset_changes()` automatically captures INSERT/UPDATE operations
-- **Pattern**: Slowly Changing Dimension Type 2 (SCD Type 2)
-  - Current records have `end_date = 9999-12-31`
-  - When updated, previous record's end_date is set to NOW(), new record starts with start_date = NOW()
-- **UI**: 
-  - Inline accordion in CMDB table rows with pagination (5 per page)
-  - History sub-table dynamically matches visible columns from main table
-  - Clickable rows open detail popup dialog
-  - "Current" badge on first column for active records
-  - **Detail Dialog History Tab**: Tabbed interface in asset detail dialog with Details and History tabs (available in both table and card views)
-- **API**: `GET /api/cmdb/history/:cmdbAssetId` returns `{ history, total }`
-
-### Sub-assets Feature
-- **Table**: `sub_assets` stores extended asset details with 38+ columns
-- **Parent Relationship**: `parentAssetId` foreign key links to FAST asset ID
-- **ID Pattern**: Sub-assets use `{parentId}-SUB1`, `-SUB2` incrementing pattern
-- **Nested Prevention**: Sub-assets are limited to one level deep. The GET /api/fast endpoint includes an `isSubAsset` computed flag via left join with sub_assets table. The "Create Sub-asset" button is hidden when viewing a sub-asset.
-- **Creation Workflow**: 
-  1. Admin clicks "Create Sub-asset" button in FAST asset detail dialog (only visible for parent assets)
-  2. System generates new FAST asset with ID like `AST-0001-SUB1`
-  3. System creates corresponding sub-asset record linking to parent
-  4. User fills in sub-asset specific fields on Sub-assets page
-- **Navigation**: Sub-assets tab between FAST and TPI in header
-- **API Endpoints**:
-  - `GET /api/sub-assets` - List all sub-assets
-  - `POST /api/sub-assets` - Create new sub-asset
-  - `PUT /api/sub-assets/:internalId` - Update sub-asset
-  - `GET /api/fast/next-sub-id/:baseAssetId` - Get next sub-asset ID
-  - `GET /api/sub-assets/counts` - Get sub-asset counts per parent
-
-### TPI History Auditing
-- **Table**: `tpi_asset_history` stores full snapshots of TPI records with start/end dates
-- **Trigger**: PostgreSQL trigger `log_tpi_asset_changes()` automatically captures INSERT/UPDATE operations
-- **Pattern**: Slowly Changing Dimension Type 2 (SCD Type 2)
-  - Current records have `end_date = 9999-12-31`
-  - When updated, previous record's end_date is set to NOW(), new record starts with start_date = NOW()
-- **UI**: 
-  - Inline accordion in TPI table rows with pagination (5 per page)
-  - History sub-table dynamically matches visible columns from main table (excluding version)
-  - Clickable rows open detail popup dialog
-  - "Current" badge on first column for active records
-  - **Detail Dialog History Tab**: Tabbed interface in asset detail dialog with Details and History tabs (available in both table and card views)
-- **API**: `GET /api/tpi/history/:tpiAssetId` returns `{ history, total }`
+### Project Structure
+The project is organized into `client/` (React frontend), `server/` (Express backend), and `shared/` (common types and schemas). It emphasizes shared components, hooks, and utilities to reduce redundancy across features like TPI, CMDB, and Recon.
 
 ## External Dependencies
 
 ### Database
-- **PostgreSQL**: Primary database (configured via `DATABASE_URL` environment variable)
-- **Drizzle Kit**: Database migrations with `npm run db:push`
+- **PostgreSQL**: Primary database.
+- **Drizzle Kit**: For database migrations.
 
 ### UI Libraries
-- **Radix UI**: Accessible component primitives (dialogs, dropdowns, tooltips, etc.)
-- **Lucide React**: Icon library
-- **date-fns**: Date formatting utilities
-- **cmdk**: Command palette component
-- **embla-carousel**: Carousel functionality
+- **Radix UI**: Accessible component primitives.
+- **Lucide React**: Icon library.
+- **date-fns**: Date formatting.
+- **cmdk**: Command palette.
+- **embla-carousel**: Carousel functionality.
 
 ### Development Tools
-- **tsx**: TypeScript execution for server
-- **esbuild**: Production bundling for server code
-- **Vite**: Frontend development server with HMR
-- **Vitest**: Unit testing framework with jsdom support
-
-## Recent Changes (December 2025)
-
-### Server-Side Pagination Refactor
-Refactored TPI and CMDB modules from client-side to server-side pagination:
-
-**Backend Changes** (`server/storage.ts`, `server/routes.ts`):
-- Added `getTpiAssetsPaginated()` and `getCmdbAssetsPaginated()` storage methods
-- Implemented PostgreSQL OFFSET/LIMIT for database-level pagination
-- Added ILIKE-based full-text search across multiple columns
-- Added dynamic column filtering with JSON filter parameter
-- Added sortBy/sortOrder parameters with SQL injection protection
-- Updated `/api/tpi` and `/api/cmdb` endpoints to return `PaginatedResponse<T>` structure with metadata (totalCount, totalPages, currentPage)
-- Added `/api/tpi/filter-options` and `/api/cmdb/filter-options` endpoints
-
-**Frontend Changes**:
-- Created shared pagination types in `client/src/types/table.types.ts`:
-  - `PaginatedResponse<T>` - API response structure
-  - `PaginationParams` - Request parameters interface
-- Rewrote `useTPIData` and `useCMDBData` hooks for on-demand server fetching
-- Refactored `useTPIPage` and `useCMDBPage` to trigger API calls on page/search/filter changes
-- Implemented 300ms debounce on search queries to reduce API load
-- Used refs to stabilize dependencies and prevent infinite render loops
-
-**Test Files** (`server/tests/pagination.test.ts`, `client/src/features/TPI/__tests__/pagination.test.tsx`):
-- Created unit tests for paginated API endpoints
-- Created integration tests for frontend pagination URL construction
-
-### Branding
-- Custom color scheme based on Freddie Mac corporate identity (Deep Blue primary, accent colors)
-- Google Fonts: Open Sans (body), Source Sans 3 (headings)
+- **tsx**: TypeScript execution for server.
+- **esbuild**: Production bundling for server.
+- **Vite**: Frontend development server.
+- **Vitest**: Unit testing framework.
