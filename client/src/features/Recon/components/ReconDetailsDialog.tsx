@@ -34,7 +34,7 @@ export function ReconDetailsDialog({
         <DialogHeader>
           <div className="flex items-center gap-3">
             <DialogTitle className="text-xl">
-              {selectedItem.applicationname || selectedItem.id}
+              {selectedItem.applicationname || `Record #${selectedItem.internalId}`}
             </DialogTitle>
             {selectedItem.status && (
               <Badge variant="secondary">{selectedItem.status}</Badge>

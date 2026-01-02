@@ -135,7 +135,6 @@ describe('Recon Search Debounce Logic', () => {
 describe('Recon Column Visibility', () => {
   it('should have all expected column keys', () => {
     const ALL_COLUMN_KEYS = [
-      'id',
       'applicationname',
       'accountname',
       'entitlementcolumn',
@@ -145,15 +144,13 @@ describe('Recon Column Visibility', () => {
       'status',
     ];
     
-    expect(ALL_COLUMN_KEYS.length).toBe(8);
-    expect(ALL_COLUMN_KEYS).toContain('id');
+    expect(ALL_COLUMN_KEYS.length).toBe(7);
     expect(ALL_COLUMN_KEYS).toContain('applicationname');
     expect(ALL_COLUMN_KEYS).toContain('status');
   });
 
   it('should have default columns configured', () => {
     const DEFAULT_COLUMNS = [
-      'id',
       'applicationname',
       'accountname',
       'entitlementcolumn',
@@ -162,7 +159,7 @@ describe('Recon Column Visibility', () => {
       'status',
     ];
     
-    expect(DEFAULT_COLUMNS.length).toBe(7);
+    expect(DEFAULT_COLUMNS.length).toBe(6);
     expect(DEFAULT_COLUMNS).not.toContain('filepath');
   });
 });
@@ -203,11 +200,10 @@ describe('Recon Data Formatting', () => {
 describe('Recon Export Functionality', () => {
   it('should create export data structure correctly', () => {
     const assets = [
-      { id: 'RECON-001', applicationname: 'App 1', status: 'Active' },
-      { id: 'RECON-002', applicationname: 'App 2', status: 'Pending' },
+      { internalId: 1, applicationname: 'App 1', status: 'Active' },
+      { internalId: 2, applicationname: 'App 2', status: 'Pending' },
     ];
     const visibleColumns = [
-      { header: 'ID', accessorKey: 'id' },
       { header: 'Application Name', accessorKey: 'applicationname' },
       { header: 'Status', accessorKey: 'status' },
     ];
@@ -221,14 +217,13 @@ describe('Recon Export Functionality', () => {
     });
     
     expect(exportData.length).toBe(2);
-    expect(exportData[0]['ID']).toBe('RECON-001');
     expect(exportData[0]['Application Name']).toBe('App 1');
     expect(exportData[1]['Status']).toBe('Pending');
   });
 
   it('should handle null values in export', () => {
     const assets = [
-      { id: 'RECON-001', applicationname: null, status: 'Active' },
+      { internalId: 1, applicationname: null, status: 'Active' },
     ];
     const visibleColumns = [
       { header: 'Application Name', accessorKey: 'applicationname' },

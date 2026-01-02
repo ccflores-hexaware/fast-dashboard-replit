@@ -353,7 +353,6 @@ export type BtoMapping = typeof btoMapping.$inferSelect;
 
 export const reconAssets = pgTable("recon_assets", {
   internalId: serial("internal_id").primaryKey(),
-  id: varchar("id", { length: 50 }).notNull().unique(),
   applicationname: text("applicationname"),
   accountname: text("accountname"),
   entitlementcolumn: text("entitlementcolumn"),

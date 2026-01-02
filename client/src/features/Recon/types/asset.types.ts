@@ -1,5 +1,5 @@
 export interface ReconAsset {
-  id: string;
+  internalId: number;
   applicationname: string | null;
   accountname: string | null;
   entitlementcolumn: string | null;

@@ -5,8 +5,8 @@ import { eq, desc, and, sql, or, ilike, asc, type SQL } from "drizzle-orm";
 import type { PaginationParams, PaginatedResult } from "./recon.types";
 
 export class ReconStorage {
-  async findById(id: string): Promise<ReconAsset | null> {
-    const [asset] = await db.select().from(reconAssets).where(eq(reconAssets.id, id));
+  async findByInternalId(internalId: number): Promise<ReconAsset | null> {
+    const [asset] = await db.select().from(reconAssets).where(eq(reconAssets.internalId, internalId));
     return asset ?? null;
   }
 
@@ -26,7 +26,6 @@ export class ReconStorage {
       } else {
         conditions.push(
           or(
-            ilike(reconAssets.id, searchPattern),
             ilike(reconAssets.applicationname, searchPattern),
             ilike(reconAssets.accountname, searchPattern),
             ilike(reconAssets.entitlementcolumn, searchPattern),
@@ -87,7 +86,6 @@ export class ReconStorage {
 
   async getFilterOptions(): Promise<Record<string, string[]>> {
     const filterableColumns = [
-      "id",
       "applicationname",
       "accountname",
       "entitlementcolumn",

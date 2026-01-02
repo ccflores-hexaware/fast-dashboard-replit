@@ -13,11 +13,11 @@ export class ReconService {
     return this.storage.findPaginated(sanitizedParams);
   }
 
-  async getAssetById(id: string): Promise<ReconAsset | null> {
-    if (!id || typeof id !== "string" || id.trim() === "") {
+  async getAssetByInternalId(internalId: number): Promise<ReconAsset | null> {
+    if (!internalId || typeof internalId !== "number" || internalId < 1) {
       return null;
     }
-    return this.storage.findById(id.trim());
+    return this.storage.findByInternalId(internalId);
   }
 
   async getFilterOptions(): Promise<Record<string, string[]>> {

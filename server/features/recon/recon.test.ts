@@ -5,7 +5,6 @@ import type { ReconAsset } from "../../../shared/schema";
 
 const createMockAsset = (overrides: Partial<ReconAsset> = {}): ReconAsset => ({
   internalId: 1,
-  id: "RECON-001",
   applicationname: "Test Application",
   accountname: "Test Account",
   entitlementcolumn: "Column A",
@@ -17,7 +16,7 @@ const createMockAsset = (overrides: Partial<ReconAsset> = {}): ReconAsset => ({
 });
 
 const createMockStorage = (): ReconStorage => ({
-  findById: vi.fn(),
+  findByInternalId: vi.fn(),
   findPaginated: vi.fn(),
   getFilterOptions: vi.fn(),
 });
@@ -31,46 +30,37 @@ describe("ReconService", () => {
     service = new ReconService(mockStorage as unknown as ReconStorage);
   });
 
-  describe("getAssetById", () => {
+  describe("getAssetByInternalId", () => {
     it("should return asset when found", async () => {
       const mockAsset = createMockAsset();
-      vi.mocked(mockStorage.findById).mockResolvedValue(mockAsset);
+      vi.mocked(mockStorage.findByInternalId).mockResolvedValue(mockAsset);
 
-      const result = await service.getAssetById("RECON-001");
+      const result = await service.getAssetByInternalId(1);
 
       expect(result).toEqual(mockAsset);
-      expect(mockStorage.findById).toHaveBeenCalledWith("RECON-001");
+      expect(mockStorage.findByInternalId).toHaveBeenCalledWith(1);
     });
 
     it("should return null when asset not found", async () => {
-      vi.mocked(mockStorage.findById).mockResolvedValue(null);
+      vi.mocked(mockStorage.findByInternalId).mockResolvedValue(null);
 
-      const result = await service.getAssetById("INVALID-ID");
+      const result = await service.getAssetByInternalId(999);
 
       expect(result).toBeNull();
     });
 
-    it("should return null for empty string id", async () => {
-      const result = await service.getAssetById("");
+    it("should return null for zero id", async () => {
+      const result = await service.getAssetByInternalId(0);
 
       expect(result).toBeNull();
-      expect(mockStorage.findById).not.toHaveBeenCalled();
+      expect(mockStorage.findByInternalId).not.toHaveBeenCalled();
     });
 
-    it("should return null for whitespace-only id", async () => {
-      const result = await service.getAssetById("   ");
+    it("should return null for negative id", async () => {
+      const result = await service.getAssetByInternalId(-5);
 
       expect(result).toBeNull();
-      expect(mockStorage.findById).not.toHaveBeenCalled();
-    });
-
-    it("should trim whitespace from id", async () => {
-      const mockAsset = createMockAsset();
-      vi.mocked(mockStorage.findById).mockResolvedValue(mockAsset);
-
-      await service.getAssetById("  RECON-001  ");
-
-      expect(mockStorage.findById).toHaveBeenCalledWith("RECON-001");
+      expect(mockStorage.findByInternalId).not.toHaveBeenCalled();
     });
 
     it("should handle null values in asset fields", async () => {
@@ -79,9 +69,9 @@ describe("ReconService", () => {
         accountname: null,
         status: null,
       });
-      vi.mocked(mockStorage.findById).mockResolvedValue(mockAsset);
+      vi.mocked(mockStorage.findByInternalId).mockResolvedValue(mockAsset);
 
-      const result = await service.getAssetById("RECON-001");
+      const result = await service.getAssetByInternalId(1);
 
       expect(result).toEqual(mockAsset);
       expect(result?.applicationname).toBeNull();

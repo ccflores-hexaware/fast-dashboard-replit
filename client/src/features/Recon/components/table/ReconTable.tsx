@@ -72,7 +72,7 @@ export function ReconTable({
           ) : (
             data.map((item: ReconAsset, index: number) => (
               <ReconTableRow
-                key={`${item.id}-${index}`}
+                key={`${item.internalId}-${index}`}
                 item={item}
                 visibleColumns={visibleColumns}
                 onItemClick={onItemClick}
