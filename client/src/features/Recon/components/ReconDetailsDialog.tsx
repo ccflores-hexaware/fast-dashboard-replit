@@ -4,9 +4,11 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import type { ReconAsset } from '../types/asset.types';
 import type { ColumnDefinition } from '../types/column.types';
 import { formatFieldValue } from '../utils/formatters';
@@ -59,6 +61,12 @@ export function ReconDetailsDialog({
             </div>
           </div>
         </ScrollArea>
+
+        <DialogFooter className="pt-4 border-t">
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
