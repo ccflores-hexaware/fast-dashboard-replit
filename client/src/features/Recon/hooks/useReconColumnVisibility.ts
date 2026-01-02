@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import type { ReconAsset } from '../types/asset.types';
 import type { ColumnDefinition, CardFieldDefinition } from '../types/column.types';
 import type { UseReconColumnVisibilityReturn } from '../types/state.types';
+import type { ColumnPreset as SharedColumnPreset } from '@/types/table.types';
 import { 
   ALL_COLUMN_KEYS, 
   DEFAULT_COLUMNS, 
@@ -64,20 +65,20 @@ export function useReconColumnVisibility(): UseReconColumnVisibilityReturn {
     return Object.values(columnVisibility).filter(Boolean).length;
   }, [columnVisibility]);
 
-  const applyPreset = useCallback((preset: 'default' | 'all' | (keyof ReconAsset)[]) => {
+  const applyPreset = useCallback((preset: SharedColumnPreset) => {
     const newVisibility: Record<string, boolean> = {};
     
-    if (preset === 'default') {
+    if (preset.columns === 'default') {
       ALL_COLUMN_KEYS.forEach(key => {
         newVisibility[key] = DEFAULT_COLUMNS.includes(key);
       });
-    } else if (preset === 'all') {
+    } else if (preset.columns === 'all') {
       ALL_COLUMN_KEYS.forEach(key => {
         newVisibility[key] = true;
       });
-    } else if (Array.isArray(preset)) {
+    } else if (Array.isArray(preset.columns)) {
       ALL_COLUMN_KEYS.forEach(key => {
-        newVisibility[key] = preset.includes(key);
+        newVisibility[key] = preset.columns.includes(key);
       });
     }
     

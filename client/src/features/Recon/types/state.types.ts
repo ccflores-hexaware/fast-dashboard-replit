@@ -1,5 +1,6 @@
 import type { ReconAsset } from './asset.types';
 import type { ColumnDefinition, CardFieldDefinition } from './column.types';
+import type { ColumnPreset } from '@/types/table.types';
 
 export interface SortConfig {
   key: string | null;
@@ -32,7 +33,7 @@ export interface UseReconColumnVisibilityReturn {
   columnSearchQuery: string;
   setColumnSearchQuery: (query: string) => void;
   visibleColumnCount: number;
-  applyPreset: (preset: 'default' | 'all' | (keyof ReconAsset)[]) => void;
+  applyPreset: (preset: ColumnPreset) => void;
 }
 
 export interface UseReconPageReturn {
