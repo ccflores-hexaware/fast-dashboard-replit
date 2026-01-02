@@ -38,7 +38,7 @@ Preferred communication style: Simple, everyday language.
 - **Sub-assets**: One-level deep sub-asset creation linked to parent FAST assets.
 - **TPI & CMDB**: SCD Type 2 history for external system updates.
 - **BTO**: Data derived from TPI assets and BTO mapping, displayed with hierarchical aggregation and Excel export.
-- **Recon**: Read-only module with server-side pagination, search, filter, and sort, but no history tracking.
+- **Recon**: Read-only module with server-side pagination, search, filter, and sort, but no history tracking. Data is grouped by Application Name with collapsible accordion rows. Pagination operates per application group (not per record). Expand/collapse state persists across data refreshes.
 
 ### Project Structure
 The project is organized into `client/` (React frontend), `server/` (Express backend), and `shared/` (common types and schemas). It emphasizes shared components, hooks, and utilities to reduce redundancy across features like TPI, CMDB, and Recon.
