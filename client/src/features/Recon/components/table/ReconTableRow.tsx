@@ -1,26 +1,46 @@
 import React from 'react';
-import { TableCell, TableRow } from '@/components/ui/table';
+import { ChevronRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import type { ReconAsset } from '../../types/asset.types';
 import type { ColumnDefinition } from '../../types/column.types';
-import { formatFieldValue } from '../../utils/formatters';
 
 interface ReconTableRowProps {
   item: ReconAsset;
-  columns: ColumnDefinition[];
-  onClick: (item: ReconAsset) => void;
+  visibleColumns: ColumnDefinition[];
+  onItemClick: (item: ReconAsset) => void;
 }
 
-export function ReconTableRow({ item, columns, onClick }: ReconTableRowProps) {
+export const ReconTableRow = React.memo(function ReconTableRow({
+  item,
+  visibleColumns,
+  onItemClick,
+}: ReconTableRowProps) {
   return (
-    <TableRow
-      className="cursor-pointer hover:bg-muted/50 transition-colors"
-      onClick={() => onClick(item)}
-    >
-      {columns.map((column) => (
-        <TableCell key={String(column.accessorKey)} className="whitespace-nowrap">
-          {formatFieldValue(item[column.accessorKey])}
-        </TableCell>
+    <tr className="hover:bg-muted/30 transition-colors border-b border-border cursor-pointer">
+      {visibleColumns.map((col, colIndex) => (
+        <td 
+          key={String(col.accessorKey)} 
+          className={cn(
+            "text-sm border-r border-border px-4 py-3 whitespace-nowrap", 
+            colIndex === 0 && "sticky left-0 z-20 bg-slate-100", 
+            colIndex === visibleColumns.length - 1 && "border-r-0"
+          )} 
+          onClick={() => onItemClick(item)}
+        >
+          {colIndex === 0 ? (
+            <div className="flex items-center gap-2">
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              <span className="font-semibold text-primary">{item[col.accessorKey] ?? '—'}</span>
+            </div>
+          ) : (
+            col.accessorKey === 'applicationname' ? (
+              <span className="font-semibold text-primary">{item[col.accessorKey] ?? '—'}</span>
+            ) : (
+              <span>{item[col.accessorKey] ?? '—'}</span>
+            )
+          )}
+        </td>
       ))}
-    </TableRow>
+    </tr>
   );
-}
+});

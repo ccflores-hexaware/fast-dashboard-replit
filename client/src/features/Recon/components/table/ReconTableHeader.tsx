@@ -1,27 +1,12 @@
 import React from 'react';
-import { TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { ArrowUpDown, ArrowUp, ArrowDown, Filter, Check } from 'lucide-react';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-} from '@/components/ui/command';
+import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ColumnDefinition } from '../../types/column.types';
 import type { SortConfig } from '../../types/state.types';
+import { ColumnFilterPopover } from './ColumnFilterPopover';
 
 interface ReconTableHeaderProps {
-  columns: ColumnDefinition[];
+  visibleColumns: ColumnDefinition[];
   sortConfig: SortConfig;
   onSort: (key: string) => void;
   columnFilters: Record<string, string[]>;
@@ -32,7 +17,7 @@ interface ReconTableHeaderProps {
 }
 
 export function ReconTableHeader({
-  columns,
+  visibleColumns,
   sortConfig,
   onSort,
   columnFilters,
@@ -42,98 +27,49 @@ export function ReconTableHeader({
   onClearFilter,
 }: ReconTableHeaderProps) {
   return (
-    <TableHeader className="sticky top-0 bg-background z-10">
-      <TableRow>
-        {columns.map((column) => {
-          const key = String(column.accessorKey);
+    <thead className="bg-muted/50">
+      <tr className="border-b border-border">
+        {visibleColumns.map((col, index) => {
+          const key = String(col.accessorKey);
+          const isFiltered = !!columnFilters[key];
           const uniqueValues = getUniqueValues(key);
-          const currentFilters = columnFilters[key];
-          const hasFilter = currentFilters !== undefined && currentFilters.length !== uniqueValues.length;
-          const isAllSelected = currentFilters === undefined;
-
+          const currentFilterValues = columnFilters[key];
+          const isSorted = sortConfig?.key === key;
+          const SortIcon = isSorted ? (sortConfig?.direction === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown;
+          
           return (
-            <TableHead key={key} className="whitespace-nowrap">
-              <div className="flex items-center gap-1">
-                <button
+            <th 
+              key={key} 
+              className={cn(
+                "font-bold text-primary whitespace-nowrap border-r border-border px-4 py-3 h-auto select-none", 
+                index === 0 && "sticky left-0 z-30 bg-slate-200", 
+                index === visibleColumns.length - 1 && "border-r-0"
+              )}
+            >
+              <div className="flex items-center justify-between gap-1.5">
+                <div 
+                  className="flex items-center gap-1.5 rounded cursor-pointer hover:bg-black/5 -ml-1 pl-1 pr-1.5 py-0.5 transition-colors"
                   onClick={() => onSort(key)}
-                  className="flex items-center gap-1 hover:text-foreground transition-colors"
                 >
-                  <span className="font-semibold">{column.header}</span>
-                  {sortConfig.key === key ? (
-                    sortConfig.direction === 'asc' ? (
-                      <ArrowUp className="h-4 w-4" />
-                    ) : (
-                      <ArrowDown className="h-4 w-4" />
-                    )
-                  ) : (
-                    <ArrowUpDown className="h-4 w-4 opacity-50" />
-                  )}
-                </button>
-
-                {uniqueValues.length > 0 && (
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className={cn(
-                          "h-6 w-6 p-0",
-                          hasFilter && "text-primary"
-                        )}
-                      >
-                        <Filter className="h-3 w-3" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-52 p-0" align="start">
-                      <Command>
-                        <CommandInput placeholder="Search..." />
-                        <CommandList>
-                          <CommandEmpty>No results found.</CommandEmpty>
-                          <CommandGroup>
-                            <CommandItem
-                              onSelect={() => onSelectAll(key)}
-                              className="justify-between"
-                            >
-                              <span>Select All</span>
-                              {isAllSelected && <Check className="h-4 w-4" />}
-                            </CommandItem>
-                            <CommandSeparator />
-                            {uniqueValues.map((value) => {
-                              const isSelected = isAllSelected || currentFilters?.includes(value);
-                              return (
-                                <CommandItem
-                                  key={value}
-                                  onSelect={() => onFilterChange(key, value, uniqueValues)}
-                                  className="justify-between"
-                                >
-                                  <span className="truncate">{value}</span>
-                                  {isSelected && <Check className="h-4 w-4" />}
-                                </CommandItem>
-                              );
-                            })}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                      {hasFilter && (
-                        <div className="p-2 border-t">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="w-full"
-                            onClick={() => onClearFilter(key)}
-                          >
-                            Clear Filter
-                          </Button>
-                        </div>
-                      )}
-                    </PopoverContent>
-                  </Popover>
-                )}
+                  {col.header}
+                  <SortIcon className={cn("h-3.5 w-3.5", isSorted ? "opacity-100" : "opacity-30")} />
+                </div>
+                
+                <ColumnFilterPopover
+                  columnKey={key}
+                  columnHeader={col.header}
+                  isFiltered={isFiltered}
+                  uniqueValues={uniqueValues}
+                  currentFilterValues={currentFilterValues}
+                  onFilterChange={onFilterChange}
+                  onSelectAll={onSelectAll}
+                  onClearFilter={onClearFilter}
+                />
               </div>
-            </TableHead>
+            </th>
           );
         })}
-      </TableRow>
-    </TableHeader>
+      </tr>
+    </thead>
   );
 }

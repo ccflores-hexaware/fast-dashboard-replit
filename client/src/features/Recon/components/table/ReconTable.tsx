@@ -1,11 +1,10 @@
 import React from 'react';
-import { Table, TableBody } from '@/components/ui/table';
-import { LoadingState } from '@/components/LoadingState';
-import { ReconTableHeader } from './ReconTableHeader';
-import { ReconTableRow } from './ReconTableRow';
+import { Loader2 } from 'lucide-react';
 import type { ReconAsset } from '../../types/asset.types';
 import type { ColumnDefinition } from '../../types/column.types';
 import type { SortConfig } from '../../types/state.types';
+import { ReconTableHeader } from './ReconTableHeader';
+import { ReconTableRow } from './ReconTableRow';
 
 interface ReconTableProps {
   data: ReconAsset[];
@@ -34,26 +33,11 @@ export function ReconTable({
   onItemClick,
   isLoading,
 }: ReconTableProps) {
-  if (isLoading) {
-    return <LoadingState />;
-  }
-
-  if (data.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <div className="text-muted-foreground">
-          <h3 className="text-lg font-semibold">No Records Found</h3>
-          <p className="text-sm mt-1">Try adjusting your filters or search criteria</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="rounded-md border overflow-auto">
-      <Table>
+    <div className="rounded-md border border-border bg-card shadow-sm overflow-x-auto overflow-y-hidden">
+      <table className="w-full caption-bottom text-sm">
         <ReconTableHeader
-          columns={visibleColumns}
+          visibleColumns={visibleColumns}
           sortConfig={sortConfig}
           onSort={onSort}
           columnFilters={columnFilters}
@@ -62,17 +46,41 @@ export function ReconTable({
           onSelectAll={onSelectAll}
           onClearFilter={onClearFilter}
         />
-        <TableBody>
-          {data.map((item) => (
-            <ReconTableRow
-              key={item.id}
-              item={item}
-              columns={visibleColumns}
-              onClick={onItemClick}
-            />
-          ))}
-        </TableBody>
-      </Table>
+        <tbody className="[&_tr:last-child]:border-0">
+          {isLoading ? (
+            <tr>
+              <td colSpan={visibleColumns.length} className="py-16">
+                <div className="flex items-center justify-center">
+                  <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <p className="text-muted-foreground">Loading assets...</p>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          ) : data.length === 0 ? (
+            <tr>
+              <td colSpan={visibleColumns.length} className="py-16">
+                <div className="flex items-center justify-center">
+                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                    <h3 className="text-lg font-semibold">No Records Found</h3>
+                    <p className="text-sm">Try adjusting your filters or search criteria</p>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          ) : (
+            data.map((item: ReconAsset, index: number) => (
+              <ReconTableRow
+                key={`${item.id}-${index}`}
+                item={item}
+                visibleColumns={visibleColumns}
+                onItemClick={onItemClick}
+              />
+            ))
+          )}
+        </tbody>
+      </table>
     </div>
   );
 }
