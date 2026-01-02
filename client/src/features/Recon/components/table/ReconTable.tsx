@@ -1,11 +1,11 @@
 import React from 'react';
-import { Loader2, ChevronRight, ChevronDown, ChevronsUpDown } from 'lucide-react';
+import { Loader2, ChevronRight, ChevronDown } from 'lucide-react';
 import type { ReconAsset, GroupedReconAsset } from '../../types/asset.types';
 import type { ColumnDefinition } from '../../types/column.types';
 import type { SortConfig } from '../../types/state.types';
 import { ReconTableHeader } from './ReconTableHeader';
 import { ReconTableRow } from './ReconTableRow';
-import { Button } from '@/components/ui/button';
+
 
 interface ReconTableProps {
   groupedData: GroupedReconAsset[];
@@ -21,8 +21,6 @@ interface ReconTableProps {
   isLoading: boolean;
   expandedGroups: Set<string>;
   toggleGroup: (applicationName: string) => void;
-  expandAll: () => void;
-  collapseAll: () => void;
 }
 
 export function ReconTable({
@@ -39,30 +37,9 @@ export function ReconTable({
   isLoading,
   expandedGroups,
   toggleGroup,
-  expandAll,
-  collapseAll,
 }: ReconTableProps) {
-  const allExpanded = groupedData.length > 0 && groupedData.every(g => expandedGroups.has(g.applicationName));
-  const someExpanded = expandedGroups.size > 0;
-
   return (
     <div className="rounded-md border border-border bg-card shadow-sm overflow-x-auto overflow-y-hidden">
-      {groupedData.length > 0 && !isLoading && (
-        <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-muted/30">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={allExpanded ? collapseAll : expandAll}
-            className="h-8 gap-2 text-xs"
-          >
-            <ChevronsUpDown className="h-4 w-4" />
-            {allExpanded ? 'Collapse All' : 'Expand All'}
-          </Button>
-          <span className="text-xs text-muted-foreground">
-            {expandedGroups.size} of {groupedData.length} groups expanded
-          </span>
-        </div>
-      )}
       <table className="w-full caption-bottom text-sm">
         <ReconTableHeader
           visibleColumns={visibleColumns}
