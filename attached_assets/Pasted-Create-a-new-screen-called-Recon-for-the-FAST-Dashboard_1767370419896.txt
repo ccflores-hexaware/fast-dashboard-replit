@@ -1,0 +1,109 @@
+Create a new screen called "Recon" for the FAST Dashboard application following the established modular architecture and UI/UX patterns.
+
+Database Schema
+Create a recon table with the following columns:
+
+id (UUID, primary key)
+applicationname (text)
+accountname (text)
+entitlementcolumn (text)
+entitlementvalue (text)
+filepath (text)
+applicationstatus (text)
+status (text)
+createdAt (timestamp)
+updatedAt (timestamp)
+Feature Requirements
+Read-only screen - No create, update, or delete functionality
+No history/versioning functionality - No history tabs, snapshots, or version tracking
+Full data viewing capabilities - Table view, card view, search, filter, sort, pagination, and Excel export
+Architecture (Follow TPI/CMDB Module Pattern)
+1. Create Feature Module Structure:
+
+client/src/features/Recon/
+  ├── components/
+  │   ├── table/
+  │   │   ├── ReconTable.tsx
+  │   │   ├── ReconTableHeader.tsx
+  │   │   └── ReconTableRow.tsx
+  │   ├── ReconCardGrid.tsx
+  │   ├── ReconDetailsDialog.tsx (read-only, no history tab)
+  │   ├── ReconHeader.tsx
+  │   └── ReconToolbar.tsx
+  ├── constants/
+  │   └── columns.ts
+  ├── hooks/
+  │   ├── useReconPage.ts (main composition hook)
+  │   ├── useReconData.ts
+  │   ├── useReconDialogs.ts
+  │   └── useReconColumnVisibility.ts
+  ├── types/
+  │   ├── asset.types.ts
+  │   ├── column.types.ts
+  │   └── state.types.ts
+  └── utils/
+      └── formatters.ts
+2. Create Backend Structure:
+
+server/features/recon/
+  ├── recon.routes.ts
+  ├── recon.service.ts
+  ├── recon.storage.ts
+  └── recon.types.ts
+3. Create Page Entry Point:
+
+client/src/pages/ReconPage.tsx - ~125 lines max, following the TPI/CMDB pattern
+UI/UX Requirements (Match Existing Patterns)
+Header Component:
+
+Title: "Recon"
+Export to Excel button (primary variant with FileSpreadsheet icon)
+Use PageHeader component pattern from TPIHeader
+Toolbar Component:
+
+Search input with column selector (combobox pattern)
+Column visibility toggle (only for table view)
+View toggle (table/card)
+Use DataToolbar patterns
+Table View:
+
+Use shared DataTable component patterns
+Column filtering (Excel-style multi-select)
+Sortable columns
+Row click opens details dialog
+No expandable rows (no history)
+Card View:
+
+Use CardGrid and DataCard patterns
+Configurable visible fields
+Card click opens details dialog
+Details Dialog:
+
+Read-only field display
+Single tab only (no history tab)
+Close button only (no edit actions)
+Use Dialog component with scroll area
+Pagination:
+
+Use shared Pagination component
+Support both table (default 20) and card (default 12) page sizes
+Styling Requirements
+Follow Tailwind CSS patterns with CSS variables
+Use shadcn/ui components (Dialog, Button, Tabs, ScrollArea, etc.)
+Maintain brand colors (primary #183567, accent #89c24b)
+Support light/dark mode theming
+Border-t-4 with accent color on cards
+Navigation
+Add "Recon" tab to DashboardLayout navigation
+Add route /recon to App.tsx Router
+API Endpoints
+GET /api/recon - List with pagination, search, filter, sort
+GET /api/recon/:id - Get single record
+Code Quality Standards
+TypeScript strict mode
+Proper type definitions for all interfaces
+Use composition hooks pattern (useReconPage returns organized state)
+Server-side pagination and filtering
+Debounced search (300ms)
+Toast notifications for export success
+Loading states using LoadingState component
