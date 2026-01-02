@@ -53,20 +53,57 @@ router.get("/filter-options", async (_req: Request, res: Response) => {
   }
 });
 
+router.get("/grouped", async (req: Request, res: Response) => {
+  try {
+    let filters: Record<string, string[]> | undefined;
+    const filtersParam = req.query.filters as string | undefined;
+    
+    if (filtersParam) {
+      try {
+        filters = JSON.parse(filtersParam);
+      } catch {
+        filters = undefined;
+      }
+    }
+
+    const parseResult = paginationParamsSchema.safeParse({
+      page: req.query.page,
+      limit: req.query.limit,
+      search: req.query.search,
+      searchColumn: req.query.searchColumn,
+      sortBy: req.query.sortBy,
+      sortOrder: req.query.sortOrder,
+      filters,
+    });
+
+    if (!parseResult.success) {
+      return res.status(400).json({
+        error: "Invalid query parameters",
+        details: parseResult.error.flatten().fieldErrors,
+      });
+    }
+
+    const result = await reconService.getGroupedAssets(parseResult.data);
+    res.json(result);
+  } catch (error) {
+    console.error("Error fetching grouped Recon assets:", error);
+    res.status(500).json({ error: "Failed to fetch grouped Recon assets" });
+  }
+});
+
 const assetIdSchema = z.string().min(1, "Asset ID is required");
 
 router.get("/:id", async (req: Request, res: Response) => {
   try {
-    const parseResult = assetIdSchema.safeParse(req.params.id);
+    const internalId = parseInt(req.params.id, 10);
     
-    if (!parseResult.success) {
+    if (isNaN(internalId) || internalId < 1) {
       return res.status(400).json({
         error: "Invalid asset ID",
-        details: parseResult.error.flatten().formErrors,
       });
     }
 
-    const asset = await reconService.getAssetById(parseResult.data);
+    const asset = await reconService.getAssetByInternalId(internalId);
     
     if (!asset) {
       return res.status(404).json({ error: "Asset not found" });

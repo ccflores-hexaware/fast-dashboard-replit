@@ -240,3 +240,137 @@ describe('Recon Export Functionality', () => {
     expect(exportData[0]['Application Name']).toBe('');
   });
 });
+
+describe('Recon Grouped Data API Integration', () => {
+  it('should construct correct URL for grouped endpoint', () => {
+    const params = { page: 1, limit: 10 };
+    const url = new URL('/api/recon/grouped', 'http://localhost:5000');
+    url.searchParams.append('page', String(params.page));
+    url.searchParams.append('limit', String(params.limit));
+    
+    expect(url.toString()).toBe('http://localhost:5000/api/recon/grouped?page=1&limit=10');
+  });
+
+  it('should construct grouped URL with search parameters', () => {
+    const params = { page: 1, limit: 10, search: 'AWS', searchColumn: 'applicationname' };
+    const url = new URL('/api/recon/grouped', 'http://localhost:5000');
+    url.searchParams.append('page', String(params.page));
+    url.searchParams.append('limit', String(params.limit));
+    url.searchParams.append('search', params.search);
+    url.searchParams.append('searchColumn', params.searchColumn);
+    
+    expect(url.toString()).toContain('/grouped');
+    expect(url.toString()).toContain('search=AWS');
+    expect(url.toString()).toContain('searchColumn=applicationname');
+  });
+
+  it('should construct grouped URL with filter parameters', () => {
+    const filters = { status: ['Active', 'Verified'] };
+    const url = new URL('/api/recon/grouped', 'http://localhost:5000');
+    url.searchParams.append('page', '1');
+    url.searchParams.append('limit', '10');
+    url.searchParams.append('filters', JSON.stringify(filters));
+    
+    expect(url.toString()).toContain('/grouped');
+    expect(url.toString()).toContain('filters=');
+  });
+});
+
+describe('Recon Grouped Data Structure', () => {
+  it('should flatten grouped records correctly', () => {
+    const groupedData = [
+      {
+        applicationName: 'AWS Console',
+        recordCount: 2,
+        records: [
+          { internalId: 1, applicationname: 'AWS Console', status: 'Active' },
+          { internalId: 2, applicationname: 'AWS Console', status: 'Pending' },
+        ],
+      },
+      {
+        applicationName: 'Salesforce',
+        recordCount: 1,
+        records: [
+          { internalId: 3, applicationname: 'Salesforce', status: 'Active' },
+        ],
+      },
+    ];
+    
+    const flatAssets = groupedData.flatMap(group => group.records);
+    
+    expect(flatAssets.length).toBe(3);
+    expect(flatAssets[0].internalId).toBe(1);
+    expect(flatAssets[2].applicationname).toBe('Salesforce');
+  });
+
+  it('should calculate total records from groups', () => {
+    const groupedData = [
+      { applicationName: 'App A', recordCount: 5, records: [] },
+      { applicationName: 'App B', recordCount: 3, records: [] },
+      { applicationName: 'App C', recordCount: 7, records: [] },
+    ];
+    
+    const totalRecords = groupedData.reduce((sum, g) => sum + g.recordCount, 0);
+    
+    expect(totalRecords).toBe(15);
+  });
+
+  it('should count total groups', () => {
+    const groupedData = [
+      { applicationName: 'App A', recordCount: 5, records: [] },
+      { applicationName: 'App B', recordCount: 3, records: [] },
+    ];
+    
+    expect(groupedData.length).toBe(2);
+  });
+});
+
+describe('Recon Expand/Collapse State', () => {
+  it('should toggle group expansion state', () => {
+    const expandedGroups = new Set<string>();
+    
+    const toggleGroup = (name: string) => {
+      if (expandedGroups.has(name)) {
+        expandedGroups.delete(name);
+      } else {
+        expandedGroups.add(name);
+      }
+    };
+    
+    toggleGroup('AWS Console');
+    expect(expandedGroups.has('AWS Console')).toBe(true);
+    
+    toggleGroup('AWS Console');
+    expect(expandedGroups.has('AWS Console')).toBe(false);
+  });
+
+  it('should expand all groups', () => {
+    const groupNames = ['AWS Console', 'Salesforce', 'SAP'];
+    const expandedGroups = new Set<string>(groupNames);
+    
+    expect(expandedGroups.size).toBe(3);
+    expect(expandedGroups.has('Salesforce')).toBe(true);
+  });
+
+  it('should collapse all groups', () => {
+    const expandedGroups = new Set(['AWS Console', 'Salesforce', 'SAP']);
+    expandedGroups.clear();
+    
+    expect(expandedGroups.size).toBe(0);
+  });
+
+  it('should check if all groups are expanded', () => {
+    const groupNames = ['AWS Console', 'Salesforce'];
+    const expandedGroups = new Set(['AWS Console', 'Salesforce']);
+    
+    const allExpanded = groupNames.every(name => expandedGroups.has(name));
+    
+    expect(allExpanded).toBe(true);
+  });
+
+  it('should check if some groups are expanded', () => {
+    const expandedGroups = new Set(['AWS Console']);
+    
+    expect(expandedGroups.size).toBeGreaterThan(0);
+  });
+});

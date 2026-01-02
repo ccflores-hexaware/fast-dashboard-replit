@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import type { ReconAsset } from '../types/asset.types';
+import type { ReconAsset, GroupedReconAsset } from '../types/asset.types';
 import type { UseReconDataReturn } from '../types/state.types';
 import { useToast } from '@/hooks/use-toast';
 import type { PaginationParams } from '@/types/table.types';
@@ -7,7 +7,9 @@ import type { PaginationParams } from '@/types/table.types';
 export function useReconData(): UseReconDataReturn {
   const { toast } = useToast();
   const [assets, setAssets] = useState<ReconAsset[]>([]);
+  const [groupedAssets, setGroupedAssets] = useState<GroupedReconAsset[]>([]);
   const [totalCount, setTotalCount] = useState(0);
+  const [totalGroups, setTotalGroups] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,7 +33,7 @@ export function useReconData(): UseReconDataReturn {
     setError(null);
 
     try {
-      const url = new URL('/api/recon', window.location.origin);
+      const url = new URL('/api/recon/grouped', window.location.origin);
       url.searchParams.append('page', String(params.page || 1));
       url.searchParams.append('limit', String(params.limit || 10));
       
@@ -58,10 +60,14 @@ export function useReconData(): UseReconDataReturn {
       }
 
       const result = await response.json();
-      setAssets(result.data);
-      setTotalCount(result.totalCount);
+      setGroupedAssets(result.data);
+      setTotalGroups(result.totalGroups);
+      setTotalCount(result.totalRecords);
       setTotalPages(result.totalPages);
       setCurrentPage(result.currentPage);
+      
+      const flatAssets = result.data.flatMap((group: GroupedReconAsset) => group.records);
+      setAssets(flatAssets);
       
       if (Object.keys(filterOptions).length === 0) {
         fetchFilterOptions();
@@ -81,7 +87,9 @@ export function useReconData(): UseReconDataReturn {
 
   return {
     assets,
+    groupedAssets,
     totalCount,
+    totalGroups,
     totalPages,
     currentPage,
     isLoading,

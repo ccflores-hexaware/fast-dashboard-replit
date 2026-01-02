@@ -20,4 +20,18 @@ export interface PaginatedResult<T> {
   currentPage: number;
 }
 
+export interface GroupedReconAsset {
+  applicationName: string;
+  recordCount: number;
+  records: ReconAsset[];
+}
+
+export interface GroupedPaginatedResult {
+  data: GroupedReconAsset[];
+  totalGroups: number;
+  totalRecords: number;
+  totalPages: number;
+  currentPage: number;
+}
+
 export type { ReconAsset };

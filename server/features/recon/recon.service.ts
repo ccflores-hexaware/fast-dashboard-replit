@@ -3,6 +3,7 @@ import type {
   PaginationParams,
   PaginatedResult,
   ReconAsset,
+  GroupedPaginatedResult,
 } from "./recon.types";
 
 export class ReconService {
@@ -11,6 +12,11 @@ export class ReconService {
   async getAssets(params: PaginationParams): Promise<PaginatedResult<ReconAsset>> {
     const sanitizedParams = this.sanitizePaginationParams(params);
     return this.storage.findPaginated(sanitizedParams);
+  }
+
+  async getGroupedAssets(params: PaginationParams): Promise<GroupedPaginatedResult> {
+    const sanitizedParams = this.sanitizePaginationParams(params);
+    return this.storage.findGrouped(sanitizedParams);
   }
 
   async getAssetByInternalId(internalId: number): Promise<ReconAsset | null> {

@@ -1,13 +1,14 @@
 import React from 'react';
-import { Loader2 } from 'lucide-react';
-import type { ReconAsset } from '../../types/asset.types';
+import { Loader2, ChevronRight, ChevronDown, ChevronsUpDown } from 'lucide-react';
+import type { ReconAsset, GroupedReconAsset } from '../../types/asset.types';
 import type { ColumnDefinition } from '../../types/column.types';
 import type { SortConfig } from '../../types/state.types';
 import { ReconTableHeader } from './ReconTableHeader';
 import { ReconTableRow } from './ReconTableRow';
+import { Button } from '@/components/ui/button';
 
 interface ReconTableProps {
-  data: ReconAsset[];
+  groupedData: GroupedReconAsset[];
   visibleColumns: ColumnDefinition[];
   sortConfig: SortConfig;
   onSort: (key: string) => void;
@@ -18,10 +19,14 @@ interface ReconTableProps {
   onClearFilter: (key: string) => void;
   onItemClick: (item: ReconAsset) => void;
   isLoading: boolean;
+  expandedGroups: Set<string>;
+  toggleGroup: (applicationName: string) => void;
+  expandAll: () => void;
+  collapseAll: () => void;
 }
 
 export function ReconTable({
-  data,
+  groupedData,
   visibleColumns,
   sortConfig,
   onSort,
@@ -32,9 +37,32 @@ export function ReconTable({
   onClearFilter,
   onItemClick,
   isLoading,
+  expandedGroups,
+  toggleGroup,
+  expandAll,
+  collapseAll,
 }: ReconTableProps) {
+  const allExpanded = groupedData.length > 0 && groupedData.every(g => expandedGroups.has(g.applicationName));
+  const someExpanded = expandedGroups.size > 0;
+
   return (
     <div className="rounded-md border border-border bg-card shadow-sm overflow-x-auto overflow-y-hidden">
+      {groupedData.length > 0 && !isLoading && (
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-muted/30">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={allExpanded ? collapseAll : expandAll}
+            className="h-8 gap-2 text-xs"
+          >
+            <ChevronsUpDown className="h-4 w-4" />
+            {allExpanded ? 'Collapse All' : 'Expand All'}
+          </Button>
+          <span className="text-xs text-muted-foreground">
+            {expandedGroups.size} of {groupedData.length} groups expanded
+          </span>
+        </div>
+      )}
       <table className="w-full caption-bottom text-sm">
         <ReconTableHeader
           visibleColumns={visibleColumns}
@@ -58,7 +86,7 @@ export function ReconTable({
                 </div>
               </td>
             </tr>
-          ) : data.length === 0 ? (
+          ) : groupedData.length === 0 ? (
             <tr>
               <td colSpan={visibleColumns.length} className="py-16">
                 <div className="flex items-center justify-center">
@@ -70,14 +98,41 @@ export function ReconTable({
               </td>
             </tr>
           ) : (
-            data.map((item: ReconAsset, index: number) => (
-              <ReconTableRow
-                key={`${item.internalId}-${index}`}
-                item={item}
-                visibleColumns={visibleColumns}
-                onItemClick={onItemClick}
-              />
-            ))
+            groupedData.map((group: GroupedReconAsset) => {
+              const isExpanded = expandedGroups.has(group.applicationName);
+              return (
+                <React.Fragment key={group.applicationName}>
+                  <tr 
+                    className="border-b border-border bg-muted/50 hover:bg-muted cursor-pointer transition-colors"
+                    onClick={() => toggleGroup(group.applicationName)}
+                  >
+                    <td colSpan={visibleColumns.length} className="py-3 px-4">
+                      <div className="flex items-center gap-3">
+                        {isExpanded ? (
+                          <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        )}
+                        <span className="font-medium text-foreground">
+                          {group.applicationName}
+                        </span>
+                        <span className="text-xs text-muted-foreground px-2 py-0.5 bg-background rounded-full border">
+                          {group.recordCount} record{group.recordCount !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                  {isExpanded && group.records.map((item: ReconAsset, index: number) => (
+                    <ReconTableRow
+                      key={`${item.internalId}-${index}`}
+                      item={item}
+                      visibleColumns={visibleColumns}
+                      onItemClick={onItemClick}
+                    />
+                  ))}
+                </React.Fragment>
+              );
+            })
           )}
         </tbody>
       </table>

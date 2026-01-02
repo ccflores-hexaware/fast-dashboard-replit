@@ -27,6 +27,7 @@ export function useReconPage(): UseReconPageReturn {
   const [pageSize, setPageSize] = useState(DEFAULT_TABLE_PAGE_SIZE);
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: null, direction: 'desc' });
   const [columnFilters, setColumnFilters] = useState<Record<string, string[]>>({});
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
   const handleViewChange = useCallback((newView: 'table' | 'card') => {
     baseSetView(newView);
@@ -142,6 +143,36 @@ export function useReconPage(): UseReconPageReturn {
     setCurrentPage(1);
   }, [columnFilters]);
 
+  const toggleGroup = useCallback((applicationName: string) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(applicationName)) {
+        next.delete(applicationName);
+      } else {
+        next.add(applicationName);
+      }
+      return next;
+    });
+  }, []);
+
+  const expandAll = useCallback(() => {
+    const allGroupNames = data.groupedAssets.map(g => g.applicationName);
+    setExpandedGroups(prev => {
+      const next = new Set(prev);
+      allGroupNames.forEach(name => next.add(name));
+      return next;
+    });
+  }, [data.groupedAssets]);
+
+  const collapseAll = useCallback(() => {
+    const currentGroupNames = data.groupedAssets.map(g => g.applicationName);
+    setExpandedGroups(prev => {
+      const next = new Set(prev);
+      currentGroupNames.forEach(name => next.delete(name));
+      return next;
+    });
+  }, [data.groupedAssets]);
+
   const exportToExcel = useCallback(() => {
     const exportData = data.assets.map((item: ReconAsset) => {
       const row: Record<string, string> = {};
@@ -178,15 +209,21 @@ export function useReconPage(): UseReconPageReturn {
       handleFilterChange,
       handleSelectAll,
       handleClearColumnFilter,
+      expandedGroups,
+      toggleGroup,
+      expandAll,
+      collapseAll,
     },
     pagination: {
       currentPage,
       pageSize,
       totalPages: data.totalPages,
       totalItems: data.totalCount,
+      totalGroups: data.totalGroups,
       setCurrentPage: handlePageChange,
       setPageSize: handlePageSizeChange,
       paginatedData: data.assets,
+      paginatedGroupedData: data.groupedAssets,
     },
     view: {
       view: view as 'table' | 'card',

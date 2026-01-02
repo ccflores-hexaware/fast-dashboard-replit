@@ -47,7 +47,7 @@ export default function ReconPage() {
 
         {view.view === 'table' ? (
           <ReconTable
-            data={pagination.paginatedData}
+            groupedData={pagination.paginatedGroupedData}
             visibleColumns={columns.visibleColumns}
             sortConfig={table.sortConfig}
             onSort={table.handleSort}
@@ -58,6 +58,10 @@ export default function ReconPage() {
             onClearFilter={table.handleClearColumnFilter}
             onItemClick={dialogs.openDetailsDialog}
             isLoading={data.isLoading}
+            expandedGroups={table.expandedGroups}
+            toggleGroup={table.toggleGroup}
+            expandAll={table.expandAll}
+            collapseAll={table.collapseAll}
           />
         ) : data.isLoading ? (
           <LoadingState />
@@ -69,15 +73,20 @@ export default function ReconPage() {
           />
         )}
 
-        <Pagination
-          currentPage={pagination.currentPage}
-          totalPages={pagination.totalPages}
-          totalItems={pagination.totalItems}
-          pageSize={pagination.pageSize}
-          onPageChange={pagination.setCurrentPage}
-          onPageSizeChange={pagination.setPageSize}
-          view={view.view}
-        />
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-muted-foreground">
+            {pagination.totalGroups} application{pagination.totalGroups !== 1 ? 's' : ''} ({pagination.totalItems} total records)
+          </span>
+          <Pagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.totalGroups}
+            pageSize={pagination.pageSize}
+            onPageChange={pagination.setCurrentPage}
+            onPageSizeChange={pagination.setPageSize}
+            view={view.view}
+          />
+        </div>
 
         <ReconDetailsDialog
           isOpen={dialogs.isDialogOpen}

@@ -1,4 +1,4 @@
-import type { ReconAsset } from './asset.types';
+import type { ReconAsset, GroupedReconAsset } from './asset.types';
 import type { ColumnDefinition, CardFieldDefinition } from './column.types';
 import type { ColumnPreset } from '@/types/table.types';
 
@@ -9,7 +9,9 @@ export interface SortConfig {
 
 export interface UseReconDataReturn {
   assets: ReconAsset[];
+  groupedAssets: GroupedReconAsset[];
   totalCount: number;
+  totalGroups: number;
   totalPages: number;
   currentPage: number;
   isLoading: boolean;
@@ -57,15 +59,21 @@ export interface UseReconPageReturn {
     handleFilterChange: (key: string, value: string, uniqueValues: string[]) => void;
     handleSelectAll: (key: string) => void;
     handleClearColumnFilter: (key: string) => void;
+    expandedGroups: Set<string>;
+    toggleGroup: (applicationName: string) => void;
+    expandAll: () => void;
+    collapseAll: () => void;
   };
   pagination: {
     currentPage: number;
     pageSize: number;
     totalPages: number;
     totalItems: number;
+    totalGroups: number;
     setCurrentPage: (page: number) => void;
     setPageSize: (size: number) => void;
     paginatedData: ReconAsset[];
+    paginatedGroupedData: GroupedReconAsset[];
   };
   view: {
     view: 'table' | 'card';
