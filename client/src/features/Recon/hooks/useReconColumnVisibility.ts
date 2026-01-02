@@ -18,7 +18,12 @@ export function useReconColumnVisibility(): UseReconColumnVisibilityReturn {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        const cleaned: Record<string, boolean> = {};
+        ALL_COLUMN_KEYS.forEach(key => {
+          cleaned[key] = parsed[key] ?? DEFAULT_COLUMNS.includes(key);
+        });
+        return cleaned;
       }
     } catch {
       // Ignore parse errors

@@ -38,8 +38,7 @@ export const CARD_FIELDS: CardFieldDefinition[] = [
   { label: 'Status', key: 'status' },
 ];
 
-export const COLUMN_HEADERS: Record<keyof ReconAsset, string> = {
-  internalId: 'Internal ID',
+export const COLUMN_HEADERS: Record<string, string> = {
   applicationname: 'Application Name',
   accountname: 'Account Name',
   entitlementcolumn: 'Entitlement Column',
