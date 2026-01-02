@@ -350,3 +350,22 @@ export const insertBtoMappingSchema = createInsertSchema(btoMapping).omit({
 export const selectBtoMappingSchema = createSelectSchema(btoMapping);
 export type InsertBtoMapping = z.infer<typeof insertBtoMappingSchema>;
 export type BtoMapping = typeof btoMapping.$inferSelect;
+
+export const reconAssets = pgTable("recon_assets", {
+  internalId: serial("internal_id").primaryKey(),
+  id: varchar("id", { length: 50 }).notNull().unique(),
+  applicationname: text("applicationname"),
+  accountname: text("accountname"),
+  entitlementcolumn: text("entitlementcolumn"),
+  entitlementvalue: text("entitlementvalue"),
+  filepath: text("filepath"),
+  applicationstatus: text("applicationstatus"),
+  status: text("status"),
+});
+
+export const insertReconAssetSchema = createInsertSchema(reconAssets).omit({
+  internalId: true,
+});
+export const selectReconAssetSchema = createSelectSchema(reconAssets);
+export type InsertReconAsset = z.infer<typeof insertReconAssetSchema>;
+export type ReconAsset = typeof reconAssets.$inferSelect;

@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { tpiRouter } from "./features/tpi/tpi.routes";
 import { cmdbRouter } from "./features/cmdb/cmdb.routes";
+import { reconRouter } from "./features/recon/recon.routes";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -11,6 +12,7 @@ export async function registerRoutes(
   
   app.use("/api/tpi", tpiRouter);
   app.use("/api/cmdb", cmdbRouter);
+  app.use("/api/recon", reconRouter);
 
   app.get("/api/fast", async (req: Request, res: Response) => {
     try {

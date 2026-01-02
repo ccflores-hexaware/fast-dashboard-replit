@@ -10,6 +10,7 @@ import SubAssetsPage from "@/pages/SubAssetsPage";
 import TPIPage from "@/pages/TPIPage";
 import BTOPage from "@/pages/BTOPage";
 import CMDBPage from "@/pages/CMDBPage";
+import ReconPage from "@/pages/ReconPage";
 import { UserProvider } from "@/lib/userContext";
 
 function Router() {
@@ -29,6 +30,9 @@ function Router() {
       </Route>
       <Route path="/cmdb">
         <CMDBPage />
+      </Route>
+      <Route path="/recon">
+        <ReconPage />
       </Route>
       <Route path="/fast">
         <FASTPage />
