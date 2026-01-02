@@ -15,3 +15,8 @@ export interface ColumnPreset {
   name: string;
   columns: (keyof ReconAsset)[] | 'default' | 'all';
 }
+
+export interface SortConfig {
+  key: string | null;
+  direction: 'asc' | 'desc';
+}

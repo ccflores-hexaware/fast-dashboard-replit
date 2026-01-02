@@ -20,6 +20,9 @@ const createMockStorage = (): ReconStorage => ({
   findPaginated: vi.fn(),
   findGrouped: vi.fn(),
   getFilterOptions: vi.fn(),
+  findApplicationList: vi.fn(),
+  findApplicationDetail: vi.fn(),
+  getApplicationFilterOptions: vi.fn(),
 });
 
 describe("ReconService", () => {

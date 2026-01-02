@@ -22,3 +22,33 @@ export interface GroupedPaginatedResult {
   totalPages: number;
   currentPage: number;
 }
+
+export interface ApplicationSummary {
+  applicationName: string;
+  applicationStatus: string | null;
+  recordCount: number;
+}
+
+export interface ApplicationListResult {
+  data: ApplicationSummary[];
+  totalCount: number;
+  totalPages: number;
+  currentPage: number;
+  statusOptions: string[];
+}
+
+export interface AccountGroupedAsset {
+  accountName: string;
+  recordCount: number;
+  records: ReconAsset[];
+}
+
+export interface ApplicationDetailResult {
+  applicationName: string;
+  applicationStatus: string | null;
+  data: AccountGroupedAsset[];
+  totalGroups: number;
+  totalRecords: number;
+  totalPages: number;
+  currentPage: number;
+}

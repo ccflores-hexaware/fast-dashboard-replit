@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import { reconService } from "./recon.service";
-import { paginationParamsSchema } from "./recon.types";
+import { paginationParamsSchema, applicationListParamsSchema, applicationDetailParamsSchema } from "./recon.types";
 import { z } from "zod";
 
 const router = Router();
@@ -92,6 +92,80 @@ router.get("/grouped", async (req: Request, res: Response) => {
 });
 
 const assetIdSchema = z.string().min(1, "Asset ID is required");
+
+router.get("/applications", async (req: Request, res: Response) => {
+  try {
+    const parseResult = applicationListParamsSchema.safeParse({
+      page: req.query.page,
+      limit: req.query.limit,
+      search: req.query.search,
+      status: req.query.status,
+      sortOrder: req.query.sortOrder,
+    });
+
+    if (!parseResult.success) {
+      return res.status(400).json({
+        error: "Invalid query parameters",
+        details: parseResult.error.flatten().fieldErrors,
+      });
+    }
+
+    const result = await reconService.getApplicationList(parseResult.data);
+    res.json(result);
+  } catch (error) {
+    console.error("Error fetching application list:", error);
+    res.status(500).json({ error: "Failed to fetch application list" });
+  }
+});
+
+router.get("/applications/:applicationName", async (req: Request, res: Response) => {
+  try {
+    let filters: Record<string, string[]> | undefined;
+    const filtersParam = req.query.filters as string | undefined;
+    
+    if (filtersParam) {
+      try {
+        filters = JSON.parse(filtersParam);
+      } catch {
+        filters = undefined;
+      }
+    }
+
+    const parseResult = applicationDetailParamsSchema.safeParse({
+      applicationName: decodeURIComponent(req.params.applicationName),
+      page: req.query.page,
+      limit: req.query.limit,
+      search: req.query.search,
+      sortBy: req.query.sortBy,
+      sortOrder: req.query.sortOrder,
+      filters,
+    });
+
+    if (!parseResult.success) {
+      return res.status(400).json({
+        error: "Invalid query parameters",
+        details: parseResult.error.flatten().fieldErrors,
+      });
+    }
+
+    const result = await reconService.getApplicationDetail(parseResult.data);
+    res.json(result);
+  } catch (error) {
+    console.error("Error fetching application detail:", error);
+    res.status(500).json({ error: "Failed to fetch application detail" });
+  }
+});
+
+router.get("/applications/:applicationName/filter-options", async (req: Request, res: Response) => {
+  try {
+    const applicationName = decodeURIComponent(req.params.applicationName);
+    const options = await reconService.getApplicationFilterOptions(applicationName);
+    res.json(options);
+  } catch (error) {
+    console.error("Error fetching application filter options:", error);
+    res.status(500).json({ error: "Failed to fetch application filter options" });
+  }
+});
 
 router.get("/:id", async (req: Request, res: Response) => {
   try {

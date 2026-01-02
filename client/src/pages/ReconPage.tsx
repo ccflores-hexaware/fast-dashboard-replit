@@ -1,99 +1,105 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
-import { Pagination } from '@/components/Pagination';
-import { LoadingState } from '@/components/LoadingState';
-import { useReconPage } from '@/features/Recon/hooks/useReconPage';
-import { ReconHeader } from '@/features/Recon/components/ReconHeader';
-import { ReconToolbar } from '@/features/Recon/components/ReconToolbar';
-import { ReconTable } from '@/features/Recon/components/table/ReconTable';
-import { ReconCardGrid } from '@/features/Recon/components/ReconCardGrid';
-import { ReconDetailsDialog } from '@/features/Recon/components/ReconDetailsDialog';
+import { PageHeader } from '@/components/PageHeader';
+import { ApplicationListView } from '@/features/Recon/components/ApplicationListView';
+import { ApplicationDetailView } from '@/features/Recon/components/ApplicationDetailView';
+import * as XLSX from 'xlsx';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ReconPage() {
-  const {
-    data,
-    columns,
-    dialogs,
-    search,
-    table,
-    pagination,
-    view,
-    exportToExcel,
-    allColumns,
-  } = useReconPage();
+  const { toast } = useToast();
+  const [selectedApplication, setSelectedApplication] = useState<string | null>(null);
+
+  const handleSelectApplication = useCallback((applicationName: string) => {
+    setSelectedApplication(applicationName);
+  }, []);
+
+  const handleBack = useCallback(() => {
+    setSelectedApplication(null);
+  }, []);
+
+  const exportToExcel = useCallback(async () => {
+    try {
+      let url: string;
+      if (selectedApplication) {
+        url = `/api/recon/applications/${encodeURIComponent(selectedApplication)}?limit=1000`;
+      } else {
+        url = '/api/recon/applications?limit=1000';
+      }
+      
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error('Failed to fetch data');
+      }
+      
+      const result = await response.json();
+      let exportData: any[];
+      
+      if (selectedApplication) {
+        exportData = result.data.flatMap((group: any) => 
+          group.records.map((record: any) => ({
+            'Application Name': selectedApplication,
+            'Account Name': group.accountName,
+            'Entitlement Column': record.entitlementcolumn,
+            'Entitlement Value': record.entitlementvalue,
+            'File Path': record.filepath,
+            'Application Status': record.applicationstatus,
+            'Status': record.status,
+          }))
+        );
+      } else {
+        exportData = result.data.map((app: any) => ({
+          'Application Name': app.applicationName,
+          'Application Status': app.applicationStatus,
+          'Record Count': app.recordCount,
+        }));
+      }
+      
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Recon Data');
+      
+      const fileName = selectedApplication 
+        ? `recon-${selectedApplication.replace(/[^a-zA-Z0-9]/g, '_')}.xlsx`
+        : 'recon-applications.xlsx';
+      XLSX.writeFile(wb, fileName);
+      
+      toast({
+        title: 'Export Complete',
+        description: `Successfully exported to ${fileName}`,
+      });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({
+        title: 'Export Failed',
+        description: 'Failed to export data to Excel',
+        variant: 'destructive',
+      });
+    }
+  }, [selectedApplication, toast]);
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <ReconHeader onExport={exportToExcel} />
-
-        <ReconToolbar
-          searchQuery={search.searchQuery}
-          onSearchQueryChange={search.setSearchQuery}
-          searchColumn={search.searchColumn}
-          onSearchColumnChange={search.setSearchColumn}
-          openCombobox={search.openCombobox}
-          onOpenComboboxChange={search.setOpenCombobox}
-          columns={allColumns}
-          columnVisibility={columns.columnVisibility}
-          onColumnVisibilityChange={columns.setColumnVisibility}
-          columnSearchQuery={columns.columnSearchQuery}
-          onColumnSearchQueryChange={columns.setColumnSearchQuery}
-          visibleColumnCount={columns.visibleColumnCount}
-          onApplyPreset={columns.applyPreset}
-          view={view.view}
-          onViewChange={view.setView}
+        <PageHeader
+          title="Recon"
+          description={selectedApplication 
+            ? `Viewing records for ${selectedApplication}` 
+            : "View and analyze reconciliation data"
+          }
+          onExport={exportToExcel}
         />
 
-        {view.view === 'table' ? (
-          <ReconTable
-            groupedData={pagination.paginatedGroupedData}
-            visibleColumns={columns.visibleColumns}
-            sortConfig={table.sortConfig}
-            onSort={table.handleSort}
-            columnFilters={table.columnFilters}
-            getUniqueValues={table.getUniqueValues}
-            onFilterChange={table.handleFilterChange}
-            onSelectAll={table.handleSelectAll}
-            onClearFilter={table.handleClearColumnFilter}
-            onItemClick={dialogs.openDetailsDialog}
-            isLoading={data.isLoading}
-            expandedGroups={table.expandedGroups}
-            toggleGroup={table.toggleGroup}
-            expandAll={table.expandAll}
-            collapseAll={table.collapseAll}
+        {selectedApplication ? (
+          <ApplicationDetailView
+            applicationName={selectedApplication}
+            onBack={handleBack}
           />
-        ) : data.isLoading ? (
-          <LoadingState />
         ) : (
-          <ReconCardGrid
-            data={pagination.paginatedData}
-            fields={columns.visibleCardFields}
-            onItemClick={dialogs.openDetailsDialog}
+          <ApplicationListView
+            onSelectApplication={handleSelectApplication}
           />
         )}
-
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">
-            {pagination.totalGroups} application{pagination.totalGroups !== 1 ? 's' : ''} ({pagination.totalItems} total records)
-          </span>
-          <Pagination
-            currentPage={pagination.currentPage}
-            totalPages={pagination.totalPages}
-            totalItems={pagination.totalGroups}
-            pageSize={pagination.pageSize}
-            onPageChange={pagination.setCurrentPage}
-            onPageSizeChange={pagination.setPageSize}
-            view={view.view}
-          />
-        </div>
-
-        <ReconDetailsDialog
-          isOpen={dialogs.isDialogOpen}
-          onClose={dialogs.closeDetailsDialog}
-          selectedItem={dialogs.selectedItem}
-          columns={allColumns}
-        />
       </div>
     </DashboardLayout>
   );
