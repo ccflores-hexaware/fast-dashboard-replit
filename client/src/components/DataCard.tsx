@@ -114,12 +114,12 @@ export function DataCard<T extends { id: string; version?: number; isLatestVersi
         </CardTitle>
         {statusKey && <StatusBadge status={String(displayItem[statusKey])} />}
       </CardHeader>
-      <CardContent className="pt-2">
+      <CardContent className="pt-2 overflow-hidden">
         <dl className="space-y-2 text-sm">
           {fields.map((field) => (
-            <div key={`${displayItem.id}-${String(field.key)}-${currentVersion}`} className="flex justify-between">
-              <dt className="text-muted-foreground font-medium">{field.label}:</dt>
-              <dd className="text-right font-semibold text-foreground">
+            <div key={`${displayItem.id}-${String(field.key)}-${currentVersion}`} className="flex justify-between gap-2">
+              <dt className="text-muted-foreground font-medium whitespace-nowrap shrink-0">{field.label}:</dt>
+              <dd className="text-right font-semibold text-foreground truncate">
                 {field.format 
                   ? field.format(displayItem[field.key]) 
                   : String(displayItem[field.key] ?? '')
