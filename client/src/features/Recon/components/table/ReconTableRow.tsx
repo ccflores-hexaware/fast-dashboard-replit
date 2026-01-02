@@ -1,5 +1,4 @@
 import React from 'react';
-import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ReconAsset } from '../../types/asset.types';
 import type { ColumnDefinition } from '../../types/column.types';
@@ -27,17 +26,10 @@ export const ReconTableRow = React.memo(function ReconTableRow({
           )} 
           onClick={() => onItemClick(item)}
         >
-          {colIndex === 0 ? (
-            <div className="flex items-center gap-2">
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              <span className="font-semibold text-primary">{item[col.accessorKey] ?? '—'}</span>
-            </div>
+          {colIndex === 0 || col.accessorKey === 'applicationname' ? (
+            <span className="font-semibold text-primary">{item[col.accessorKey] ?? '—'}</span>
           ) : (
-            col.accessorKey === 'applicationname' ? (
-              <span className="font-semibold text-primary">{item[col.accessorKey] ?? '—'}</span>
-            ) : (
-              <span>{item[col.accessorKey] ?? '—'}</span>
-            )
+            <span>{item[col.accessorKey] ?? '—'}</span>
           )}
         </td>
       ))}
