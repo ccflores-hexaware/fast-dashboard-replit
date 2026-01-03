@@ -233,10 +233,6 @@ export function ApplicationDetailView({ applicationName, onBack }: ApplicationDe
         <table className="w-full caption-bottom text-sm">
           <thead className="bg-muted/50">
             <tr className="border-b border-border">
-              <th className={cn(
-                "font-bold text-primary whitespace-nowrap border-r border-border px-4 py-3 h-auto select-none w-10",
-                "sticky left-0 z-30 bg-slate-200"
-              )}></th>
               {columns.map((column, index) => {
                 const key = column.accessorKey as string;
                 const uniqueValues = getUniqueValues(key);
@@ -249,6 +245,7 @@ export function ApplicationDetailView({ applicationName, onBack }: ApplicationDe
                     key={key}
                     className={cn(
                       "font-bold text-primary whitespace-nowrap border-r border-border px-4 py-3 h-auto select-none",
+                      index === 0 && "sticky left-0 z-30 bg-slate-200",
                       index === columns.length - 1 && "border-r-0"
                     )}
                   >
@@ -280,7 +277,7 @@ export function ApplicationDetailView({ applicationName, onBack }: ApplicationDe
           <tbody className="[&_tr:last-child]:border-0">
             {isLoading ? (
               <tr>
-                <td colSpan={columns.length + 1} className="py-16">
+                <td colSpan={columns.length} className="py-16">
                   <div className="flex items-center justify-center">
                     <div className="flex flex-col items-center gap-4">
                       <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -291,7 +288,7 @@ export function ApplicationDetailView({ applicationName, onBack }: ApplicationDe
               </tr>
             ) : data.length === 0 ? (
               <tr>
-                <td colSpan={columns.length + 1} className="py-16">
+                <td colSpan={columns.length} className="py-16">
                   <div className="flex items-center justify-center">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
                       <h3 className="text-lg font-semibold">No Records Found</h3>
@@ -310,23 +307,22 @@ export function ApplicationDetailView({ applicationName, onBack }: ApplicationDe
                       onClick={() => toggleGroup(group.accountName)}
                     >
                       <td className={cn(
-                        "text-sm border-r border-border px-4 py-3 whitespace-nowrap",
+                        "text-sm border-r border-border px-4 py-3 whitespace-nowrap font-semibold text-primary",
                         "sticky left-0 z-20 bg-slate-100"
                       )}>
-                        {isExpanded ? (
-                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                        )}
-                      </td>
-                      <td colSpan={columns.length} className="text-sm border-r border-border px-4 py-3 whitespace-nowrap font-semibold text-primary">
                         <div className="flex items-center gap-2">
+                          {isExpanded ? (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                          )}
                           <span>{group.accountName}</span>
                           <Badge variant="outline" className="ml-1 text-xs px-1.5 py-0 h-5 font-normal">
                             {group.recordCount} record{group.recordCount !== 1 ? 's' : ''}
                           </Badge>
                         </div>
                       </td>
+                      <td colSpan={columns.length - 1} className="text-sm px-4 py-3"></td>
                     </tr>
                     {isExpanded && group.records.map((record) => (
                       <tr
@@ -334,10 +330,6 @@ export function ApplicationDetailView({ applicationName, onBack }: ApplicationDe
                         className="hover:bg-muted/30 transition-colors border-b border-border cursor-pointer"
                         onClick={() => handleItemClick(record)}
                       >
-                        <td className={cn(
-                          "text-sm border-r border-border px-4 py-3 whitespace-nowrap",
-                          "sticky left-0 z-20 bg-slate-100"
-                        )}></td>
                         {columns.map((column, colIndex) => {
                           const value = record[column.accessorKey as keyof ReconAsset];
                           return (
@@ -345,6 +337,7 @@ export function ApplicationDetailView({ applicationName, onBack }: ApplicationDe
                               key={column.accessorKey as string} 
                               className={cn(
                                 "text-sm border-r border-border px-4 py-3 whitespace-nowrap",
+                                colIndex === 0 && "sticky left-0 z-20 bg-slate-100 pl-10",
                                 colIndex === columns.length - 1 && "border-r-0"
                               )}
                             >
