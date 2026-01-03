@@ -5,12 +5,13 @@ import { Badge } from '@/components/ui/badge';
 import { Pagination } from '@/components/Pagination';
 import { LoadingState } from '@/components/LoadingState';
 import { ReconDetailsDialog } from './ReconDetailsDialog';
-import { ArrowLeft, Search, ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
+import { ArrowLeft, Search, ChevronDown, ChevronRight, Loader2, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { COLUMN_HEADERS } from '../constants/columns';
 import type { ReconAsset, AccountGroupedAsset, ApplicationDetailResult } from '../types/asset.types';
 import type { ColumnDefinition, SortConfig } from '../types/column.types';
 import { ColumnFilterPopover } from './table/ColumnFilterPopover';
+import { cn } from '@/lib/utils';
 
 interface ApplicationDetailViewProps {
   applicationName: string;
@@ -230,26 +231,36 @@ export function ApplicationDetailView({ applicationName, onBack }: ApplicationDe
 
       <div className="rounded-md border border-border bg-card shadow-sm overflow-x-auto overflow-y-hidden">
         <table className="w-full caption-bottom text-sm">
-          <thead className="[&_tr]:border-b bg-muted/50">
-            <tr className="border-b transition-colors hover:bg-muted/50">
-              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-10"></th>
-              {columns.map((column) => {
+          <thead className="bg-muted/50">
+            <tr className="border-b border-border">
+              <th className={cn(
+                "font-bold text-primary whitespace-nowrap border-r border-border px-4 py-3 h-auto select-none w-10",
+                "sticky left-0 z-30 bg-slate-200"
+              )}></th>
+              {columns.map((column, index) => {
                 const key = column.accessorKey as string;
                 const uniqueValues = getUniqueValues(key);
                 const isFiltered = columnFilters[key] && columnFilters[key].length > 0 && columnFilters[key].length < uniqueValues.length;
+                const isSorted = sortConfig.key === key;
+                const SortIcon = isSorted ? (sortConfig.direction === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown;
                 
                 return (
                   <th 
                     key={key}
-                    className="h-12 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer hover:bg-muted/80"
-                    onClick={() => handleSort(key)}
+                    className={cn(
+                      "font-bold text-primary whitespace-nowrap border-r border-border px-4 py-3 h-auto select-none",
+                      index === columns.length - 1 && "border-r-0"
+                    )}
                   >
-                    <div className="flex items-center gap-1">
-                      <span>{column.header}</span>
-                      {sortConfig.key === key && (
-                        <span className="text-xs">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                      )}
-                      {isFiltered && <span className="text-primary">*</span>}
+                    <div className="flex items-center justify-between gap-1.5">
+                      <div 
+                        className="flex items-center gap-1.5 rounded cursor-pointer hover:bg-black/5 -ml-1 pl-1 pr-1.5 py-0.5 transition-colors"
+                        onClick={() => handleSort(key)}
+                      >
+                        {column.header}
+                        <SortIcon className={cn("h-3.5 w-3.5", isSorted ? "opacity-100" : "opacity-30")} />
+                      </div>
+                      
                       <ColumnFilterPopover
                         columnKey={key}
                         columnHeader={column.header}
@@ -295,20 +306,23 @@ export function ApplicationDetailView({ applicationName, onBack }: ApplicationDe
                 return (
                   <React.Fragment key={group.accountName}>
                     <tr
-                      className="border-b transition-colors bg-muted/30 hover:bg-muted/50 cursor-pointer"
+                      className="hover:bg-muted/30 transition-colors border-b border-border cursor-pointer"
                       onClick={() => toggleGroup(group.accountName)}
                     >
-                      <td className="px-4 py-3">
+                      <td className={cn(
+                        "text-sm border-r border-border px-4 py-3 whitespace-nowrap",
+                        "sticky left-0 z-20 bg-slate-100"
+                      )}>
                         {isExpanded ? (
-                          <ChevronDown className="h-4 w-4" />
+                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
                         ) : (
-                          <ChevronRight className="h-4 w-4" />
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
                         )}
                       </td>
-                      <td colSpan={columns.length} className="px-4 py-3 font-medium">
+                      <td colSpan={columns.length} className="text-sm border-r border-border px-4 py-3 whitespace-nowrap font-semibold text-primary">
                         <div className="flex items-center gap-2">
                           <span>{group.accountName}</span>
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="ml-1 text-xs px-1.5 py-0 h-5 font-normal">
                             {group.recordCount} record{group.recordCount !== 1 ? 's' : ''}
                           </Badge>
                         </div>
@@ -317,15 +331,24 @@ export function ApplicationDetailView({ applicationName, onBack }: ApplicationDe
                     {isExpanded && group.records.map((record) => (
                       <tr
                         key={record.internalId}
-                        className="border-b transition-colors hover:bg-muted/50 cursor-pointer"
+                        className="hover:bg-muted/30 transition-colors border-b border-border cursor-pointer"
                         onClick={() => handleItemClick(record)}
                       >
-                        <td className="px-4 py-3"></td>
-                        {columns.map((column) => {
+                        <td className={cn(
+                          "text-sm border-r border-border px-4 py-3 whitespace-nowrap",
+                          "sticky left-0 z-20 bg-slate-100"
+                        )}></td>
+                        {columns.map((column, colIndex) => {
                           const value = record[column.accessorKey as keyof ReconAsset];
                           return (
-                            <td key={column.accessorKey as string} className="px-4 py-3">
-                              {value !== null && value !== undefined ? String(value) : '-'}
+                            <td 
+                              key={column.accessorKey as string} 
+                              className={cn(
+                                "text-sm border-r border-border px-4 py-3 whitespace-nowrap",
+                                colIndex === columns.length - 1 && "border-r-0"
+                              )}
+                            >
+                              {value !== null && value !== undefined ? String(value) : '—'}
                             </td>
                           );
                         })}
