@@ -47,6 +47,7 @@ export function ApplicationDetailView({ applicationName, onBack }: ApplicationDe
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const initialLoadRef = useRef(true);
 
   const columns: ColumnDefinition[] = useMemo(() => 
     DETAIL_COLUMNS.map(key => ({
@@ -101,8 +102,9 @@ export function ApplicationDetailView({ applicationName, onBack }: ApplicationDe
       setTotalRecords(result.totalRecords);
       setTotalPages(result.totalPages);
 
-      if (result.data.length > 0 && expandedGroups.size === 0) {
+      if (result.data.length > 0 && initialLoadRef.current) {
         setExpandedGroups(new Set([result.data[0].accountName]));
+        initialLoadRef.current = false;
       }
 
       if (Object.keys(filterOptions).length === 0) {
@@ -118,7 +120,7 @@ export function ApplicationDetailView({ applicationName, onBack }: ApplicationDe
     } finally {
       setIsLoading(false);
     }
-  }, [applicationName, currentPage, pageSize, searchQuery, sortConfig, columnFilters, toast, fetchFilterOptions, filterOptions, expandedGroups.size]);
+  }, [applicationName, currentPage, pageSize, searchQuery, sortConfig, columnFilters, toast, fetchFilterOptions, filterOptions]);
 
   useEffect(() => {
     if (debounceTimerRef.current) {
