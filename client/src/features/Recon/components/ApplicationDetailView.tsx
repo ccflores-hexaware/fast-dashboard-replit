@@ -393,20 +393,34 @@ export function ApplicationDetailView({ applicationName, onBack }: ApplicationDe
                             </tr>
                           ))}
                           <tr className="bg-muted/5 border-b border-border">
-                            <td colSpan={columns.length} className="px-2 py-1" onClick={(e) => e.stopPropagation()}>
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm text-muted-foreground">
+                            <td colSpan={columns.length} className="px-4 py-2">
+                              <div className="flex items-center gap-3">
+                                <span className="text-xs text-muted-foreground">
                                   {group.recordCount} record{group.recordCount !== 1 ? 's' : ''}
+                                  {recordTotalPages > 1 && ` • Page ${recordCurrentPage} of ${recordTotalPages}`}
                                 </span>
-                                <Pagination
-                                  currentPage={recordCurrentPage}
-                                  totalPages={recordTotalPages}
-                                  pageSize={RECORDS_PAGE_SIZE}
-                                  totalItems={group.recordCount}
-                                  onPageChange={(page) => handleRecordPageChange(group.accountName, page)}
-                                  onPageSizeChange={() => {}}
-                                  pageSizeOptions={[RECORDS_PAGE_SIZE]}
-                                />
+                                {recordTotalPages > 1 && (
+                                  <div className="flex items-center gap-1">
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="h-6 px-2 text-xs" 
+                                      disabled={recordCurrentPage === 1} 
+                                      onClick={(e) => { e.stopPropagation(); handleRecordPageChange(group.accountName, recordCurrentPage - 1); }}
+                                    >
+                                      Prev
+                                    </Button>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="h-6 px-2 text-xs" 
+                                      disabled={recordCurrentPage === recordTotalPages} 
+                                      onClick={(e) => { e.stopPropagation(); handleRecordPageChange(group.accountName, recordCurrentPage + 1); }}
+                                    >
+                                      Next
+                                    </Button>
+                                  </div>
+                                )}
                               </div>
                             </td>
                           </tr>
