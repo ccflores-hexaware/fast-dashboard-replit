@@ -436,22 +436,17 @@ export function ApplicationDetailView({ applicationName, onBack }: ApplicationDe
       </div>
 
       {!isLoading && data.length > 0 && (
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">
-            {totalGroups} account group{totalGroups !== 1 ? 's' : ''} ({totalRecords} total records)
-          </span>
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalItems={totalGroups}
-            pageSize={pageSize}
-            onPageChange={setCurrentPage}
-            onPageSizeChange={(size) => {
-              setPageSize(size);
-              setCurrentPage(1);
-            }}
-          />
-        </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalGroups}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setCurrentPage(1);
+          }}
+        />
       )}
 
       <ReconDetailsDialog

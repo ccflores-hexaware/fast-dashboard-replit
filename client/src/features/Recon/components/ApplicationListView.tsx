@@ -158,19 +158,14 @@ export function ApplicationListView({ onSelectApplication }: ApplicationListView
       )}
 
       {!isLoading && applications.length > 0 && (
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">
-            {totalCount} application{totalCount !== 1 ? 's' : ''}
-          </span>
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalItems={totalCount}
-            pageSize={pageSize}
-            onPageChange={handlePageChange}
-            onPageSizeChange={handlePageSizeChange}
-          />
-        </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalCount}
+          pageSize={pageSize}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+        />
       )}
     </div>
   );
