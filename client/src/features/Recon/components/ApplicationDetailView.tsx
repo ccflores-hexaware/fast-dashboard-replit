@@ -306,23 +306,47 @@ export function ApplicationDetailView({ applicationName, onBack }: ApplicationDe
                       className="hover:bg-muted/30 transition-colors border-b border-border cursor-pointer"
                       onClick={() => toggleGroup(group.accountName)}
                     >
-                      <td className={cn(
-                        "text-sm border-r border-border px-4 py-3 whitespace-nowrap font-semibold text-primary",
-                        "sticky left-0 z-20 bg-slate-100"
-                      )}>
-                        <div className="flex items-center gap-2">
-                          {isExpanded ? (
-                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                          )}
-                          <span>{group.accountName}</span>
-                          <Badge variant="outline" className="ml-1 text-xs px-1.5 py-0 h-5 font-normal">
-                            {group.recordCount} record{group.recordCount !== 1 ? 's' : ''}
-                          </Badge>
-                        </div>
-                      </td>
-                      <td colSpan={columns.length - 1} className="text-sm px-4 py-3"></td>
+                      {isExpanded ? (
+                        <>
+                          <td className={cn(
+                            "text-sm border-r border-border px-4 py-3 whitespace-nowrap font-semibold text-primary",
+                            "sticky left-0 z-20 bg-slate-100"
+                          )}>
+                            <div className="flex items-center gap-2">
+                              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                              <span>{group.accountName}</span>
+                              <Badge variant="outline" className="ml-1 text-xs px-1.5 py-0 h-5 font-normal">
+                                {group.recordCount} record{group.recordCount !== 1 ? 's' : ''}
+                              </Badge>
+                            </div>
+                          </td>
+                          <td colSpan={columns.length - 1} className="text-sm px-4 py-3"></td>
+                        </>
+                      ) : (
+                        columns.map((column, colIndex) => (
+                          <td 
+                            key={column.accessorKey as string}
+                            className={cn(
+                              "text-sm border-r border-border px-4 py-3 whitespace-nowrap",
+                              colIndex === 0 && "sticky left-0 z-20 bg-slate-100 font-semibold text-primary",
+                              colIndex !== 0 && "bg-gray-100/60",
+                              colIndex === columns.length - 1 && "border-r-0"
+                            )}
+                          >
+                            {colIndex === 0 ? (
+                              <div className="flex items-center gap-2">
+                                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                <span>{group.accountName}</span>
+                                <Badge variant="outline" className="ml-1 text-xs px-1.5 py-0 h-5 font-normal">
+                                  {group.recordCount} record{group.recordCount !== 1 ? 's' : ''}
+                                </Badge>
+                              </div>
+                            ) : (
+                              <span className="text-gray-400">—</span>
+                            )}
+                          </td>
+                        ))
+                      )}
                     </tr>
                     {isExpanded && group.records.map((record) => (
                       <tr

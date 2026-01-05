@@ -83,21 +83,40 @@ export function ReconTable({
                     className="border-b border-border bg-muted/50 hover:bg-muted cursor-pointer transition-colors"
                     onClick={() => toggleGroup(group.applicationName)}
                   >
-                    <td colSpan={visibleColumns.length} className="py-3 px-4">
-                      <div className="flex items-center gap-3">
-                        {isExpanded ? (
+                    {isExpanded ? (
+                      <td colSpan={visibleColumns.length} className="py-3 px-4">
+                        <div className="flex items-center gap-3">
                           <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                        )}
-                        <span className="font-medium text-foreground">
-                          {group.applicationName}
-                        </span>
-                        <span className="text-xs text-muted-foreground px-2 py-0.5 bg-background rounded-full border">
-                          {group.recordCount} record{group.recordCount !== 1 ? 's' : ''}
-                        </span>
-                      </div>
-                    </td>
+                          <span className="font-medium text-foreground">
+                            {group.applicationName}
+                          </span>
+                          <span className="text-xs text-muted-foreground px-2 py-0.5 bg-background rounded-full border">
+                            {group.recordCount} record{group.recordCount !== 1 ? 's' : ''}
+                          </span>
+                        </div>
+                      </td>
+                    ) : (
+                      visibleColumns.map((col, colIndex) => (
+                        <td 
+                          key={String(col.accessorKey)}
+                          className={`py-3 px-4 border-r border-border ${colIndex === visibleColumns.length - 1 ? 'border-r-0' : ''} ${colIndex === 0 ? 'sticky left-0 z-20 bg-slate-100' : 'bg-gray-100/60'}`}
+                        >
+                          {colIndex === 0 ? (
+                            <div className="flex items-center gap-3">
+                              <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                              <span className="font-medium text-foreground">
+                                {group.applicationName}
+                              </span>
+                              <span className="text-xs text-muted-foreground px-2 py-0.5 bg-background rounded-full border">
+                                {group.recordCount} record{group.recordCount !== 1 ? 's' : ''}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400 text-sm">—</span>
+                          )}
+                        </td>
+                      ))
+                    )}
                   </tr>
                   {isExpanded && group.records.map((item: ReconAsset, index: number) => (
                     <ReconTableRow
