@@ -359,8 +359,9 @@ export function ApplicationDetailView({ applicationName, onBack }: ApplicationDe
                       )}
                     </tr>
                     {isExpanded && (() => {
-                      const recordCurrentPage = recordPages[group.accountName] || 1;
                       const recordTotalPages = Math.ceil(group.records.length / RECORDS_PAGE_SIZE);
+                      const rawPage = recordPages[group.accountName] || 1;
+                      const recordCurrentPage = Math.max(1, Math.min(rawPage, recordTotalPages || 1));
                       const paginatedRecords = group.records.slice(
                         (recordCurrentPage - 1) * RECORDS_PAGE_SIZE,
                         recordCurrentPage * RECORDS_PAGE_SIZE
