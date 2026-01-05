@@ -7,7 +7,6 @@ export const ALL_COLUMN_KEYS: (keyof ReconAsset)[] = [
   'entitlementcolumn',
   'entitlementvalue',
   'filepath',
-  'applicationstatus',
   'status',
 ];
 
@@ -16,7 +15,6 @@ export const DEFAULT_COLUMNS: (keyof ReconAsset)[] = [
   'accountname',
   'entitlementcolumn',
   'entitlementvalue',
-  'applicationstatus',
   'status',
 ];
 
@@ -29,7 +27,7 @@ export const DEFAULT_CARD_FIELDS: (keyof ReconAsset)[] = [
 export const COLUMN_PRESETS: ColumnPreset[] = [
   { name: 'Default', columns: 'default' },
   { name: 'All Columns', columns: 'all' },
-  { name: 'Status Overview', columns: ['applicationname', 'applicationstatus', 'status'] },
+  { name: 'Status Overview', columns: ['applicationname', 'status'] },
 ];
 
 export const CARD_FIELDS: CardFieldDefinition[] = [
@@ -44,7 +42,6 @@ export const COLUMN_HEADERS: Record<string, string> = {
   entitlementcolumn: 'Entitlement Column',
   entitlementvalue: 'Entitlement Value',
   filepath: 'File Path',
-  applicationstatus: 'Application Status',
   status: 'Status',
 };
 

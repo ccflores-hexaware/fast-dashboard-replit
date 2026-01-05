@@ -43,14 +43,12 @@ export default function ReconPage() {
             'Entitlement Column': record.entitlementcolumn,
             'Entitlement Value': record.entitlementvalue,
             'File Path': record.filepath,
-            'Application Status': record.applicationstatus,
             'Status': record.status,
           }))
         );
       } else {
         exportData = result.data.map((app: any) => ({
           'Application Name': app.applicationName,
-          'Application Status': app.applicationStatus,
           'Record Count': app.recordCount,
         }));
       }

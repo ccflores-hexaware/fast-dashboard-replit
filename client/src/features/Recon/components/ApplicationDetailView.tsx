@@ -23,7 +23,6 @@ const DETAIL_COLUMNS: (keyof ReconAsset)[] = [
   'entitlementcolumn',
   'entitlementvalue',
   'filepath',
-  'applicationstatus',
   'status',
 ];
 
