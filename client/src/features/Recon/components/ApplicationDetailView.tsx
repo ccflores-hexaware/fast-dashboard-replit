@@ -7,7 +7,7 @@ import { LoadingState } from '@/components/LoadingState';
 import { ReconDetailsDialog } from './ReconDetailsDialog';
 import { ArrowLeft, Search, ChevronDown, ChevronRight, Loader2, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { COLUMN_HEADERS } from '../constants/columns';
+import { COLUMN_HEADERS, RECORDS_PAGE_SIZE } from '../constants/columns';
 import type { ReconAsset, AccountGroupedAsset, ApplicationDetailResult } from '../types/asset.types';
 import type { ColumnDefinition, SortConfig } from '../types/column.types';
 import { ColumnFilterPopover } from './table/ColumnFilterPopover';
@@ -46,6 +46,7 @@ export function ApplicationDetailView({ applicationName, onBack }: ApplicationDe
   const [totalPages, setTotalPages] = useState(0);
   const [selectedItem, setSelectedItem] = useState<ReconAsset | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [recordPages, setRecordPages] = useState<Record<string, number>>({});
 
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const initialLoadRef = useRef(true);
@@ -153,11 +154,20 @@ export function ApplicationDetailView({ applicationName, onBack }: ApplicationDe
       const next = new Set(prev);
       if (next.has(accountName)) {
         next.delete(accountName);
+        setRecordPages(prevPages => {
+          const { [accountName]: _, ...rest } = prevPages;
+          return rest;
+        });
       } else {
         next.add(accountName);
+        setRecordPages(prevPages => ({ ...prevPages, [accountName]: 1 }));
       }
       return next;
     });
+  };
+
+  const handleRecordPageChange = (accountName: string, page: number) => {
+    setRecordPages(prev => ({ ...prev, [accountName]: page }));
   };
 
   const handleFilterChange = (key: string, value: string, uniqueValues: string[]) => {
@@ -348,29 +358,74 @@ export function ApplicationDetailView({ applicationName, onBack }: ApplicationDe
                         ))
                       )}
                     </tr>
-                    {isExpanded && group.records.map((record) => (
-                      <tr
-                        key={record.internalId}
-                        className="hover:bg-muted/30 transition-colors border-b border-border cursor-pointer"
-                        onClick={() => handleItemClick(record)}
-                      >
-                        {columns.map((column, colIndex) => {
-                          const value = record[column.accessorKey as keyof ReconAsset];
-                          return (
-                            <td 
-                              key={column.accessorKey as string} 
-                              className={cn(
-                                "text-sm border-r border-border px-4 py-3 whitespace-nowrap",
-                                colIndex === 0 && "sticky left-0 z-20 bg-slate-100 pl-10",
-                                colIndex === columns.length - 1 && "border-r-0"
-                              )}
+                    {isExpanded && (() => {
+                      const recordCurrentPage = recordPages[group.accountName] || 1;
+                      const recordTotalPages = Math.ceil(group.records.length / RECORDS_PAGE_SIZE);
+                      const paginatedRecords = group.records.slice(
+                        (recordCurrentPage - 1) * RECORDS_PAGE_SIZE,
+                        recordCurrentPage * RECORDS_PAGE_SIZE
+                      );
+                      
+                      return (
+                        <>
+                          {paginatedRecords.map((record) => (
+                            <tr
+                              key={record.internalId}
+                              className="hover:bg-muted/30 transition-colors border-b border-border cursor-pointer"
+                              onClick={() => handleItemClick(record)}
                             >
-                              {value !== null && value !== undefined ? String(value) : '—'}
+                              {columns.map((column, colIndex) => {
+                                const value = record[column.accessorKey as keyof ReconAsset];
+                                return (
+                                  <td 
+                                    key={column.accessorKey as string} 
+                                    className={cn(
+                                      "text-sm border-r border-border px-4 py-3 whitespace-nowrap",
+                                      colIndex === 0 && "sticky left-0 z-20 bg-slate-100 pl-10",
+                                      colIndex === columns.length - 1 && "border-r-0"
+                                    )}
+                                  >
+                                    {value !== null && value !== undefined ? String(value) : '—'}
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          ))}
+                          <tr className="bg-muted/5 border-b border-border">
+                            <td colSpan={columns.length} className="px-4 py-2">
+                              <div className="flex items-center gap-3">
+                                <span className="text-xs text-muted-foreground">
+                                  {group.recordCount} record{group.recordCount !== 1 ? 's' : ''}
+                                  {recordTotalPages > 1 && ` • Page ${recordCurrentPage} of ${recordTotalPages}`}
+                                </span>
+                                {recordTotalPages > 1 && (
+                                  <div className="flex items-center gap-1">
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="h-6 px-2 text-xs" 
+                                      disabled={recordCurrentPage === 1} 
+                                      onClick={(e) => { e.stopPropagation(); handleRecordPageChange(group.accountName, recordCurrentPage - 1); }}
+                                    >
+                                      Prev
+                                    </Button>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="h-6 px-2 text-xs" 
+                                      disabled={recordCurrentPage === recordTotalPages} 
+                                      onClick={(e) => { e.stopPropagation(); handleRecordPageChange(group.accountName, recordCurrentPage + 1); }}
+                                    >
+                                      Next
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
                             </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
+                          </tr>
+                        </>
+                      );
+                    })()}
                   </React.Fragment>
                 );
               })

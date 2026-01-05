@@ -47,3 +47,5 @@ export const COLUMN_HEADERS: Record<string, string> = {
   applicationstatus: 'Application Status',
   status: 'Status',
 };
+
+export const RECORDS_PAGE_SIZE = 5;
