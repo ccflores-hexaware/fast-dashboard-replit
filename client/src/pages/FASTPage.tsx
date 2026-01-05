@@ -700,18 +700,23 @@ export default function FASTPage() {
   };
 
   const exportToExcel = () => {
-    const exportData = sortedData.map((item: any) => {
-      const row: Record<string, any> = {};
-      visibleColumns.forEach(col => {
-        row[col.header] = item[col.accessorKey] ?? '';
+    try {
+      const exportData = sortedData.map((item: any) => {
+        const row: Record<string, any> = {};
+        visibleColumns.forEach(col => {
+          row[col.header] = item[col.accessorKey] ?? '';
+        });
+        return row;
       });
-      return row;
-    });
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'FAST');
-    XLSX.writeFile(wb, `FAST_Export_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
-    toast({ title: "Export Complete", description: `Exported ${exportData.length} records.`, variant: "success" });
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'FAST');
+      XLSX.writeFile(wb, `FAST_Export_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+      toast({ title: "Export Complete", description: `Exported ${exportData.length} records.`, variant: "success" });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({ title: "Export Failed", description: "Failed to export data to Excel. Please try again.", variant: "destructive" });
+    }
   };
 
   return (

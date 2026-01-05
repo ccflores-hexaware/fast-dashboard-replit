@@ -97,7 +97,7 @@ export interface UseTPIPageReturn {
     view: 'table' | 'card';
     setView: (view: 'table' | 'card') => void;
   };
-  exportToExcel: () => void;
+  exportToExcel: () => Promise<void>;
   allColumns: ColumnDefinition[];
   cardFields: CardFieldDefinition[];
 }

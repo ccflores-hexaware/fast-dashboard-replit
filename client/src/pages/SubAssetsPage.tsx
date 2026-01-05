@@ -345,27 +345,23 @@ export default function SubAssetsPage() {
   };
 
   const exportToExcel = () => {
-    const exportData = sortedData.map((item: any) => {
-      const row: Record<string, any> = {};
-      visibleColumns.forEach(col => {
-        row[col.header] = item[col.accessorKey] ?? '';
+    try {
+      const exportData = sortedData.map((item: any) => {
+        const row: Record<string, any> = {};
+        visibleColumns.forEach(col => {
+          row[col.header] = item[col.accessorKey] ?? '';
+        });
+        return row;
       });
-      return row;
-    });
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Sub-assets');
-    
-    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
-    for (let C = range.s.c; C <= range.e.c; C++) {
-      const cell = ws[XLSX.utils.encode_cell({ r: 0, c: C })];
-      if (cell) {
-        cell.s = { fill: { fgColor: { rgb: '89c24b' } }, font: { bold: true, color: { rgb: 'FFFFFF' } } };
-      }
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Sub-assets');
+      XLSX.writeFile(wb, `Sub-assets_Export_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+      toast({ title: "Export Complete", description: `Exported ${exportData.length} records.`, variant: "success" });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({ title: "Export Failed", description: "Failed to export data to Excel. Please try again.", variant: "destructive" });
     }
-    
-    XLSX.writeFile(wb, `Sub-assets_Export_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
-    toast({ title: "Export Complete", description: `Exported ${exportData.length} records.`, variant: "success" });
   };
 
   return (

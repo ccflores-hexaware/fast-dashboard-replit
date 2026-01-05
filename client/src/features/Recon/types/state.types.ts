@@ -79,7 +79,7 @@ export interface UseReconPageReturn {
     view: 'table' | 'card';
     setView: (view: 'table' | 'card') => void;
   };
-  exportToExcel: () => void;
+  exportToExcel: () => Promise<void>;
   allColumns: ColumnDefinition[];
   cardFields: CardFieldDefinition[];
 }

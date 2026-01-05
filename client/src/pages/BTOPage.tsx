@@ -83,35 +83,38 @@ export default function BTOPage() {
   };
 
   const exportToExcel = () => {
-    const exportData: any[] = [];
-    
-    for (const row of aggregatedData) {
-      exportData.push({
-        'Higher Level BTO': row.higherLevelBto,
-        'BTO': '',
-        'Division': '',
-        'Total Assets': row.totalAssets
-      });
+    try {
+      const exportData: any[] = [];
       
-      for (const breakdown of row.breakdown) {
+      for (const row of aggregatedData) {
         exportData.push({
-          'Higher Level BTO': '',
-          'BTO': breakdown.bto,
-          'Division': breakdown.division,
-          'Total Assets': breakdown.totalAssets
+          'Higher Level BTO': row.higherLevelBto,
+          'BTO': '',
+          'Division': '',
+          'Total Assets': row.totalAssets
         });
+        
+        for (const breakdown of row.breakdown) {
+          exportData.push({
+            'Higher Level BTO': '',
+            'BTO': breakdown.bto,
+            'Division': breakdown.division,
+            'Total Assets': breakdown.totalAssets
+          });
+        }
       }
+      
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      ws['!cols'] = [{ wch: 20 }, { wch: 40 }, { wch: 40 }, { wch: 15 }];
+      
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'BTO Summary');
+      XLSX.writeFile(wb, `BTO_Export_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+      toast({ title: "Export Complete", description: `Exported ${exportData.length} records.`, variant: "success" });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({ title: "Export Failed", description: "Failed to export data to Excel. Please try again.", variant: "destructive" });
     }
-    
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    
-    const headerStyle = { fill: { fgColor: { rgb: "89c24b" } }, font: { color: { rgb: "FFFFFF" }, bold: true } };
-    ws['!cols'] = [{ wch: 20 }, { wch: 40 }, { wch: 40 }, { wch: 15 }];
-    
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'BTO Summary');
-    XLSX.writeFile(wb, `BTO_Export_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
-    toast({ title: "Export Complete", description: `Exported BTO summary data.`, variant: "success" });
   };
 
   return (

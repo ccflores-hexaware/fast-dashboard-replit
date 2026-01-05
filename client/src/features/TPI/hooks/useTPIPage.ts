@@ -144,20 +144,35 @@ export function useTPIPage(): UseTPIPageReturn {
     setCurrentPage(1);
   }, [columnFilters]);
 
-  const exportToExcel = useCallback(() => {
-    const exportData = data.assets.map((item: TPIAsset) => {
-      const row: Record<string, string> = {};
-      columns.visibleColumns.forEach(col => {
-        row[col.header] = String(item[col.accessorKey] ?? '');
+  const exportToExcel = useCallback(async () => {
+    try {
+      toast({ title: "Exporting...", description: "Fetching all TPI data for export.", variant: "default" });
+      
+      const response = await fetch('/api/tpi?limit=100000');
+      if (!response.ok) {
+        throw new Error('Failed to fetch data for export');
+      }
+      const result = await response.json();
+      const allData = result.data || [];
+      
+      const exportData = allData.map((item: TPIAsset) => {
+        const row: Record<string, string> = {};
+        columns.visibleColumns.forEach(col => {
+          row[col.header] = String(item[col.accessorKey] ?? '');
+        });
+        return row;
       });
-      return row;
-    });
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'TPI');
-    XLSX.writeFile(wb, `TPI_Export_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
-    toast({ title: "Export Complete", description: `Exported ${exportData.length} records.`, variant: "success" });
-  }, [data.assets, columns.visibleColumns, toast]);
+      
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'TPI');
+      XLSX.writeFile(wb, `TPI_Export_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+      toast({ title: "Export Complete", description: `Exported ${exportData.length} records.`, variant: "success" });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({ title: "Export Failed", description: "Failed to export data to Excel. Please try again.", variant: "destructive" });
+    }
+  }, [columns.visibleColumns, toast]);
 
   return {
     data,
