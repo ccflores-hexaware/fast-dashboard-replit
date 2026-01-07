@@ -61,7 +61,6 @@ export function DataTable<T extends { id: string }>({
 }: DataTableProps<T>) {
 
   const tableRef = useRef<HTMLTableElement>(null);
-  const [isScrolled, setIsScrolled] = useState(false);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [versionPages, setVersionPages] = useState<Record<string, number>>({});
   const [versionPageInputs, setVersionPageInputs] = useState<Record<string, string>>({});
@@ -151,21 +150,6 @@ export function DataTable<T extends { id: string }>({
     return groups;
   }, [data, expandableVersions]);
 
-  useEffect(() => {
-    const table = tableRef.current;
-    const wrapper = table?.parentElement;
-    
-    if (!wrapper) return;
-
-    const handleScroll = () => {
-      setIsScrolled(wrapper.scrollLeft > 0);
-    };
-
-    wrapper.addEventListener('scroll', handleScroll);
-    handleScroll(); // Check initial state
-    
-    return () => wrapper.removeEventListener('scroll', handleScroll);
-  }, []);
 
   const allUniqueValues = useMemo(() => {
     const result: Record<string, string[]> = {};
