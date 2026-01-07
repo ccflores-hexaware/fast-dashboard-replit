@@ -136,6 +136,17 @@ export class CmdbStorage {
       .where(eq(cmdbAssetHistory.cmdbAssetId, cmdbAssetId));
     return result?.count ?? 0;
   }
+
+  async bulkInsertHistory(records: Omit<typeof cmdbAssetHistory.$inferInsert, 'id'>[]): Promise<number> {
+    if (records.length === 0) return 0;
+    
+    const result = await db.insert(cmdbAssetHistory).values(records).returning({ id: cmdbAssetHistory.id });
+    return result.length;
+  }
+
+  async clearAllHistory(): Promise<void> {
+    await db.delete(cmdbAssetHistory);
+  }
 }
 
 export const cmdbStorage = new CmdbStorage();

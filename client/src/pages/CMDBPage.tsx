@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Pagination } from '@/components/Pagination';
 import { LoadingState } from '@/components/LoadingState';
@@ -9,6 +9,7 @@ import { CMDBTable } from '@/features/CMDB/components/table/CMDBTable';
 import { CMDBCardGrid } from '@/features/CMDB/components/CMDBCardGrid';
 import { CMDBDetailsDialog } from '@/features/CMDB/components/CMDBDetailsDialog';
 import { CMDBHistorySnapshotDialog } from '@/features/CMDB/components/CMDBHistorySnapshotDialog';
+import { CMDBHistoryUploadDialog } from '@/features/CMDB/components/CMDBHistoryUploadDialog';
 
 export default function CMDBPage() {
   const {
@@ -24,6 +25,12 @@ export default function CMDBPage() {
     allColumns,
   } = useCMDBPage();
 
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+
+  const handleUploadComplete = useCallback(() => {
+    history.clearHistoryCache();
+  }, [history]);
+
   const handleDialogTabChange = (tab: string) => {
     dialogs.setDialogTab(tab as 'details' | 'history');
     if (tab === 'history' && dialogs.selectedItem && 
@@ -35,7 +42,7 @@ export default function CMDBPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <CMDBHeader onExport={exportToExcel} />
+        <CMDBHeader onExport={exportToExcel} onUploadHistory={() => setIsUploadDialogOpen(true)} />
 
         <CMDBToolbar
           searchQuery={search.searchQuery}
@@ -114,6 +121,12 @@ export default function CMDBPage() {
           onClose={dialogs.closeHistorySnapshotDialog}
           selectedHistoryItem={dialogs.selectedHistoryItem}
           columns={allColumns}
+        />
+
+        <CMDBHistoryUploadDialog
+          isOpen={isUploadDialogOpen}
+          onClose={() => setIsUploadDialogOpen(false)}
+          onUploadComplete={handleUploadComplete}
         />
       </div>
     </DashboardLayout>

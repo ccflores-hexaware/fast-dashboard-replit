@@ -14,6 +14,7 @@ export interface UseCMDBHistoryReturn {
   dialogHistoryPage: number;
   setDialogHistoryPage: (page: number) => void;
   fetchDialogHistory: (assetId: string) => void;
+  clearHistoryCache: () => void;
 }
 
 export function useCMDBHistory(): UseCMDBHistoryReturn {
@@ -85,6 +86,13 @@ export function useCMDBHistory(): UseCMDBHistoryReturn {
     }
   }, [dialogHistoryData, historyCache, toast]);
 
+  const clearHistoryCache = useCallback(() => {
+    setHistoryCache({});
+    setDialogHistoryData(null);
+    setExpandedRows(new Set());
+    setHistoryPage({});
+  }, []);
+
   return {
     expandedRows,
     historyCache,
@@ -97,5 +105,6 @@ export function useCMDBHistory(): UseCMDBHistoryReturn {
     dialogHistoryPage,
     setDialogHistoryPage,
     fetchDialogHistory,
+    clearHistoryCache,
   };
 }
