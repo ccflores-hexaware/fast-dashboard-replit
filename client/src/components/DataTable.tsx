@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import { 
   Table, 
   TableBody, 
@@ -61,6 +61,8 @@ export function DataTable<T extends { id: string }>({
 }: DataTableProps<T>) {
 
   const tableRef = useRef<HTMLTableElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const scrollPositionRef = useRef<{ left: number; maxScroll: number } | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [versionPages, setVersionPages] = useState<Record<string, number>>({});
   const [versionPageInputs, setVersionPageInputs] = useState<Record<string, string>>({});
@@ -68,6 +70,35 @@ export function DataTable<T extends { id: string }>({
   
   const DEFAULT_VERSIONS_PER_PAGE = 5;
   const VERSION_PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
+
+  const handleSort = useCallback((key: string) => {
+    if (scrollContainerRef.current) {
+      const container = scrollContainerRef.current;
+      scrollPositionRef.current = {
+        left: container.scrollLeft,
+        maxScroll: container.scrollWidth - container.clientWidth
+      };
+    }
+    if (onSort) {
+      onSort(key);
+    }
+  }, [onSort]);
+
+  useLayoutEffect(() => {
+    if (scrollPositionRef.current && scrollContainerRef.current) {
+      const container = scrollContainerRef.current;
+      const { left, maxScroll } = scrollPositionRef.current;
+      const newMaxScroll = container.scrollWidth - container.clientWidth;
+      
+      if (maxScroll > 0 && newMaxScroll > 0) {
+        const ratio = left / maxScroll;
+        container.scrollLeft = ratio * newMaxScroll;
+      } else {
+        container.scrollLeft = left;
+      }
+      scrollPositionRef.current = null;
+    }
+  }, [data]);
 
   const toggleRowExpansion = (id: string) => {
     setExpandedRows(prev => {
@@ -218,7 +249,7 @@ export function DataTable<T extends { id: string }>({
   }
 
   return (
-    <div className="rounded-md border border-border bg-card shadow-sm overflow-x-auto overflow-y-hidden" style={{ overflowAnchor: 'none' }}>
+    <div ref={scrollContainerRef} className="rounded-md border border-border bg-card shadow-sm overflow-x-auto overflow-y-hidden" style={{ overflowAnchor: 'none' }}>
       <Table ref={tableRef}>
         <TableHeader className="bg-muted/50">
           <TableRow className="border-b border-border">
@@ -253,7 +284,7 @@ export function DataTable<T extends { id: string }>({
                     )}
                     onClick={() => {
                       if (col.accessorKey && onSort) {
-                         onSort(String(col.accessorKey));
+                         handleSort(String(col.accessorKey));
                       }
                     }}
                   >
