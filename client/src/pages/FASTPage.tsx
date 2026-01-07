@@ -739,8 +739,10 @@ export default function FASTPage() {
           <div className="flex items-center gap-2 flex-1">
             <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
               <PopoverTrigger asChild>
-                <Button variant="outline" role="combobox" className="w-[140px] justify-between">
-                  {searchColumn === 'all' ? 'All Columns' : columns.find(c => c.accessorKey === searchColumn)?.header || searchColumn}
+                <Button variant="outline" role="combobox" className="w-[180px] justify-between">
+                  <span className="truncate">
+                    {searchColumn === 'all' ? 'All Columns' : columns.find(c => c.accessorKey === searchColumn)?.header || searchColumn}
+                  </span>
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
