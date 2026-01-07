@@ -234,7 +234,7 @@ export function DataTable<T extends { id: string }>({
   }
 
   return (
-    <div className="rounded-md border border-border bg-card shadow-sm overflow-x-auto overflow-y-hidden">
+    <div className="rounded-md border border-border bg-card shadow-sm overflow-x-auto overflow-y-hidden" style={{ overflowAnchor: 'none' }}>
       <Table ref={tableRef}>
         <TableHeader className="bg-muted/50">
           <TableRow className="border-b border-border">
