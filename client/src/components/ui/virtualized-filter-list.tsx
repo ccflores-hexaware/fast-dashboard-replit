@@ -1,11 +1,10 @@
-import React, { useRef, useMemo, useState, useCallback } from 'react';
+import React, { useRef, useMemo, useState, useCallback, useLayoutEffect } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Check, Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface VirtualizedFilterListProps {
   columnKey: string;
@@ -21,6 +20,77 @@ interface VirtualizedFilterListProps {
 const ITEM_HEIGHT = 32;
 const LIST_HEIGHT = 200;
 
+function VirtualizedList({
+  filteredValues,
+  currentFilterValues,
+  onItemClick,
+}: {
+  filteredValues: string[];
+  currentFilterValues: string[] | undefined;
+  onItemClick: (val: string) => void;
+}) {
+  const parentRef = useRef<HTMLDivElement>(null);
+
+  const virtualizer = useVirtualizer({
+    count: filteredValues.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => ITEM_HEIGHT,
+    overscan: 5,
+  });
+
+  useLayoutEffect(() => {
+    virtualizer.measure();
+  }, [virtualizer]);
+
+  const containerHeight = Math.min(LIST_HEIGHT, filteredValues.length * ITEM_HEIGHT);
+
+  if (filteredValues.length === 0) {
+    return (
+      <div className="p-4 text-sm text-muted-foreground text-center">
+        No results found.
+      </div>
+    );
+  }
+
+  return (
+    <div
+      ref={parentRef}
+      className="overflow-auto"
+      style={{ height: containerHeight, maxHeight: LIST_HEIGHT }}
+    >
+      <div
+        style={{
+          height: `${virtualizer.getTotalSize()}px`,
+          width: '100%',
+          position: 'relative',
+        }}
+      >
+        {virtualizer.getVirtualItems().map((virtualItem) => {
+          const val = filteredValues[virtualItem.index];
+          const isSelected = !currentFilterValues || currentFilterValues.includes(val);
+          
+          return (
+            <button
+              key={virtualItem.key}
+              onClick={() => onItemClick(val)}
+              className="absolute left-0 w-full flex items-center gap-2 px-2 text-sm hover:bg-accent cursor-pointer"
+              style={{
+                height: `${virtualItem.size}px`,
+                transform: `translateY(${virtualItem.start}px)`,
+              }}
+            >
+              <div className={cn("flex h-4 w-4 items-center justify-center rounded-sm border border-primary flex-shrink-0", isSelected ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible")}>
+                <Check className="h-3 w-3" />
+              </div>
+              <span className="truncate">{val || "(Empty)"}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export const VirtualizedFilterList = React.memo(function VirtualizedFilterList({
   columnKey,
   columnHeader,
@@ -32,7 +102,7 @@ export const VirtualizedFilterList = React.memo(function VirtualizedFilterList({
   onClearFilter,
 }: VirtualizedFilterListProps) {
   const [searchValue, setSearchValue] = useState('');
-  const parentRef = useRef<HTMLDivElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
   const isSelectAll = currentFilterValues === undefined;
 
   const filteredValues = useMemo(() => {
@@ -43,19 +113,19 @@ export const VirtualizedFilterList = React.memo(function VirtualizedFilterList({
     );
   }, [uniqueValues, searchValue]);
 
-  const virtualizer = useVirtualizer({
-    count: filteredValues.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => ITEM_HEIGHT,
-    overscan: 5,
-  });
+  const handleOpenChange = useCallback((open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      setSearchValue('');
+    }
+  }, []);
 
   const handleItemClick = useCallback((val: string) => {
     onFilterChange(columnKey, val, uniqueValues);
   }, [columnKey, uniqueValues, onFilterChange]);
 
   return (
-    <Popover onOpenChange={() => setSearchValue('')}>
+    <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button 
           variant="ghost" 
@@ -94,46 +164,13 @@ export const VirtualizedFilterList = React.memo(function VirtualizedFilterList({
             </button>
           </div>
 
-          {filteredValues.length === 0 ? (
-            <div className="p-4 text-sm text-muted-foreground text-center">
-              No results found.
-            </div>
-          ) : (
-            <div
-              ref={parentRef}
-              className="overflow-auto"
-              style={{ height: Math.min(LIST_HEIGHT, filteredValues.length * ITEM_HEIGHT) }}
-            >
-              <div
-                style={{
-                  height: `${virtualizer.getTotalSize()}px`,
-                  width: '100%',
-                  position: 'relative',
-                }}
-              >
-                {virtualizer.getVirtualItems().map((virtualItem) => {
-                  const val = filteredValues[virtualItem.index];
-                  const isSelected = !currentFilterValues || currentFilterValues.includes(val);
-                  
-                  return (
-                    <button
-                      key={virtualItem.key}
-                      onClick={() => handleItemClick(val)}
-                      className="absolute left-0 w-full flex items-center gap-2 px-2 text-sm hover:bg-accent cursor-pointer"
-                      style={{
-                        height: `${virtualItem.size}px`,
-                        transform: `translateY(${virtualItem.start}px)`,
-                      }}
-                    >
-                      <div className={cn("flex h-4 w-4 items-center justify-center rounded-sm border border-primary flex-shrink-0", isSelected ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible")}>
-                        <Check className="h-3 w-3" />
-                      </div>
-                      <span className="truncate">{val || "(Empty)"}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+          {isOpen && (
+            <VirtualizedList
+              key={`${columnKey}-${filteredValues.length}`}
+              filteredValues={filteredValues}
+              currentFilterValues={currentFilterValues}
+              onItemClick={handleItemClick}
+            />
           )}
         </div>
       </PopoverContent>
