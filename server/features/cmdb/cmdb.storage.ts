@@ -15,6 +15,8 @@ export class CmdbStorage {
   ] as const;
 
   private static readonly FILTERABLE_COLUMNS = [
+    "id",
+    "configItem",
     "environment",
     "status",
     "owner",
