@@ -57,6 +57,7 @@ The project is organized into `client/` (React frontend), `server/` (Express bac
 - **date-fns**: Date formatting.
 - **cmdk**: Command palette.
 - **embla-carousel**: Carousel functionality.
+- **@tanstack/react-virtual**: List virtualization for performance with large datasets.
 
 ### Development Tools
 - **tsx**: TypeScript execution for server.
