@@ -3,7 +3,7 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Download, ChevronRight, ChevronDown, Loader2, ArrowRightLeft, Eye } from 'lucide-react';
+import { Download, ChevronRight, ChevronDown, Loader2, ArrowRightLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
@@ -164,7 +164,6 @@ export default function BTOPage() {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors cursor-pointer"
                  onClick={() => setShowZeroAssets(!showZeroAssets)}>
-              <Eye className="h-4 w-4 text-gray-500 dark:text-gray-400" />
               <Checkbox
                 id="show-zero-assets"
                 checked={showZeroAssets}
