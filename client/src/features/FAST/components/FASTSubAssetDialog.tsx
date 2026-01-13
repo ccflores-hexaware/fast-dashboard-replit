@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Loader2, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,13 +25,24 @@ export function FASTSubAssetDialog({
   isCreating,
   onCreate,
 }: FASTSubAssetDialogProps) {
+  const [nextId, setNextId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen && selectedItem?.id) {
+      fetch(`/api/fast/next-sub-id/${selectedItem.id}`)
+        .then(res => res.json())
+        .then(data => setNextId(data.nextId))
+        .catch(() => setNextId(`${selectedItem.id}-SUB?`));
+    }
+  }, [isOpen, selectedItem?.id]);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create Sub-asset</DialogTitle>
           <DialogDescription>
-            This will create a new sub-asset derived from {selectedItem?.id}. The new asset will have an ID like <span className="font-mono font-bold">{selectedItem?.id}-SUB1</span>.
+            This will create a new sub-asset derived from {selectedItem?.id}. The new asset will have an ID like <span className="font-mono font-bold">{nextId || `${selectedItem?.id}-SUB...`}</span>.
             <br /><br />
             After creation, go to the Sub-assets page to fill in the sub-asset specific fields.
           </DialogDescription>
