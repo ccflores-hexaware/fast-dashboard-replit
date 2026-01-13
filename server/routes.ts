@@ -136,7 +136,30 @@ export async function registerRoutes(
 
   app.post("/api/sub-assets", async (req: Request, res: Response) => {
     try {
-      const asset = await storage.createSubAsset(req.body);
+      const { parentAssetId, createdBy } = req.body;
+      
+      if (!parentAssetId) {
+        return res.status(400).json({ error: "parentAssetId is required" });
+      }
+      
+      const [parentAsset] = await storage.getFastAssetById(parentAssetId);
+      if (!parentAsset) {
+        return res.status(404).json({ error: "Parent asset not found" });
+      }
+      
+      const nextNum = await storage.getNextSubAssetNumber(parentAssetId);
+      const assetId = `${parentAssetId}-SUB${nextNum}`;
+      const now = new Date().toISOString();
+      
+      const subAssetData = {
+        parentAssetId,
+        assetId,
+        name: `${parentAsset.name || 'Sub-asset'} (Sub-asset)`,
+        lastModifiedBy: createdBy || 'Unknown User',
+        lastModifiedDate: now,
+      };
+      
+      const asset = await storage.createSubAsset(subAssetData);
       res.status(201).json(asset);
     } catch (error) {
       console.error("Error creating sub-asset:", error);
