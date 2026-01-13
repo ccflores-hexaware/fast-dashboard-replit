@@ -1,0 +1,65 @@
+export interface FASTAsset {
+  internalId: number;
+  id: string;
+  name: string;
+  kalmAssignee: string | null;
+  onboardingStatus: string | null;
+  onboardingDisposition: string | null;
+  airDisposition: string | null;
+  maintenanceDisposition: string | null;
+  lastConnectorDeliveryDate: string | null;
+  maintenanceSLAExpiration: string | null;
+  technology: string | null;
+  cmdbStatus: string | null;
+  cmdbBeingRetired: string | null;
+  cmdbLegalHold: string | null;
+  ticketsOpened: string | null;
+  assetType: string | null;
+  yearOnboarded: string | null;
+  monthOnboarded: string | null;
+  assetPOCs: string | null;
+  onboardingSchedule: string | null;
+  entitlementsMissing: string | null;
+  membersMissing: string | null;
+  cisMissing: string | null;
+  reliesOnCAFederation: string | null;
+  connectorPattern: string | null;
+  automationTeam: string | null;
+  nameOfConnector: string | null;
+  connectorStatus: string | null;
+  enrollmentStatus: string | null;
+  evidenceStatus: string | null;
+  miSchedule: string | null;
+  miLastAIRUpload: string | null;
+  miDaysSince: string | null;
+  miDueDate: string | null;
+  miOnboardingChangeDate: string | null;
+  miL2Assignee: string | null;
+  miStatus: string | null;
+  attestationKickedOff: string | null;
+  attestationComplete: string | null;
+  aiLastCandAAttestation: string | null;
+  keychainAttestationKickoffDate: string | null;
+  aiDaysSince: string | null;
+  aiAttestationDueDate: string | null;
+  aiOnboardingChangeDate: string | null;
+  aiL2Assignee: string | null;
+  aiStatus: string | null;
+  theGap: string | null;
+  comments: string | null;
+  lastModifiedBy: string | null;
+  lastModifiedDate: string | null;
+  isSubAsset?: boolean;
+  createdAt?: string;
+  version?: number;
+  isLatestVersion?: boolean;
+}
+
+export interface FASTActivity {
+  id: number;
+  assetId: string;
+  text: string | null;
+  field: { field: string; old: any; new: any }[] | null;
+  modifiedBy: string;
+  modifiedDate: string;
+}
