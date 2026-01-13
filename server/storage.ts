@@ -456,9 +456,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getNextSubAssetNumber(baseAssetId: string): Promise<number> {
+    // Check both fast_assets and sub_assets tables for existing sub-asset IDs
     const allFastAssets = await db.select({ id: fastAssets.id }).from(fastAssets);
+    const allSubAssets = await db.select({ assetId: subAssets.assetId }).from(subAssets);
+    
     const subPattern = new RegExp(`^${baseAssetId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}-SUB(\\d+)$`);
     let maxNum = 0;
+    
     for (const asset of allFastAssets) {
       const match = asset.id.match(subPattern);
       if (match) {
@@ -466,6 +470,17 @@ export class DatabaseStorage implements IStorage {
         if (num > maxNum) maxNum = num;
       }
     }
+    
+    for (const asset of allSubAssets) {
+      if (asset.assetId) {
+        const match = asset.assetId.match(subPattern);
+        if (match) {
+          const num = parseInt(match[1], 10);
+          if (num > maxNum) maxNum = num;
+        }
+      }
+    }
+    
     return maxNum + 1;
   }
 

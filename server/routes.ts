@@ -150,11 +150,25 @@ export async function registerRoutes(
       const nextNum = await storage.getNextSubAssetNumber(parentAssetId);
       const assetId = `${parentAssetId}-SUB${nextNum}`;
       const now = new Date().toISOString();
+      const subAssetName = `${parentAsset.name || 'Sub-asset'} (Sub-asset)`;
       
+      // First, create the FAST asset entry so it appears on the FAST page
+      const fastAssetData = {
+        id: assetId,
+        name: subAssetName,
+        kalmAssignee: parentAsset.kalmAssignee,
+        onboardingStatus: parentAsset.onboardingStatus,
+        onboardingDisposition: parentAsset.onboardingDisposition,
+        lastModifiedBy: createdBy || 'Unknown User',
+        lastModifiedDate: now,
+      };
+      await storage.createFastAsset(fastAssetData);
+      
+      // Then, create the sub-asset entry to link it to the parent
       const subAssetData = {
         parentAssetId,
         assetId,
-        name: `${parentAsset.name || 'Sub-asset'} (Sub-asset)`,
+        name: subAssetName,
         lastModifiedBy: createdBy || 'Unknown User',
         lastModifiedDate: now,
       };
