@@ -37,7 +37,7 @@ Preferred communication style: Simple, everyday language.
 - **FAST**: Activity log for user edits.
 - **Sub-assets**: One-level deep sub-asset creation linked to parent FAST assets.
 - **TPI & CMDB**: SCD Type 2 history for external system updates. CMDB includes bulk history upload via Excel/CSV files with drag-and-drop support, template download, and row-level error reporting.
-- **BTO**: Data derived from TPI assets and BTO mapping, displayed with hierarchical aggregation and Excel export.
+- **BTO**: Data derived from TPI assets and BTO mapping, displayed with hierarchical aggregation and Excel export. Includes BTO mapping reassignment feature allowing users to change the Higher Level BTO for any BTO/Division mapping. Features a "Show zero-asset mappings" toggle to view and reassign mappings with no associated assets.
 - **Recon**: Read-only module with a two-step master-detail flow:
   - **Application List View (1st screen)**: Shows unique applications with name, status badge, and record count. Supports search by application name, filter by application status dropdown, and pagination.
   - **Application Detail View (2nd screen)**: Shows records for a selected application, grouped by Account Name with collapsible accordion rows. Features include: search across all fields, Excel-style column filtering, column sorting, and a details dialog when clicking a row. Pagination operates per account group.
