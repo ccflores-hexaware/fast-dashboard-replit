@@ -8,6 +8,7 @@ import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
 import { BtoReassignDialog } from '@/components/BtoReassignDialog';
+import { useUser } from '@/lib/userContext';
 
 interface BtoSummaryRow {
   id: number;
@@ -32,6 +33,7 @@ interface SelectedMapping {
 
 export default function BTOPage() {
   const { toast } = useToast();
+  const { isAdmin } = useUser();
   const [summaryData, setSummaryData] = useState<BtoSummaryRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
@@ -206,13 +208,13 @@ export default function BTOPage() {
                   <th className="text-left p-4 font-semibold">BTO</th>
                   <th className="text-left p-4 font-semibold">Division</th>
                   <th className="text-right p-4 font-semibold">Total Assets</th>
-                  <th className="text-center p-4 font-semibold w-24">Actions</th>
+                  {isAdmin && <th className="text-center p-4 font-semibold w-24">Actions</th>}
                 </tr>
               </thead>
               <tbody>
                 {aggregatedData.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-16 text-muted-foreground">
+                    <td colSpan={isAdmin ? 6 : 5} className="text-center py-16 text-muted-foreground">
                       <p className="text-lg font-medium">No BTO Data</p>
                       <p className="text-sm">No matching assets found in TPI data.</p>
                     </td>
@@ -235,7 +237,7 @@ export default function BTOPage() {
                         <td className="p-4 text-muted-foreground italic">{row.breakdown.length} mappings</td>
                         <td className="p-4 text-muted-foreground italic">-</td>
                         <td className="p-4 text-right font-semibold">{row.totalAssets}</td>
-                        <td className="p-4 text-center">-</td>
+                        {isAdmin && <td className="p-4 text-center">-</td>}
                       </tr>
                       
                       {expandedRows.has(row.higherLevelBto) && (
@@ -249,17 +251,19 @@ export default function BTOPage() {
                             <td className="p-4 pl-8">{breakdown.bto}</td>
                             <td className="p-4">{breakdown.division}</td>
                             <td className="p-4 text-right">{breakdown.totalAssets}</td>
-                            <td className="p-4 text-center">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => handleReassignClick(e, breakdown, row.higherLevelBto)}
-                                className="h-8 px-2"
-                                title="Reassign to different Higher Level BTO"
-                              >
-                                <ArrowRightLeft className="h-4 w-4" />
-                              </Button>
-                            </td>
+                            {isAdmin && (
+                              <td className="p-4 text-center">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => handleReassignClick(e, breakdown, row.higherLevelBto)}
+                                  className="h-8 px-2"
+                                  title="Reassign to different Higher Level BTO"
+                                >
+                                  <ArrowRightLeft className="h-4 w-4" />
+                                </Button>
+                              </td>
+                            )}
                           </tr>
                         ))
                       )}
