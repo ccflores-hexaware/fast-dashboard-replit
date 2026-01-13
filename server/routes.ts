@@ -179,5 +179,63 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/bto/mappings", async (req: Request, res: Response) => {
+    try {
+      const mappings = await storage.getAllBtoMappings();
+      res.json(mappings);
+    } catch (error) {
+      console.error("Error fetching BTO mappings:", error);
+      res.status(500).json({ error: "Failed to fetch BTO mappings" });
+    }
+  });
+
+  app.get("/api/bto/higher-level-btos", async (req: Request, res: Response) => {
+    try {
+      const higherLevelBtos = await storage.getDistinctHigherLevelBtos();
+      res.json(higherLevelBtos);
+    } catch (error) {
+      console.error("Error fetching higher level BTOs:", error);
+      res.status(500).json({ error: "Failed to fetch higher level BTOs" });
+    }
+  });
+
+  app.get("/api/bto/mappings/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid mapping ID" });
+      }
+      const mapping = await storage.getBtoMappingById(id);
+      if (!mapping) {
+        return res.status(404).json({ error: "BTO mapping not found" });
+      }
+      res.json(mapping);
+    } catch (error) {
+      console.error("Error fetching BTO mapping:", error);
+      res.status(500).json({ error: "Failed to fetch BTO mapping" });
+    }
+  });
+
+  app.put("/api/bto/mappings/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid mapping ID" });
+      }
+      const { higherLevelBto } = req.body;
+      if (!higherLevelBto || typeof higherLevelBto !== 'string') {
+        return res.status(400).json({ error: "higherLevelBto is required and must be a string" });
+      }
+      const updated = await storage.updateBtoMapping(id, { higherLevelBto });
+      if (!updated) {
+        return res.status(404).json({ error: "BTO mapping not found" });
+      }
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating BTO mapping:", error);
+      res.status(500).json({ error: "Failed to update BTO mapping" });
+    }
+  });
+
   return httpServer;
 }

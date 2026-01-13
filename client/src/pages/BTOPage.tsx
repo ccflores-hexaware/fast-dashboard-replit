@@ -1,12 +1,14 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
-import { Download, ChevronRight, ChevronDown, Loader2 } from 'lucide-react';
+import { Download, ChevronRight, ChevronDown, Loader2, ArrowRightLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
+import { BtoReassignDialog } from '@/components/BtoReassignDialog';
 
 interface BtoSummaryRow {
+  id: number;
   higherLevelBto: string;
   bto: string | null;
   division: string | null;
@@ -16,36 +18,47 @@ interface BtoSummaryRow {
 interface AggregatedBto {
   higherLevelBto: string;
   totalAssets: number;
-  breakdown: { bto: string; division: string; totalAssets: number }[];
+  breakdown: { id: number; bto: string; division: string; totalAssets: number }[];
+}
+
+interface SelectedMapping {
+  id: number;
+  higherLevelBto: string;
+  bto: string | null;
+  division: string | null;
 }
 
 export default function BTOPage() {
   const { toast } = useToast();
-  const [data, setData] = useState<BtoSummaryRow[]>([]);
+  const [summaryData, setSummaryData] = useState<BtoSummaryRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [selectedMapping, setSelectedMapping] = useState<SelectedMapping | null>(null);
+  const [isReassignDialogOpen, setIsReassignDialogOpen] = useState(false);
+  const [showZeroAssets, setShowZeroAssets] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    try {
+      const response = await fetch('/api/bto/summary');
+      if (!response.ok) throw new Error('Failed to fetch summary');
+      const summary = await response.json();
+      setSummaryData(summary);
+    } catch (error) {
+      console.error('Error fetching BTO data:', error);
+      toast({ title: "Error", description: "Failed to load BTO data", variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch('/api/bto/summary');
-        if (!response.ok) throw new Error('Failed to fetch');
-        const summary = await response.json();
-        setData(summary);
-      } catch (error) {
-        console.error('Error fetching BTO data:', error);
-        toast({ title: "Error", description: "Failed to load BTO data", variant: "destructive" });
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   const aggregatedData = useMemo(() => {
     const grouped: Record<string, AggregatedBto> = {};
     
-    for (const row of data) {
+    for (const row of summaryData) {
       if (!grouped[row.higherLevelBto]) {
         grouped[row.higherLevelBto] = {
           higherLevelBto: row.higherLevelBto,
@@ -53,8 +66,10 @@ export default function BTOPage() {
           breakdown: []
         };
       }
+      
       grouped[row.higherLevelBto].totalAssets += row.totalAssets;
       grouped[row.higherLevelBto].breakdown.push({
+        id: row.id,
         bto: row.bto || '(Not specified)',
         division: row.division || '(Not specified)',
         totalAssets: row.totalAssets
@@ -62,13 +77,15 @@ export default function BTOPage() {
     }
     
     return Object.values(grouped)
-      .filter(row => row.totalAssets >= 1)
+      .filter(row => showZeroAssets || row.totalAssets >= 1)
       .map(row => ({
         ...row,
-        breakdown: row.breakdown.filter(b => b.totalAssets >= 1)
+        breakdown: showZeroAssets 
+          ? row.breakdown 
+          : row.breakdown.filter(b => b.totalAssets >= 1)
       }))
       .sort((a, b) => a.higherLevelBto.localeCompare(b.higherLevelBto));
-  }, [data]);
+  }, [summaryData, showZeroAssets]);
 
   const toggleRow = (higherLevelBto: string) => {
     setExpandedRows(prev => {
@@ -80,6 +97,23 @@ export default function BTOPage() {
       }
       return next;
     });
+  };
+
+  const handleReassignClick = (e: React.MouseEvent, breakdown: { id: number; bto: string; division: string }, higherLevelBto: string) => {
+    e.stopPropagation();
+    setSelectedMapping({
+      id: breakdown.id,
+      higherLevelBto,
+      bto: breakdown.bto === '(Not specified)' ? null : breakdown.bto,
+      division: breakdown.division === '(Not specified)' ? null : breakdown.division
+    });
+    setIsReassignDialogOpen(true);
+  };
+
+  const handleReassignSuccess = () => {
+    toast({ title: "Success", description: "BTO mapping updated successfully", variant: "success" });
+    setIsLoading(true);
+    fetchData();
   };
 
   const exportToExcel = () => {
@@ -125,15 +159,26 @@ export default function BTOPage() {
             <h1 className="text-3xl font-bold tracking-tight">Business Technology Office (BTO)</h1>
             <p className="text-muted-foreground mt-1">Asset counts by Higher Level BTO, derived from TPI data.</p>
           </div>
-          <Button 
-            onClick={exportToExcel} 
-            className="gap-2 text-white" 
-            style={{ backgroundColor: '#89c24b' }} 
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#7ab043'} 
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#89c24b'}
-          >
-            <Download className="h-4 w-4" />Export to Excel
-          </Button>
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={showZeroAssets}
+                onChange={(e) => setShowZeroAssets(e.target.checked)}
+                className="rounded border-gray-300"
+              />
+              Show zero-asset mappings
+            </label>
+            <Button 
+              onClick={exportToExcel} 
+              className="gap-2 text-white" 
+              style={{ backgroundColor: '#89c24b' }} 
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#7ab043'} 
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#89c24b'}
+            >
+              <Download className="h-4 w-4" />Export to Excel
+            </Button>
+          </div>
         </div>
 
         {isLoading ? (
@@ -153,12 +198,13 @@ export default function BTOPage() {
                   <th className="text-left p-4 font-semibold">BTO</th>
                   <th className="text-left p-4 font-semibold">Division</th>
                   <th className="text-right p-4 font-semibold">Total Assets</th>
+                  <th className="text-center p-4 font-semibold w-24">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {aggregatedData.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="text-center py-16 text-muted-foreground">
+                    <td colSpan={6} className="text-center py-16 text-muted-foreground">
                       <p className="text-lg font-medium">No BTO Data</p>
                       <p className="text-sm">No matching assets found in TPI data.</p>
                     </td>
@@ -181,12 +227,13 @@ export default function BTOPage() {
                         <td className="p-4 text-muted-foreground italic">{row.breakdown.length} mappings</td>
                         <td className="p-4 text-muted-foreground italic">-</td>
                         <td className="p-4 text-right font-semibold">{row.totalAssets}</td>
+                        <td className="p-4 text-center">-</td>
                       </tr>
                       
                       {expandedRows.has(row.higherLevelBto) && (
-                        row.breakdown.map((breakdown, idx) => (
+                        row.breakdown.map((breakdown) => (
                           <tr 
-                            key={`${row.higherLevelBto}-${idx}`} 
+                            key={breakdown.id} 
                             className="border-b bg-muted/30 hover:bg-muted/50"
                           >
                             <td className="p-4"></td>
@@ -194,6 +241,17 @@ export default function BTOPage() {
                             <td className="p-4 pl-8">{breakdown.bto}</td>
                             <td className="p-4">{breakdown.division}</td>
                             <td className="p-4 text-right">{breakdown.totalAssets}</td>
+                            <td className="p-4 text-center">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => handleReassignClick(e, breakdown, row.higherLevelBto)}
+                                className="h-8 px-2"
+                                title="Reassign to different Higher Level BTO"
+                              >
+                                <ArrowRightLeft className="h-4 w-4" />
+                              </Button>
+                            </td>
                           </tr>
                         ))
                       )}
@@ -218,6 +276,13 @@ export default function BTOPage() {
           </div>
         )}
       </div>
+
+      <BtoReassignDialog
+        isOpen={isReassignDialogOpen}
+        onClose={() => setIsReassignDialogOpen(false)}
+        mapping={selectedMapping}
+        onSuccess={handleReassignSuccess}
+      />
     </DashboardLayout>
   );
 }

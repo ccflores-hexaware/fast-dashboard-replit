@@ -73,7 +73,12 @@ export interface IStorage {
   getNextSubAssetNumber(baseAssetId: string): Promise<number>;
   getSubAssetCounts(): Promise<Record<string, number>>;
   
-  getBtoSummary(): Promise<{ higherLevelBto: string; bto: string | null; division: string | null; totalAssets: number }[]>;
+  getBtoSummary(): Promise<{ id: number; higherLevelBto: string; bto: string | null; division: string | null; totalAssets: number }[]>;
+  
+  getAllBtoMappings(): Promise<BtoMapping[]>;
+  getBtoMappingById(id: number): Promise<BtoMapping | undefined>;
+  getDistinctHigherLevelBtos(): Promise<string[]>;
+  updateBtoMapping(id: number, data: { higherLevelBto: string }): Promise<BtoMapping | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -479,8 +484,9 @@ export class DatabaseStorage implements IStorage {
     return counts;
   }
 
-  async getBtoSummary(): Promise<{ higherLevelBto: string; bto: string | null; division: string | null; totalAssets: number }[]> {
+  async getBtoSummary(): Promise<{ id: number; higherLevelBto: string; bto: string | null; division: string | null; totalAssets: number }[]> {
     const results = await db.select({
+      id: btoMapping.id,
       higherLevelBto: btoMapping.higherLevelBto,
       bto: btoMapping.bto,
       division: btoMapping.division,
@@ -491,15 +497,41 @@ export class DatabaseStorage implements IStorage {
       eq(tpiAssets.btoAlignment, btoMapping.bto),
       eq(tpiAssets.owningInternalOrg, btoMapping.division)
     ))
-    .groupBy(btoMapping.higherLevelBto, btoMapping.bto, btoMapping.division)
+    .groupBy(btoMapping.id, btoMapping.higherLevelBto, btoMapping.bto, btoMapping.division)
     .orderBy(btoMapping.higherLevelBto, btoMapping.bto, btoMapping.division);
     
     return results.map(row => ({
+      id: row.id,
       higherLevelBto: row.higherLevelBto,
       bto: row.bto,
       division: row.division,
       totalAssets: Number(row.totalAssets)
     }));
+  }
+
+  async getAllBtoMappings(): Promise<BtoMapping[]> {
+    return db.select().from(btoMapping).orderBy(btoMapping.higherLevelBto, btoMapping.bto, btoMapping.division);
+  }
+
+  async getBtoMappingById(id: number): Promise<BtoMapping | undefined> {
+    const [mapping] = await db.select().from(btoMapping).where(eq(btoMapping.id, id));
+    return mapping;
+  }
+
+  async getDistinctHigherLevelBtos(): Promise<string[]> {
+    const results = await db
+      .selectDistinct({ higherLevelBto: btoMapping.higherLevelBto })
+      .from(btoMapping)
+      .orderBy(btoMapping.higherLevelBto);
+    return results.map(r => r.higherLevelBto);
+  }
+
+  async updateBtoMapping(id: number, data: { higherLevelBto: string }): Promise<BtoMapping | undefined> {
+    const [updated] = await db.update(btoMapping)
+      .set({ higherLevelBto: data.higherLevelBto })
+      .where(eq(btoMapping.id, id))
+      .returning();
+    return updated;
   }
 }
 
