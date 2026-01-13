@@ -43,7 +43,24 @@ Preferred communication style: Simple, everyday language.
   - **Application Detail View (2nd screen)**: Shows records for a selected application, grouped by Account Name with collapsible accordion rows. Features include: search across all fields, Excel-style column filtering, column sorting, and a details dialog when clicking a row. Pagination operates per account group.
 
 ### Project Structure
-The project is organized into `client/` (React frontend), `server/` (Express backend), and `shared/` (common types and schemas). It emphasizes shared components, hooks, and utilities to reduce redundancy across features like TPI, CMDB, and Recon.
+The project is organized into `client/` (React frontend), `server/` (Express backend), and `shared/` (common types and schemas). It emphasizes shared components, hooks, and utilities to reduce redundancy across features.
+
+### Modular Feature Architecture
+All major pages follow a consistent modular architecture pattern with feature-specific folders:
+- **FAST** (`client/src/features/FAST/`): components/, hooks/, types/, constants/
+- **SubAssets** (`client/src/features/SubAssets/`): components/, hooks/, types/, constants/
+- **TPI** (`client/src/features/TPI/`): components/, hooks/, types/, constants/
+- **CMDB** (`client/src/features/CMDB/`): components/, hooks/, types/, constants/, utils/
+- **Recon** (`client/src/features/Recon/`): components/, hooks/, types/, constants/
+- **BTO** (`client/src/pages/BTOPage.tsx`): Uses unique expandable table structure, kept as single file
+
+Each feature module contains:
+- **types/**: TypeScript interfaces for assets, columns, and state
+- **constants/**: Column definitions, presets, and field configurations
+- **hooks/**: React hooks for data fetching, state management, column visibility, and dialogs
+- **components/**: UI components including tables, cards, toolbars, headers, and dialogs
+
+Main page files are kept minimal (50-120 lines), importing from their respective feature modules.
 
 ## External Dependencies
 
