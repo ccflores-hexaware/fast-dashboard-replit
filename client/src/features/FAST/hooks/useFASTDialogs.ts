@@ -84,9 +84,10 @@ export function useFASTDialogs(): UseFASTDialogsReturn {
   const openEditDialog = useCallback((item?: FASTAsset) => {
     const itemToEdit = item || selectedItem;
     if (itemToEdit) {
-      const itemCopy = JSON.parse(JSON.stringify(itemToEdit));
-      setEditFormData(itemCopy);
-      setOriginalItem(itemCopy);
+      const editCopy = JSON.parse(JSON.stringify(itemToEdit));
+      const originalCopy = JSON.parse(JSON.stringify(itemToEdit));
+      setEditFormData(editCopy);
+      setOriginalItem(originalCopy);
       setSelectedItem(itemToEdit);
       setIsEditing(true);
       setComment('');
