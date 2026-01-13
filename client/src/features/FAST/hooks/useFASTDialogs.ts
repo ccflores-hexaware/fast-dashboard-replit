@@ -212,10 +212,11 @@ export function useFASTDialogs(): UseFASTDialogsReturn {
           });
         }
         
-        setData(data.map(item => item.internalId === savedItem.internalId ? savedItem : item));
+        const updatedItemWithFlags = { ...savedItem, isSubAsset: selectedItem?.isSubAsset };
+        setData(data.map(item => item.internalId === savedItem.internalId ? updatedItemWithFlags : item));
         toast({ title: "Saved", description: `Asset ${savedItem.id} has been updated.`, variant: "success" });
         
-        setSelectedItem(savedItem);
+        setSelectedItem(updatedItemWithFlags);
         setIsEditing(false);
         setEditFormData({});
         setOriginalItem(null);
