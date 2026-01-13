@@ -84,8 +84,9 @@ export function useFASTDialogs(): UseFASTDialogsReturn {
   const openEditDialog = useCallback((item?: FASTAsset) => {
     const itemToEdit = item || selectedItem;
     if (itemToEdit) {
-      setEditFormData({ ...itemToEdit });
-      setOriginalItem({ ...itemToEdit } as FASTAsset);
+      const itemCopy = JSON.parse(JSON.stringify(itemToEdit));
+      setEditFormData(itemCopy);
+      setOriginalItem(itemCopy);
       setSelectedItem(itemToEdit);
       setIsEditing(true);
       setComment('');
@@ -212,15 +213,24 @@ export function useFASTDialogs(): UseFASTDialogsReturn {
         
         setData(data.map(item => item.internalId === savedItem.internalId ? savedItem : item));
         toast({ title: "Saved", description: `Asset ${savedItem.id} has been updated.`, variant: "success" });
+        
+        setSelectedItem(savedItem);
+        setIsEditing(false);
+        setEditFormData({});
+        setOriginalItem(null);
+        setComment('');
+        setAssetIdError(null);
+        setAssetIdAvailable(false);
+        setDateFieldErrors({});
+        fetchActivities(savedItem.id);
       }
-      closeDialog();
     } catch (error) {
       console.error('Save error:', error);
       toast({ title: "Error", description: "Failed to save changes. Please try again.", variant: "destructive" });
     } finally {
       setIsSaving(false);
     }
-  }, [editFormData, originalItem, selectedItem, comment, dateFieldErrors, user, toast, closeDialog, validateAssetId]);
+  }, [editFormData, originalItem, selectedItem, comment, dateFieldErrors, user, toast, fetchActivities, validateAssetId]);
 
   const handleDuplicate = useCallback(async (
     data: FASTAsset[], 
