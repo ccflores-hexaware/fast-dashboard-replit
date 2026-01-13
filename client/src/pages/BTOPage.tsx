@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
-import { Download, ChevronRight, ChevronDown, Loader2, ArrowRightLeft } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Download, ChevronRight, ChevronDown, Loader2, ArrowRightLeft, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
@@ -159,16 +161,23 @@ export default function BTOPage() {
             <h1 className="text-3xl font-bold tracking-tight">Business Technology Office (BTO)</h1>
             <p className="text-muted-foreground mt-1">Asset counts by Higher Level BTO, derived from TPI data.</p>
           </div>
-          <div className="flex items-center gap-2">
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors cursor-pointer"
+                 onClick={() => setShowZeroAssets(!showZeroAssets)}>
+              <Eye className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+              <Checkbox
+                id="show-zero-assets"
                 checked={showZeroAssets}
-                onChange={(e) => setShowZeroAssets(e.target.checked)}
-                className="rounded border-gray-300"
+                onCheckedChange={(checked) => setShowZeroAssets(checked === true)}
+                className="data-[state=checked]:bg-[#89c24b] data-[state=checked]:border-[#89c24b]"
               />
-              Show zero-asset mappings
-            </label>
+              <Label 
+                htmlFor="show-zero-assets" 
+                className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer select-none"
+              >
+                Show zero-asset mappings
+              </Label>
+            </div>
             <Button 
               onClick={exportToExcel} 
               className="gap-2 text-white" 
