@@ -206,7 +206,7 @@ export function useFASTDialogs(): UseFASTDialogsReturn {
             body: JSON.stringify({
               assetId: savedItem.id,
               text: hasComment ? comment.trim() : null,
-              fieldChanges: fieldChangesArray,
+              field: fieldChangesArray,
               modifiedBy: user?.name || 'Unknown User',
             })
           });
