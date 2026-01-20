@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, Fragment } from 'react';
 import { format, subMonths, startOfMonth, isAfter, isBefore, differenceInMonths } from 'date-fns';
 import * as XLSX from 'xlsx';
 import { PBCLayout } from '@/components/PBCLayout';
@@ -235,6 +235,17 @@ export default function PBCAutomationPage() {
     requests.filter(r => r.userId === MOCK_USER.id),
     [requests]
   );
+
+  const groupedRequests = useMemo(() => {
+    const grouped: Record<string, EvidenceRequest[]> = {};
+    userRequests.forEach(request => {
+      if (!grouped[request.controlId]) {
+        grouped[request.controlId] = [];
+      }
+      grouped[request.controlId].push(request);
+    });
+    return Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b));
+  }, [userRequests]);
 
   return (
     <PBCLayout>
@@ -475,7 +486,6 @@ export default function PBCAutomationPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Request ID</TableHead>
-                      <TableHead>Control ID</TableHead>
                       <TableHead>Date From</TableHead>
                       <TableHead>Date To</TableHead>
                       <TableHead>Status</TableHead>
@@ -483,31 +493,38 @@ export default function PBCAutomationPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {userRequests.map(request => (
-                      <TableRow key={request.id}>
-                        <TableCell className="font-mono text-sm">{request.requestId}</TableCell>
-                        <TableCell>
-                          <span className="font-mono text-sm">
-                            {request.controlId}
-                          </span>
-                        </TableCell>
-                        <TableCell>{format(new Date(request.dateFrom), 'MMM d, yyyy')}</TableCell>
-                        <TableCell>{format(new Date(request.dateTo), 'MMM d, yyyy')}</TableCell>
-                        <TableCell>
-                          <StatusBadge status={request.status} />
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDownloadReport(request)}
-                            disabled={request.status !== 'Completed'}
-                            aria-label={`Download report for ${request.requestId}`}
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
+                    {groupedRequests.map(([controlId, controlRequests]) => (
+                      <Fragment key={controlId}>
+                        <TableRow className="bg-muted/50 hover:bg-muted/50">
+                          <TableCell colSpan={5} className="py-2">
+                            <span className="font-mono text-sm font-semibold">{controlId}</span>
+                            <span className="text-muted-foreground ml-2 text-sm">
+                              ({controlRequests.length} {controlRequests.length === 1 ? 'request' : 'requests'})
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                        {controlRequests.map(request => (
+                          <TableRow key={request.id}>
+                            <TableCell className="font-mono text-sm pl-8">{request.requestId}</TableCell>
+                            <TableCell>{format(new Date(request.dateFrom), 'MMM d, yyyy')}</TableCell>
+                            <TableCell>{format(new Date(request.dateTo), 'MMM d, yyyy')}</TableCell>
+                            <TableCell>
+                              <StatusBadge status={request.status} />
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDownloadReport(request)}
+                                disabled={request.status !== 'Completed'}
+                                aria-label={`Download report for ${request.requestId}`}
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </Fragment>
                     ))}
                   </TableBody>
                 </Table>
