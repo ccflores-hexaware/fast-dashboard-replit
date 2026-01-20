@@ -27,9 +27,7 @@ export default function LandingPage() {
       <main className="flex-1 flex items-center justify-center p-8">
         <div className="max-w-4xl w-full">
           <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-4">
-              Welcome to IT Management Suite
-            </h1>
+            <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-4">Welcome to IAM Suite</h1>
             <p className="text-lg text-slate-600 dark:text-slate-400">
               Select an application to continue
             </p>
