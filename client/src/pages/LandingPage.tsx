@@ -37,7 +37,7 @@ export default function LandingPage() {
 
           <div className="grid md:grid-cols-2 gap-8">
             <Card 
-              className="cursor-pointer transition-all hover:shadow-lg hover:border-primary group"
+              className="cursor-pointer transition-all hover:shadow-lg hover:border-primary group flex flex-col"
               onClick={() => setLocation('/fast')}
             >
               <CardHeader className="text-center pb-2">
@@ -47,8 +47,8 @@ export default function LandingPage() {
                 <CardTitle className="text-2xl">FAST Dashboard</CardTitle>
                 <CardDescription className="text-base">Full Asset Status Tracker</CardDescription>
               </CardHeader>
-              <CardContent className="text-center">
-                <p className="text-sm text-muted-foreground mb-4">Manage technology portfolios across Assets, TPI, BTO, and CMDB modules. Full CRUD capabilities for administrators.</p>
+              <CardContent className="text-center flex flex-col flex-1">
+                <p className="text-sm text-muted-foreground mb-4 flex-1">Manage technology portfolios across Assets, TPI, BTO, and CMDB modules. Full CRUD capabilities for administrators.</p>
                 <Button className="w-full" variant="outline">
                   Open FAST Dashboard
                 </Button>
@@ -56,7 +56,7 @@ export default function LandingPage() {
             </Card>
 
             <Card 
-              className="cursor-pointer transition-all hover:shadow-lg hover:border-primary group"
+              className="cursor-pointer transition-all hover:shadow-lg hover:border-primary group flex flex-col"
               onClick={() => setLocation('/pbc')}
             >
               <CardHeader className="text-center pb-2">
@@ -68,8 +68,8 @@ export default function LandingPage() {
                   Self-Service Control Evidence System
                 </CardDescription>
               </CardHeader>
-              <CardContent className="text-center">
-                <p className="text-sm text-muted-foreground mb-4">
+              <CardContent className="text-center flex flex-col flex-1">
+                <p className="text-sm text-muted-foreground mb-4 flex-1">
                   Request control execution evidence for auditors. 
                   Automated evidence generation for IAM controls with Excel export.
                 </p>
