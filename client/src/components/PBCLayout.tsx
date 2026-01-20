@@ -1,81 +1,109 @@
+import React from 'react';
 import { format } from 'date-fns';
-import { useLocation } from 'wouter';
-import { Moon, Sun, User, Home } from 'lucide-react';
+import { Link, useLocation } from 'wouter';
+import { UserCircle, LogOut, Check, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useTheme } from '@/components/theme-provider';
-import { useUser } from '@/lib/userContext';
+import { ThemeToggle } from '@/components/theme-toggle';
+import { useUser, USERS } from '@/lib/userContext';
 import freddieMacLogo from '@assets/image_1765386309294.png';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface PBCLayoutProps {
   children: React.ReactNode;
 }
 
 export function PBCLayout({ children }: PBCLayoutProps) {
-  const [, setLocation] = useLocation();
-  const { theme, setTheme } = useTheme();
-  const { user } = useUser();
+  const [location] = useLocation();
+  const { user, setUser } = useUser();
 
   const currentDate = format(new Date(), 'MMMM d, yyyy');
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+    <div className="min-h-screen bg-background flex flex-col font-sans">
+      <header className="bg-background border-b border-border shadow-sm z-20">
+        <div className="w-full px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center space-x-6">
+            <Link href="/" className="flex items-center space-x-4 hover:opacity-90 transition-opacity">
               <img 
                 src={freddieMacLogo} 
-                alt="Freddie Mac Logo" 
-                className="h-8"
+                alt="Freddie Mac" 
+                className="h-8 w-auto" 
               />
-              <div className="h-6 w-px bg-border" />
-              <div>
-                <h1 className="text-xl font-bold tracking-tight text-[#1a365d]">
-                  PBC AUTOMATION SYSTEM
-                </h1>
-                <p className="text-sm text-muted-foreground">{currentDate}</p>
+              
+              <div className="flex flex-col justify-center border-l border-muted-foreground/20 pl-6 h-10">
+                <h1 className="text-2xl font-bold leading-none text-primary tracking-tight">PBC AUTOMATION</h1>
+                <span className="text-xs font-medium leading-none text-muted-foreground mt-0.5">{currentDate}</span>
               </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="text-right hidden md:block">
-                <p className="text-sm font-medium">{user?.name || 'John Doe'}</p>
-                <p className="text-xs text-muted-foreground">{user?.email || 'john.doe@freddiemac.com'}</p>
-                <p className="text-xs text-muted-foreground">Role: {user?.role || 'User'}</p>
+            </Link>
+          </div>
+
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
+              <div className="flex flex-col text-right hidden sm:flex space-y-1">
+                <span className="text-sm font-bold leading-none text-foreground">{user.name}</span>
+                <span className="text-xs text-muted-foreground leading-none">{user.email}</span>
+                <span className="text-xs font-semibold text-primary leading-none">Role: {user.role}</span>
               </div>
-              <User className="h-8 w-8 p-1.5 rounded-full bg-muted" />
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                aria-label="Toggle theme"
-              >
-                {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-              </Button>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full text-foreground hover:bg-muted">
+                    <UserCircle className="h-9 w-9 text-primary" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>Switch User</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {USERS.map((u) => (
+                    <DropdownMenuItem 
+                      key={u.email} 
+                      onClick={() => setUser(u)}
+                      className="flex items-center justify-between"
+                    >
+                      <span>{u.name} ({u.role})</span>
+                      {user.email === u.email && <Check className="h-4 w-4" />}
+                    </DropdownMenuItem>
+                  ))}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="text-destructive">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <ThemeToggle />
             </div>
           </div>
         </div>
       </header>
 
-      <nav className="bg-[#1a365d] text-white">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center">
-            <Button
-              variant="ghost"
-              className="text-white hover:bg-white/10 rounded-none px-4 py-6 flex items-center gap-2"
-              onClick={() => setLocation('/')}
+      <nav className="bg-primary text-primary-foreground shadow-md z-10">
+        <div className="w-full px-6">
+          <div className="flex h-14 space-x-1">
+            <Link 
+              href="/"
+              className="px-4 h-full flex items-center text-sm font-semibold transition-colors border-b-4 whitespace-nowrap text-primary-foreground/90 hover:bg-primary-foreground/10 hover:text-white border-transparent gap-2"
             >
               <Home className="h-4 w-4" />
-              Back to Home
-            </Button>
-            <div className="h-6 w-px bg-white/20 mx-2" />
-            <span className="px-4 py-6 text-white/80">
-              Self-Service PBC Automation
+              Home
+            </Link>
+            <div className="h-8 w-px bg-primary-foreground/20 self-center mx-2" />
+            <span className="px-6 h-full flex items-center text-sm font-semibold bg-secondary text-primary border-b-4 border-accent">
+              Control Evidence
             </span>
           </div>
         </div>
       </nav>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="flex-1 w-full px-6 py-8">
         {children}
       </main>
     </div>
