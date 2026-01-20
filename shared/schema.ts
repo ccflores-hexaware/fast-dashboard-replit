@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, timestamp, serial, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, timestamp, serial, jsonb, boolean, date } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -368,3 +368,55 @@ export const insertReconAssetSchema = createInsertSchema(reconAssets).omit({
 export const selectReconAssetSchema = createSelectSchema(reconAssets);
 export type InsertReconAsset = z.infer<typeof insertReconAssetSchema>;
 export type ReconAsset = typeof reconAssets.$inferSelect;
+
+export const pbcControls = pgTable("pbc_controls", {
+  id: serial("id").primaryKey(),
+  controlId: varchar("control_id", { length: 50 }).notNull().unique(),
+  name: text("name").notNull(),
+  isAutomated: boolean("is_automated").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertPbcControlSchema = createInsertSchema(pbcControls).omit({
+  id: true,
+  createdAt: true,
+});
+export const selectPbcControlSchema = createSelectSchema(pbcControls);
+export type InsertPbcControl = z.infer<typeof insertPbcControlSchema>;
+export type PbcControl = typeof pbcControls.$inferSelect;
+
+export const pbcEvidenceRequests = pgTable("pbc_evidence_requests", {
+  id: serial("id").primaryKey(),
+  requestId: varchar("request_id", { length: 50 }).notNull().unique(),
+  controlId: varchar("control_id", { length: 50 }).notNull(),
+  controlName: text("control_name").notNull(),
+  dateFrom: date("date_from").notNull(),
+  dateTo: date("date_to").notNull(),
+  status: text("status").notNull().default('In Progress'),
+  userId: varchar("user_id", { length: 100 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertPbcEvidenceRequestSchema = createInsertSchema(pbcEvidenceRequests).omit({
+  id: true,
+  createdAt: true,
+});
+export const selectPbcEvidenceRequestSchema = createSelectSchema(pbcEvidenceRequests);
+export type InsertPbcEvidenceRequest = z.infer<typeof insertPbcEvidenceRequestSchema>;
+export type PbcEvidenceRequest = typeof pbcEvidenceRequests.$inferSelect;
+
+export const pbcEvidenceReports = pgTable("pbc_evidence_reports", {
+  id: serial("id").primaryKey(),
+  requestId: varchar("request_id", { length: 50 }).notNull(),
+  keychainDatabase: text("keychain_database").notNull(),
+  executedQuery: text("executed_query").notNull(),
+  recordCount: integer("record_count").notNull().default(0),
+  executedAt: timestamp("executed_at").defaultNow(),
+});
+
+export const insertPbcEvidenceReportSchema = createInsertSchema(pbcEvidenceReports).omit({
+  id: true,
+});
+export const selectPbcEvidenceReportSchema = createSelectSchema(pbcEvidenceReports);
+export type InsertPbcEvidenceReport = z.infer<typeof insertPbcEvidenceReportSchema>;
+export type PbcEvidenceReport = typeof pbcEvidenceReports.$inferSelect;
