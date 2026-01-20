@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
-import { format, subMonths, startOfMonth, endOfMonth, isAfter, isBefore, differenceInMonths } from 'date-fns';
+import { format, subMonths, startOfMonth, isAfter, isBefore, differenceInMonths } from 'date-fns';
 import * as XLSX from 'xlsx';
 import { PBCLayout } from '@/components/PBCLayout';
 import { PageHeader } from '@/components/PageHeader';
@@ -81,7 +81,7 @@ function StatusBadge({ status }: { status: RequestStatus }) {
 export default function PBCAutomationPage() {
   const [selectedControl, setSelectedControl] = useState<string>('');
   const [dateFrom, setDateFrom] = useState<Date | undefined>(startOfMonth(new Date()));
-  const [dateTo, setDateTo] = useState<Date | undefined>(endOfMonth(new Date()));
+  const [dateTo, setDateTo] = useState<Date | undefined>(new Date());
   const [requests, setRequests] = useState<EvidenceRequest[]>(SAMPLE_REQUESTS);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -183,7 +183,7 @@ export default function PBCAutomationPage() {
     setShowSuccessDialog(true);
     setSelectedControl('');
     setDateFrom(startOfMonth(new Date()));
-    setDateTo(endOfMonth(new Date()));
+    setDateTo(new Date());
   };
 
   const handleViewReport = (request: EvidenceRequest) => {
