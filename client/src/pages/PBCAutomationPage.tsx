@@ -287,16 +287,20 @@ export default function PBCAutomationPage() {
                                   key={control.id}
                                   value={control.id}
                                   onSelect={handleControlSelect}
+                                  className="flex justify-between"
                                 >
-                                  <Check
-                                    className={cn(
-                                      "mr-2 h-4 w-4",
-                                      selectedControl === control.id ? "opacity-100" : "opacity-0"
-                                    )}
-                                  />
-                                  <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">
-                                    {control.id}
-                                  </span>
+                                  <div className="flex items-center">
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        selectedControl === control.id ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">
+                                      {control.id}
+                                    </span>
+                                  </div>
+                                  <Badge className="bg-accent text-accent-foreground text-xs">Automated</Badge>
                                 </CommandItem>
                               ))}
                             </CommandGroup>
@@ -306,16 +310,20 @@ export default function PBCAutomationPage() {
                                   key={control.id}
                                   value={control.id}
                                   onSelect={handleControlSelect}
+                                  className="flex justify-between"
                                 >
-                                  <Check
-                                    className={cn(
-                                      "mr-2 h-4 w-4",
-                                      selectedControl === control.id ? "opacity-100" : "opacity-0"
-                                    )}
-                                  />
-                                  <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">
-                                    {control.id}
-                                  </span>
+                                  <div className="flex items-center">
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        selectedControl === control.id ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">
+                                      {control.id}
+                                    </span>
+                                  </div>
+                                  <Badge variant="secondary" className="text-xs">Manual</Badge>
                                 </CommandItem>
                               ))}
                             </CommandGroup>
