@@ -24,7 +24,6 @@ export default function LandingPage() {
           </div>
         </div>
       </header>
-
       <main className="flex-1 flex items-center justify-center p-8">
         <div className="max-w-4xl w-full">
           <div className="text-center mb-12">
@@ -46,9 +45,7 @@ export default function LandingPage() {
                   <LayoutDashboard className="h-8 w-8 text-blue-600 dark:text-blue-400" />
                 </div>
                 <CardTitle className="text-2xl">FAST Dashboard</CardTitle>
-                <CardDescription className="text-base">
-                  Freddie Mac Asset & System Tracking
-                </CardDescription>
+                <CardDescription className="text-base">Full Asset Status Tracker</CardDescription>
               </CardHeader>
               <CardContent className="text-center">
                 <p className="text-sm text-muted-foreground mb-4">
@@ -87,7 +84,6 @@ export default function LandingPage() {
           </div>
         </div>
       </main>
-
       <footer className="border-t bg-white dark:bg-slate-950 py-4">
         <div className="container mx-auto px-6 text-center text-sm text-muted-foreground">
           Freddie Mac Enterprise IT Management Suite
