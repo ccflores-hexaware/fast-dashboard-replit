@@ -137,9 +137,10 @@ export default function PBCAutomationPage() {
   const handleControlSelect = (controlId: string) => {
     setSelectedControl(controlId);
     setControlComboboxOpen(false);
-    if (!isAutomatedControl(controlId)) {
-      window.open(EXTERNAL_LINKS.sharepointIntakeForm, '_blank', 'noopener,noreferrer');
-    }
+  };
+
+  const handleOpenManualForm = () => {
+    window.open(EXTERNAL_LINKS.sharepointIntakeForm, '_blank', 'noopener,noreferrer');
   };
 
   const canSubmit = useMemo(() => {
@@ -446,6 +447,17 @@ export default function PBCAutomationPage() {
                         )}
                       </Button>
                     </>
+                  )}
+
+                  {selectedControl && !isAutomated && (
+                    <div className="bg-muted/50 border rounded-lg p-4 space-y-3">
+                      <p className="text-sm text-muted-foreground">
+                        This control requires manual processing. Please submit your request through the SharePoint intake form.
+                      </p>
+                      <Button onClick={handleOpenManualForm} className="w-full md:w-auto">
+                        Open SharePoint Intake Form
+                      </Button>
+                    </div>
                   )}
             </div>
           </CardContent>
