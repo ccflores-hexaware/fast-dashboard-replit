@@ -44,7 +44,9 @@ import {
   Clock, 
   AlertCircle,
   ChevronsUpDown,
-  Check
+  Check,
+  ChevronRight,
+  ChevronDown
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -92,6 +94,19 @@ export default function PBCAutomationPage() {
   const [selectedReport, setSelectedReport] = useState<EvidenceReport[] | null>(null);
   const [selectedReportRequest, setSelectedReportRequest] = useState<EvidenceRequest | null>(null);
   const [controlComboboxOpen, setControlComboboxOpen] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+
+  const toggleGroupExpansion = useCallback((controlId: string) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(controlId)) {
+        next.delete(controlId);
+      } else {
+        next.add(controlId);
+      }
+      return next;
+    });
+  }, []);
 
   const selectedControlData = useMemo(() => 
     ALL_CONTROLS.find(c => c.id === selectedControl),
@@ -481,51 +496,93 @@ export default function PBCAutomationPage() {
                 <p>No requests found. Submit your first evidence request above.</p>
               </div>
             ) : (
-              <div className="rounded-md border">
+              <div className="rounded-md border border-border bg-card shadow-sm overflow-x-auto">
                 <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Request ID</TableHead>
-                      <TableHead>Date From</TableHead>
-                      <TableHead>Date To</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                  <TableHeader className="bg-muted/50">
+                    <TableRow className="border-b border-border">
+                      <TableHead className="text-sm border-r border-border px-4 py-3 whitespace-nowrap font-medium text-muted-foreground">Control ID</TableHead>
+                      <TableHead className="text-sm border-r border-border px-4 py-3 whitespace-nowrap font-medium text-muted-foreground">Request ID</TableHead>
+                      <TableHead className="text-sm border-r border-border px-4 py-3 whitespace-nowrap font-medium text-muted-foreground">Date From</TableHead>
+                      <TableHead className="text-sm border-r border-border px-4 py-3 whitespace-nowrap font-medium text-muted-foreground">Date To</TableHead>
+                      <TableHead className="text-sm border-r border-border px-4 py-3 whitespace-nowrap font-medium text-muted-foreground">Status</TableHead>
+                      <TableHead className="text-sm px-4 py-3 whitespace-nowrap font-medium text-muted-foreground text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {groupedRequests.map(([controlId, controlRequests]) => (
-                      <Fragment key={controlId}>
-                        <TableRow className="bg-muted/50 hover:bg-muted/50">
-                          <TableCell colSpan={5} className="py-2">
-                            <span className="font-mono text-sm font-semibold">{controlId}</span>
-                            <span className="text-muted-foreground ml-2 text-sm">
-                              ({controlRequests.length} {controlRequests.length === 1 ? 'request' : 'requests'})
-                            </span>
-                          </TableCell>
-                        </TableRow>
-                        {controlRequests.map(request => (
-                          <TableRow key={request.id}>
-                            <TableCell className="font-mono text-sm pl-8">{request.requestId}</TableCell>
-                            <TableCell>{format(new Date(request.dateFrom), 'MMM d, yyyy')}</TableCell>
-                            <TableCell>{format(new Date(request.dateTo), 'MMM d, yyyy')}</TableCell>
-                            <TableCell>
-                              <StatusBadge status={request.status} />
+                    {groupedRequests.map(([controlId, controlRequests]) => {
+                      const isExpanded = expandedGroups.has(controlId);
+                      return (
+                        <Fragment key={controlId}>
+                          <TableRow 
+                            className={cn(
+                              "hover:bg-muted/30 transition-colors border-b border-border cursor-pointer font-medium",
+                              isExpanded && "bg-muted/20"
+                            )}
+                            onClick={() => toggleGroupExpansion(controlId)}
+                          >
+                            <TableCell className="text-sm border-r border-border px-4 py-3 whitespace-nowrap">
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); toggleGroupExpansion(controlId); }}
+                                  className="p-0.5 hover:bg-muted rounded transition-colors"
+                                  aria-label={isExpanded ? "Collapse requests" : "Expand requests"}
+                                >
+                                  {isExpanded ? (
+                                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                  ) : (
+                                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                  )}
+                                </button>
+                                <span className="font-mono text-sm font-semibold text-primary">{controlId}</span>
+                                <Badge variant="outline" className="ml-1 text-xs px-1.5 py-0 h-5 font-normal">
+                                  {controlRequests.length} {controlRequests.length === 1 ? 'request' : 'requests'}
+                                </Badge>
+                              </div>
                             </TableCell>
-                            <TableCell className="text-right">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDownloadReport(request)}
-                                disabled={request.status !== 'Completed'}
-                                aria-label={`Download report for ${request.requestId}`}
-                              >
-                                <Download className="h-4 w-4" />
-                              </Button>
-                            </TableCell>
+                            <TableCell className="text-sm border-r border-border px-4 py-3 whitespace-nowrap text-muted-foreground">—</TableCell>
+                            <TableCell className="text-sm border-r border-border px-4 py-3 whitespace-nowrap text-muted-foreground">—</TableCell>
+                            <TableCell className="text-sm border-r border-border px-4 py-3 whitespace-nowrap text-muted-foreground">—</TableCell>
+                            <TableCell className="text-sm border-r border-border px-4 py-3 whitespace-nowrap text-muted-foreground">—</TableCell>
+                            <TableCell className="text-sm px-4 py-3 whitespace-nowrap text-right">—</TableCell>
                           </TableRow>
-                        ))}
-                      </Fragment>
-                    ))}
+                          {isExpanded && controlRequests.map(request => (
+                            <TableRow 
+                              key={request.id}
+                              className="hover:bg-muted/30 transition-colors border-b border-border bg-muted/10"
+                            >
+                              <TableCell className="text-sm border-r border-border px-4 py-3 whitespace-nowrap text-muted-foreground">
+                                <div className="flex items-center gap-2 pl-7">
+                                  <span className="text-xs text-muted-foreground">└</span>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-sm border-r border-border px-4 py-3 whitespace-nowrap">
+                                <span className="font-mono text-sm">{request.requestId}</span>
+                              </TableCell>
+                              <TableCell className="text-sm border-r border-border px-4 py-3 whitespace-nowrap">
+                                {format(new Date(request.dateFrom), 'MMM d, yyyy')}
+                              </TableCell>
+                              <TableCell className="text-sm border-r border-border px-4 py-3 whitespace-nowrap">
+                                {format(new Date(request.dateTo), 'MMM d, yyyy')}
+                              </TableCell>
+                              <TableCell className="text-sm border-r border-border px-4 py-3 whitespace-nowrap">
+                                <StatusBadge status={request.status} />
+                              </TableCell>
+                              <TableCell className="text-sm px-4 py-3 whitespace-nowrap text-right">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDownloadReport(request)}
+                                  disabled={request.status !== 'Completed'}
+                                  aria-label={`Download report for ${request.requestId}`}
+                                >
+                                  <Download className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </Fragment>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
