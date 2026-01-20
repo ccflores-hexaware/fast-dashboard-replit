@@ -266,8 +266,10 @@ export default function PBCAutomationPage() {
                               <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">
                                 {selectedControl}
                               </span>
-                              {selectedControlData?.isAutomated && (
-                                <Badge variant="secondary" className="text-xs">Automated</Badge>
+                              {selectedControlData?.isAutomated ? (
+                                <Badge className="bg-accent text-accent-foreground text-xs">Automated</Badge>
+                              ) : (
+                                <Badge variant="secondary" className="text-xs">Manual</Badge>
                               )}
                             </span>
                           ) : (
