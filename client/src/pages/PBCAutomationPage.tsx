@@ -39,7 +39,6 @@ import { toast } from 'sonner';
 import { 
   CalendarIcon, 
   Download, 
-  Eye, 
   CheckCircle2, 
   Clock, 
   AlertCircle
@@ -421,26 +420,15 @@ export default function PBCAutomationPage() {
                           <StatusBadge status={request.status} />
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleViewReport(request)}
-                              disabled={request.status !== 'Completed'}
-                              aria-label={`View report for ${request.requestId}`}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDownloadReport(request)}
-                              disabled={request.status !== 'Completed'}
-                              aria-label={`Download report for ${request.requestId}`}
-                            >
-                              <Download className="h-4 w-4" />
-                            </Button>
-                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDownloadReport(request)}
+                            disabled={request.status !== 'Completed'}
+                            aria-label={`Download report for ${request.requestId}`}
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
