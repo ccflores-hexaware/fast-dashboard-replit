@@ -84,7 +84,6 @@ export function PBCLayout({ children }: PBCLayoutProps) {
           </div>
         </div>
       </header>
-
       <nav className="bg-primary text-primary-foreground shadow-md z-10">
         <div className="w-full px-6">
           <div className="flex h-14 space-x-1">
@@ -103,9 +102,7 @@ export function PBCLayout({ children }: PBCLayoutProps) {
                   ? 'bg-secondary text-primary border-accent' 
                   : 'text-primary-foreground/90 hover:bg-primary-foreground/10 hover:text-white border-transparent'
               }`}
-            >
-              Control Evidence
-            </Link>
+            >Control Execution Evidence</Link>
             <Link 
               href="/pbc/documentation"
               className={`px-6 h-full flex items-center text-sm font-semibold transition-colors border-b-4 whitespace-nowrap ${
@@ -129,7 +126,6 @@ export function PBCLayout({ children }: PBCLayoutProps) {
           </div>
         </div>
       </nav>
-
       <main className="flex-1 w-full px-6 py-8">
         {children}
       </main>
