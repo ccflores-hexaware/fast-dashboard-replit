@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, Fragment } from 'react';
 import { format, subMonths, startOfMonth, isAfter, isBefore, differenceInMonths } from 'date-fns';
 import * as XLSX from 'xlsx';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PBCLayout } from '@/components/PBCLayout';
 import { PageHeader } from '@/components/PageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -55,16 +56,35 @@ import {
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import {
-  ALL_CONTROLS,
-  SAMPLE_REQUESTS,
-  SAMPLE_EVIDENCE_REPORTS,
-  MOCK_USER,
   EXTERNAL_LINKS,
-  generateRequestId,
-  isAutomatedControl,
-  type EvidenceRequest,
   type EvidenceReport,
 } from '@/lib/pbcMockData';
+
+interface Control {
+  id: number;
+  controlId: string;
+  name: string;
+  isAutomated: boolean;
+  createdAt: string | null;
+}
+
+interface EvidenceRequest {
+  id: number;
+  requestId: string;
+  controlId: string;
+  controlName: string;
+  dateFrom: string;
+  dateTo: string;
+  status: 'In Progress' | 'Completed' | 'Failed';
+  userId: string;
+  createdAt: string | null;
+}
+
+const MOCK_USER = {
+  id: 'user-001',
+  name: 'Auditor User',
+  email: 'auditor@company.com',
+};
 
 type RequestStatus = 'In Progress' | 'Completed' | 'Failed';
 type SortColumn = 'requestId' | 'dateFrom' | 'dateTo' | 'status';
@@ -87,12 +107,45 @@ function StatusBadge({ status }: { status: RequestStatus }) {
   );
 }
 
+async function fetchControls(): Promise<Control[]> {
+  const response = await fetch('/api/pbc/controls');
+  if (!response.ok) throw new Error('Failed to fetch controls');
+  return response.json();
+}
+
+async function fetchRequests(userId: string): Promise<EvidenceRequest[]> {
+  const response = await fetch(`/api/pbc/requests?userId=${encodeURIComponent(userId)}`);
+  if (!response.ok) throw new Error('Failed to fetch requests');
+  return response.json();
+}
+
+async function fetchReports(requestId: string): Promise<EvidenceReport[]> {
+  const response = await fetch(`/api/pbc/requests/${encodeURIComponent(requestId)}/reports`);
+  if (!response.ok) throw new Error('Failed to fetch reports');
+  return response.json();
+}
+
+async function createRequest(data: {
+  controlId: string;
+  controlName: string;
+  dateFrom: string;
+  dateTo: string;
+  userId: string;
+}): Promise<EvidenceRequest> {
+  const response = await fetch('/api/pbc/requests', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error('Failed to create request');
+  return response.json();
+}
+
 export default function PBCAutomationPage() {
+  const queryClient = useQueryClient();
   const [selectedControl, setSelectedControl] = useState<string>('');
   const [dateFrom, setDateFrom] = useState<Date | undefined>(startOfMonth(new Date()));
   const [dateTo, setDateTo] = useState<Date | undefined>(new Date());
-  const [requests, setRequests] = useState<EvidenceRequest[]>(SAMPLE_REQUESTS);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [lastRequestId, setLastRequestId] = useState('');
@@ -105,6 +158,35 @@ export default function PBCAutomationPage() {
   const [historySearch, setHistorySearch] = useState('');
   const [sortColumn, setSortColumn] = useState<SortColumn>('requestId');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+  const { data: controls = [], isLoading: controlsLoading } = useQuery({
+    queryKey: ['pbc-controls'],
+    queryFn: fetchControls,
+  });
+
+  const { data: requests = [], isLoading: requestsLoading } = useQuery({
+    queryKey: ['pbc-requests', MOCK_USER.id],
+    queryFn: () => fetchRequests(MOCK_USER.id),
+  });
+
+  const createRequestMutation = useMutation({
+    mutationFn: createRequest,
+    onSuccess: (newRequest) => {
+      queryClient.invalidateQueries({ queryKey: ['pbc-requests'] });
+      setLastRequestId(newRequest.requestId);
+      setShowSuccessDialog(true);
+      setSelectedControl('');
+      setDateFrom(startOfMonth(new Date()));
+      setDateTo(new Date());
+    },
+    onError: () => {
+      toast.error('Failed to submit request', {
+        description: 'Please try again later.',
+      });
+    },
+  });
+
+  const isSubmitting = createRequestMutation.isPending;
 
   const handleSort = useCallback((column: SortColumn) => {
     if (sortColumn === column) {
@@ -128,13 +210,13 @@ export default function PBCAutomationPage() {
   }, []);
 
   const selectedControlData = useMemo(() => 
-    ALL_CONTROLS.find(c => c.id === selectedControl),
-    [selectedControl]
+    controls.find(c => c.controlId === selectedControl),
+    [selectedControl, controls]
   );
 
   const isAutomated = useMemo(() => 
-    selectedControl ? isAutomatedControl(selectedControl) : false,
-    [selectedControl]
+    selectedControlData?.isAutomated ?? false,
+    [selectedControlData]
   );
 
   const validateDates = useCallback((from: Date | undefined, to: Date | undefined): string[] => {
@@ -195,74 +277,69 @@ export default function PBCAutomationPage() {
 
   const handleConfirmSubmit = async () => {
     setShowConfirmDialog(false);
-    setIsSubmitting(true);
-
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    const requestId = generateRequestId();
-    const newRequest: EvidenceRequest = {
-      id: String(requests.length + 1),
-      requestId,
+    createRequestMutation.mutate({
       controlId: selectedControl,
       controlName: selectedControlData?.name || '',
       dateFrom: format(dateFrom!, 'yyyy-MM-dd'),
       dateTo: format(dateTo!, 'yyyy-MM-dd'),
-      status: 'In Progress',
-      createdAt: new Date().toISOString(),
       userId: MOCK_USER.id,
-    };
-
-    setRequests(prev => [newRequest, ...prev]);
-    setLastRequestId(requestId);
-    setIsSubmitting(false);
-    setShowSuccessDialog(true);
-    setSelectedControl('');
-    setDateFrom(startOfMonth(new Date()));
-    setDateTo(new Date());
+    });
   };
 
-  const handleViewReport = (request: EvidenceRequest) => {
-    const report = SAMPLE_EVIDENCE_REPORTS[request.requestId];
-    if (report) {
-      setSelectedReport(report);
-      setSelectedReportRequest(request);
-      setShowReportDialog(true);
-    } else {
+  const handleViewReport = async (request: EvidenceRequest) => {
+    try {
+      const reports = await fetchReports(request.requestId);
+      if (reports && reports.length > 0) {
+        setSelectedReport(reports);
+        setSelectedReportRequest(request);
+        setShowReportDialog(true);
+      } else {
+        toast.error('Report not available', {
+          description: `The evidence report for ${request.requestId} is not yet available. Please try again later.`,
+        });
+      }
+    } catch {
       toast.error('Report not available', {
         description: `The evidence report for ${request.requestId} is not yet available. Please try again later.`,
       });
     }
   };
 
-  const handleDownloadReport = (request: EvidenceRequest) => {
-    const report = SAMPLE_EVIDENCE_REPORTS[request.requestId];
-    if (!report) {
+  const handleDownloadReport = async (request: EvidenceRequest) => {
+    try {
+      const reports = await fetchReports(request.requestId);
+      if (!reports || reports.length === 0) {
+        toast.error('Download failed', {
+          description: `The evidence report for ${request.requestId} is not yet available for download.`,
+        });
+        return;
+      }
+
+      const worksheetData = reports.map(r => ({
+        'Keychain Database Name': r.keychainDatabase,
+        'Executed Query': r.executedQuery,
+        'Number of Records': r.recordCount,
+        'Date & Time Executed': r.executedAt ? format(new Date(r.executedAt), 'yyyy-MM-dd HH:mm:ss') : 'N/A',
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Evidence Report');
+
+      const colWidths = [
+        { wch: 25 },
+        { wch: 80 },
+        { wch: 18 },
+        { wch: 22 },
+      ];
+      worksheet['!cols'] = colWidths;
+
+      XLSX.writeFile(workbook, `${request.requestId}_Evidence_Report.xlsx`);
+    } catch {
       toast.error('Download failed', {
-        description: `The evidence report for ${request.requestId} is not yet available for download.`,
+        description: `Failed to download the evidence report. Please try again later.`,
       });
-      return;
     }
-
-    const worksheetData = report.map(r => ({
-      'Keychain Database Name': r.keychainDatabase,
-      'Executed Query': r.executedQuery,
-      'Number of Records': r.recordCount,
-      'Date & Time Executed': format(new Date(r.executedAt), 'yyyy-MM-dd HH:mm:ss'),
-    }));
-
-    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Evidence Report');
-
-    const colWidths = [
-      { wch: 25 },
-      { wch: 80 },
-      { wch: 18 },
-      { wch: 22 },
-    ];
-    worksheet['!cols'] = colWidths;
-
-    XLSX.writeFile(workbook, `${request.requestId}_Evidence_Report.xlsx`);
   };
 
   const userRequests = useMemo(() => 
@@ -318,6 +395,23 @@ export default function PBCAutomationPage() {
       .map(([controlId, requests]) => [controlId, sortRequests(requests)] as [string, EvidenceRequest[]]);
   }, [filteredRequests, sortRequests]);
 
+  if (controlsLoading) {
+    return (
+      <PBCLayout>
+        <div className="space-y-6">
+          <PageHeader 
+            title="Control Execution Evidence" 
+            description="Request and manage evidence for IAM controls"
+          />
+          <div className="flex items-center justify-center py-12">
+            <Spinner className="h-8 w-8" />
+            <span className="ml-3 text-muted-foreground">Loading controls...</span>
+          </div>
+        </div>
+      </PBCLayout>
+    );
+  }
+
   return (
     <PBCLayout>
       <div className="space-y-6">
@@ -369,10 +463,10 @@ export default function PBCAutomationPage() {
                           <CommandList>
                             <CommandEmpty>No control found.</CommandEmpty>
                             <CommandGroup heading="Automated">
-                              {ALL_CONTROLS.filter(c => c.isAutomated).map(control => (
+                              {controls.filter(c => c.isAutomated).map(control => (
                                 <CommandItem
-                                  key={control.id}
-                                  value={control.id}
+                                  key={control.controlId}
+                                  value={control.controlId}
                                   onSelect={handleControlSelect}
                                   className="flex justify-between"
                                 >
@@ -380,11 +474,11 @@ export default function PBCAutomationPage() {
                                     <Check
                                       className={cn(
                                         "mr-2 h-4 w-4",
-                                        selectedControl === control.id ? "opacity-100" : "opacity-0"
+                                        selectedControl === control.controlId ? "opacity-100" : "opacity-0"
                                       )}
                                     />
                                     <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">
-                                      {control.id}
+                                      {control.controlId}
                                     </span>
                                   </div>
                                   <Badge className="bg-accent text-accent-foreground text-xs">Automated</Badge>
@@ -392,10 +486,10 @@ export default function PBCAutomationPage() {
                               ))}
                             </CommandGroup>
                             <CommandGroup heading="Manual">
-                              {ALL_CONTROLS.filter(c => !c.isAutomated).map(control => (
+                              {controls.filter(c => !c.isAutomated).map(control => (
                                 <CommandItem
-                                  key={control.id}
-                                  value={control.id}
+                                  key={control.controlId}
+                                  value={control.controlId}
                                   onSelect={handleControlSelect}
                                   className="flex justify-between"
                                 >
@@ -403,11 +497,11 @@ export default function PBCAutomationPage() {
                                     <Check
                                       className={cn(
                                         "mr-2 h-4 w-4",
-                                        selectedControl === control.id ? "opacity-100" : "opacity-0"
+                                        selectedControl === control.controlId ? "opacity-100" : "opacity-0"
                                       )}
                                     />
                                     <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">
-                                      {control.id}
+                                      {control.controlId}
                                     </span>
                                   </div>
                                   <Badge variant="secondary" className="text-xs">Manual</Badge>
@@ -423,7 +517,7 @@ export default function PBCAutomationPage() {
                         ? 'This control supports automated evidence generation'
                         : selectedControl 
                           ? 'This control requires manual processing. Please submit your request through the SharePoint intake form.'
-                          : 'Choose from 43 available controls'}
+                          : `Choose from ${controls.length} available controls`}
                     </p>
                   </div>
 
@@ -570,7 +664,12 @@ export default function PBCAutomationPage() {
             </div>
           </CardHeader>
           <CardContent>
-            {userRequests.length === 0 ? (
+            {requestsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Spinner className="h-6 w-6" />
+                <span className="ml-3 text-muted-foreground">Loading requests...</span>
+              </div>
+            ) : userRequests.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Clock className="h-12 w-12 mx-auto mb-3 opacity-50" />
                 <p>No requests found. Submit your first evidence request above.</p>
