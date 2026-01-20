@@ -48,7 +48,9 @@ import {
   ChevronRight,
   ChevronDown,
   Search,
-  X
+  X,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -65,6 +67,8 @@ import {
 } from '@/lib/pbcMockData';
 
 type RequestStatus = 'In Progress' | 'Completed' | 'Failed';
+type SortColumn = 'requestId' | 'dateFrom' | 'dateTo' | 'status';
+type SortDirection = 'asc' | 'desc';
 
 function StatusBadge({ status }: { status: RequestStatus }) {
   const variants: Record<RequestStatus, { className?: string; variant: 'default' | 'secondary' | 'destructive'; icon: React.ReactNode }> = {
@@ -99,6 +103,17 @@ export default function PBCAutomationPage() {
   const [controlComboboxOpen, setControlComboboxOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [historySearch, setHistorySearch] = useState('');
+  const [sortColumn, setSortColumn] = useState<SortColumn>('requestId');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+  const handleSort = useCallback((column: SortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  }, [sortColumn]);
 
   const toggleGroupExpansion = useCallback((controlId: string) => {
     setExpandedGroups(prev => {
@@ -269,6 +284,27 @@ export default function PBCAutomationPage() {
     );
   }, [userRequests, historySearch]);
 
+  const sortRequests = useCallback((requests: EvidenceRequest[]) => {
+    return [...requests].sort((a, b) => {
+      let comparison = 0;
+      switch (sortColumn) {
+        case 'requestId':
+          comparison = a.requestId.localeCompare(b.requestId);
+          break;
+        case 'dateFrom':
+          comparison = new Date(a.dateFrom).getTime() - new Date(b.dateFrom).getTime();
+          break;
+        case 'dateTo':
+          comparison = new Date(a.dateTo).getTime() - new Date(b.dateTo).getTime();
+          break;
+        case 'status':
+          comparison = a.status.localeCompare(b.status);
+          break;
+      }
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }, [sortColumn, sortDirection]);
+
   const groupedRequests = useMemo(() => {
     const grouped: Record<string, EvidenceRequest[]> = {};
     filteredRequests.forEach(request => {
@@ -277,8 +313,10 @@ export default function PBCAutomationPage() {
       }
       grouped[request.controlId].push(request);
     });
-    return Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b));
-  }, [filteredRequests]);
+    return Object.entries(grouped)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([controlId, requests]) => [controlId, sortRequests(requests)] as [string, EvidenceRequest[]]);
+  }, [filteredRequests, sortRequests]);
 
   return (
     <PBCLayout>
@@ -583,12 +621,60 @@ export default function PBCAutomationPage() {
                           </TableRow>
                           {isExpanded && (
                             <>
-                              <TableRow className="bg-slate-50 hover:bg-slate-50 border-b border-slate-200">
-                                <TableCell className="py-2 px-4 pl-14 text-xs font-semibold text-slate-500 uppercase tracking-wider">Request ID</TableCell>
-                                <TableCell className="py-2 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Date From</TableCell>
-                                <TableCell className="py-2 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Date To</TableCell>
-                                <TableCell className="py-2 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</TableCell>
-                                <TableCell className="py-2 px-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider w-24">Actions</TableCell>
+                              <TableRow className="bg-white hover:bg-white border-b border-slate-200">
+                                <TableCell 
+                                  className="py-3 px-4 pl-14 text-sm font-medium text-primary cursor-pointer select-none"
+                                  onClick={(e) => { e.stopPropagation(); handleSort('requestId'); }}
+                                >
+                                  <div className="flex items-center gap-1">
+                                    Request ID
+                                    {sortColumn === 'requestId' && (
+                                      sortDirection === 'asc' 
+                                        ? <ArrowUp className="h-3 w-3" />
+                                        : <ArrowDown className="h-3 w-3" />
+                                    )}
+                                  </div>
+                                </TableCell>
+                                <TableCell 
+                                  className="py-3 px-4 text-sm font-medium text-primary cursor-pointer select-none"
+                                  onClick={(e) => { e.stopPropagation(); handleSort('dateFrom'); }}
+                                >
+                                  <div className="flex items-center gap-1">
+                                    Date From
+                                    {sortColumn === 'dateFrom' && (
+                                      sortDirection === 'asc' 
+                                        ? <ArrowUp className="h-3 w-3" />
+                                        : <ArrowDown className="h-3 w-3" />
+                                    )}
+                                  </div>
+                                </TableCell>
+                                <TableCell 
+                                  className="py-3 px-4 text-sm font-medium text-primary cursor-pointer select-none"
+                                  onClick={(e) => { e.stopPropagation(); handleSort('dateTo'); }}
+                                >
+                                  <div className="flex items-center gap-1">
+                                    Date To
+                                    {sortColumn === 'dateTo' && (
+                                      sortDirection === 'asc' 
+                                        ? <ArrowUp className="h-3 w-3" />
+                                        : <ArrowDown className="h-3 w-3" />
+                                    )}
+                                  </div>
+                                </TableCell>
+                                <TableCell 
+                                  className="py-3 px-4 text-sm font-medium text-primary cursor-pointer select-none"
+                                  onClick={(e) => { e.stopPropagation(); handleSort('status'); }}
+                                >
+                                  <div className="flex items-center gap-1">
+                                    Status
+                                    {sortColumn === 'status' && (
+                                      sortDirection === 'asc' 
+                                        ? <ArrowUp className="h-3 w-3" />
+                                        : <ArrowDown className="h-3 w-3" />
+                                    )}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="py-3 px-4 text-right text-sm font-medium text-slate-500 w-24">Actions</TableCell>
                               </TableRow>
                               {controlRequests.map((request, idx) => (
                                 <TableRow 
