@@ -14,6 +14,8 @@ import BTOPage from "@/pages/BTOPage";
 import CMDBPage from "@/pages/CMDBPage";
 import ReconPage from "@/pages/ReconPage";
 import PBCAutomationPage from "@/pages/PBCAutomationPage";
+import PBCDocumentationPage from "@/pages/PBCDocumentationPage";
+import PBCOtherPage from "@/pages/PBCOtherPage";
 import { UserProvider } from "@/lib/userContext";
 
 function Router() {
@@ -42,6 +44,12 @@ function Router() {
       </Route>
       <Route path="/pbc">
         <PBCAutomationPage />
+      </Route>
+      <Route path="/pbc/documentation">
+        <PBCDocumentationPage />
+      </Route>
+      <Route path="/pbc/other">
+        <PBCOtherPage />
       </Route>
       <Route component={NotFound} />
     </Switch>

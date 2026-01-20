@@ -96,9 +96,36 @@ export function PBCLayout({ children }: PBCLayoutProps) {
               Home
             </Link>
             <div className="h-8 w-px bg-primary-foreground/20 self-center mx-2" />
-            <span className="px-6 h-full flex items-center text-sm font-semibold bg-secondary text-primary border-b-4 border-accent">
+            <Link 
+              href="/pbc"
+              className={`px-6 h-full flex items-center text-sm font-semibold transition-colors border-b-4 whitespace-nowrap ${
+                location === '/pbc' 
+                  ? 'bg-secondary text-primary border-accent' 
+                  : 'text-primary-foreground/90 hover:bg-primary-foreground/10 hover:text-white border-transparent'
+              }`}
+            >
               Control Evidence
-            </span>
+            </Link>
+            <Link 
+              href="/pbc/documentation"
+              className={`px-6 h-full flex items-center text-sm font-semibold transition-colors border-b-4 whitespace-nowrap ${
+                location === '/pbc/documentation' 
+                  ? 'bg-secondary text-primary border-accent' 
+                  : 'text-primary-foreground/90 hover:bg-primary-foreground/10 hover:text-white border-transparent'
+              }`}
+            >
+              Documentation
+            </Link>
+            <Link 
+              href="/pbc/other"
+              className={`px-6 h-full flex items-center text-sm font-semibold transition-colors border-b-4 whitespace-nowrap ${
+                location === '/pbc/other' 
+                  ? 'bg-secondary text-primary border-accent' 
+                  : 'text-primary-foreground/90 hover:bg-primary-foreground/10 hover:text-white border-transparent'
+              }`}
+            >
+              Other
+            </Link>
           </div>
         </div>
       </nav>

@@ -5,7 +5,6 @@ import { PBCLayout } from '@/components/PBCLayout';
 import { PageHeader } from '@/components/PageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -41,8 +40,6 @@ import {
   CalendarIcon, 
   Download, 
   Eye, 
-  ExternalLink, 
-  FileText, 
   CheckCircle2, 
   Clock, 
   AlertCircle
@@ -80,7 +77,6 @@ function StatusBadge({ status }: { status: RequestStatus }) {
 }
 
 export default function PBCAutomationPage() {
-  const [activeTab, setActiveTab] = useState('control-evidence');
   const [selectedControl, setSelectedControl] = useState<string>('');
   const [dateFrom, setDateFrom] = useState<Date | undefined>(startOfMonth(new Date()));
   const [dateTo, setDateTo] = useState<Date | undefined>(endOfMonth(new Date()));
@@ -230,14 +226,6 @@ export default function PBCAutomationPage() {
     XLSX.writeFile(workbook, `${request.requestId}_Evidence_Report.xlsx`);
   };
 
-  const handleDocumentationClick = () => {
-    window.open(EXTERNAL_LINKS.documentCentral, '_blank', 'noopener,noreferrer');
-  };
-
-  const handleOtherClick = () => {
-    window.open(EXTERNAL_LINKS.sharepointIntakeForm, '_blank', 'noopener,noreferrer');
-  };
-
   const userRequests = useMemo(() => 
     requests.filter(r => r.userId === MOCK_USER.id),
     [requests]
@@ -252,28 +240,11 @@ export default function PBCAutomationPage() {
         />
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle>Request Type</CardTitle>
-            <CardDescription>Select the type of request you would like to make</CardDescription>
+            <CardTitle>Request Evidence</CardTitle>
+            <CardDescription>Select a control and date range to generate evidence</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-3" role="tablist" aria-label="Request type selection">
-                <TabsTrigger value="control-evidence" aria-controls="control-evidence-panel">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Control Execution Evidence
-                </TabsTrigger>
-                <TabsTrigger value="documentation" aria-controls="documentation-panel">
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Documentation
-                </TabsTrigger>
-                <TabsTrigger value="other" aria-controls="other-panel">
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Other
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="control-evidence" id="control-evidence-panel" className="mt-6">
-                <div className="space-y-6">
+            <div className="space-y-6">
                   <div className="space-y-2">
                     <Label htmlFor="control-select">Select Control</Label>
                     <Select value={selectedControl} onValueChange={handleControlSelect}>
@@ -408,37 +379,7 @@ export default function PBCAutomationPage() {
                       </Button>
                     </>
                   )}
-                </div>
-              </TabsContent>
-
-              <TabsContent value="documentation" id="documentation-panel" className="mt-6">
-                <div className="text-center py-12">
-                  <FileText className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">EO+T Document Central</h3>
-                  <p className="text-muted-foreground mb-6">
-                    Access documentation and reference materials
-                  </p>
-                  <Button onClick={handleDocumentationClick}>
-                    <ExternalLink className="mr-2 h-4 w-4" />
-                    Open Document Central
-                  </Button>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="other" id="other-panel" className="mt-6">
-                <div className="text-center py-12">
-                  <FileText className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Other Requests</h3>
-                  <p className="text-muted-foreground mb-6">
-                    Submit other PBC requests via SharePoint
-                  </p>
-                  <Button onClick={handleOtherClick}>
-                    <ExternalLink className="mr-2 h-4 w-4" />
-                    Open SharePoint Intake Form
-                  </Button>
-                </div>
-              </TabsContent>
-            </Tabs>
+            </div>
           </CardContent>
         </Card>
 
