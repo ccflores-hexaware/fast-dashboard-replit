@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { fastAssets, tpiAssets, btoAssets, cmdbAssets } from "@shared/schema";
+import { fastAssets, tpiAssets, btoAssets, cmdbAssets, pbcControls, pbcEvidenceRequests, pbcEvidenceReports } from "@shared/schema";
 
 const pick = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 const randomDate = (startYear: number, endYear: number): string => {
@@ -243,6 +243,151 @@ async function seed() {
   
   await db.insert(cmdbAssets).values(cmdbRecords);
   console.log(`Inserted ${cmdbRecords.length} CMDB records`);
+
+  console.log("Seeding PBC controls...");
+  const pbcControlRecords = [
+    { controlId: 'C.IT.IACTM.001', name: 'User Access Provisioning', isAutomated: true },
+    { controlId: 'C.IT.IACTM.002', name: 'User Access Review - Quarterly', isAutomated: false },
+    { controlId: 'C.IT.IACTM.003', name: 'Privileged Access Management', isAutomated: false },
+    { controlId: 'C.IT.IACTM.004', name: 'User Access Termination', isAutomated: true },
+    { controlId: 'C.IT.IACTM.005', name: 'Password Policy Enforcement', isAutomated: false },
+    { controlId: 'C.IT.IACTM.006', name: 'Multi-Factor Authentication', isAutomated: true },
+    { controlId: 'C.IT.IACTM.007', name: 'Service Account Management', isAutomated: true },
+    { controlId: 'C.IT.IACTM.008', name: 'Access Rights Recertification', isAutomated: true },
+    { controlId: 'C.IT.IACTM.009', name: 'Role-Based Access Control', isAutomated: false },
+    { controlId: 'C.IT.IACTM.010', name: 'Privileged User Monitoring', isAutomated: true },
+    { controlId: 'C.IT.IACTM.011', name: 'Access Request Approval Workflow', isAutomated: false },
+    { controlId: 'C.IT.IACTM.012', name: 'Emergency Access Procedures', isAutomated: false },
+    { controlId: 'C.IT.IACTM.013', name: 'Third-Party Access Control', isAutomated: false },
+    { controlId: 'C.IT.IACTM.014', name: 'Remote Access Security', isAutomated: false },
+    { controlId: 'C.IT.IACTM.015', name: 'Access Logging and Monitoring', isAutomated: false },
+    { controlId: 'C.IT.IACTM.016', name: 'Identity Lifecycle Management', isAutomated: false },
+    { controlId: 'C.IT.IACTM.017', name: 'Session Timeout Controls', isAutomated: true },
+    { controlId: 'C.IT.IACTM.018', name: 'Account Lockout Policies', isAutomated: false },
+    { controlId: 'C.IT.IACTM.019', name: 'Segregation of Duties', isAutomated: false },
+    { controlId: 'C.IT.IACTM.020', name: 'Access Control Matrix Review', isAutomated: false },
+    { controlId: 'C.IT.IACTM.021', name: 'Privileged Access Approval', isAutomated: false },
+    { controlId: 'C.IT.IACTM.022', name: 'System Administrator Controls', isAutomated: false },
+    { controlId: 'C.IT.IACTM.023', name: 'Database Access Management', isAutomated: false },
+    { controlId: 'C.IT.IACTM.024', name: 'Application Access Controls', isAutomated: false },
+    { controlId: 'C.IT.IACTM.025', name: 'Network Access Controls', isAutomated: false },
+    { controlId: 'C.IT.IACTM.026', name: 'VPN Access Management', isAutomated: false },
+    { controlId: 'C.IT.IACTM.027', name: 'Cloud Access Security', isAutomated: false },
+    { controlId: 'C.IT.IACTM.028', name: 'Mobile Device Access Control', isAutomated: false },
+    { controlId: 'C.IT.IACTM.029', name: 'Guest Access Management', isAutomated: false },
+    { controlId: 'C.IT.IACTM.030', name: 'Contractor Access Control', isAutomated: false },
+    { controlId: 'C.IT.IACTM.031', name: 'Dormant Account Management', isAutomated: true },
+    { controlId: 'C.IT.IACTM.032', name: 'Generic Account Controls', isAutomated: false },
+    { controlId: 'C.IT.IACTM.033', name: 'Shared Account Management', isAutomated: false },
+    { controlId: 'C.IT.IACTM.034', name: 'API Access Management', isAutomated: false },
+    { controlId: 'C.IT.IACTM.035', name: 'Token-Based Authentication', isAutomated: false },
+    { controlId: 'C.IT.IACTM.036', name: 'SSO Implementation', isAutomated: false },
+    { controlId: 'C.IT.IACTM.037', name: 'Biometric Access Controls', isAutomated: false },
+    { controlId: 'C.IT.IACTM.038', name: 'Physical Access Integration', isAutomated: false },
+    { controlId: 'C.IT.IACTM.039', name: 'Access Provisioning SLA', isAutomated: false },
+    { controlId: 'C.IT.IACTM.040', name: 'Access Deprovisioning SLA', isAutomated: false },
+    { controlId: 'C.IT.IACTM.041', name: 'User Activity Monitoring', isAutomated: false },
+    { controlId: 'C.IT.IACTM.042', name: 'Access Anomaly Detection', isAutomated: false },
+    { controlId: 'C.IT.CRM.121', name: 'Customer Data Access Control', isAutomated: true },
+  ];
+  
+  await db.insert(pbcControls).values(pbcControlRecords);
+  console.log(`Inserted ${pbcControlRecords.length} PBC control records`);
+
+  console.log("Seeding PBC evidence requests...");
+  const pbcRequestRecords = [
+    {
+      requestId: 'PBC-001-A2X',
+      controlId: 'C.IT.IACTM.001',
+      controlName: 'User Access Provisioning',
+      dateFrom: '2025-01-01',
+      dateTo: '2025-01-15',
+      status: 'Completed',
+      userId: 'user-001',
+    },
+    {
+      requestId: 'PBC-002-B3Y',
+      controlId: 'C.IT.IACTM.004',
+      controlName: 'User Access Termination',
+      dateFrom: '2025-01-01',
+      dateTo: '2025-01-20',
+      status: 'In Progress',
+      userId: 'user-001',
+    },
+    {
+      requestId: 'PBC-003-C4Z',
+      controlId: 'C.IT.IACTM.010',
+      controlName: 'Privileged User Monitoring',
+      dateFrom: '2024-12-01',
+      dateTo: '2024-12-31',
+      status: 'Failed',
+      userId: 'user-001',
+    },
+    {
+      requestId: 'PBC-004-D5W',
+      controlId: 'C.IT.CRM.121',
+      controlName: 'Customer Data Access Control',
+      dateFrom: '2024-11-01',
+      dateTo: '2024-11-30',
+      status: 'Completed',
+      userId: 'user-001',
+    },
+    {
+      requestId: 'PBC-005-E6V',
+      controlId: 'C.IT.IACTM.006',
+      controlName: 'Multi-Factor Authentication',
+      dateFrom: '2024-10-01',
+      dateTo: '2024-12-31',
+      status: 'Completed',
+      userId: 'user-001',
+    },
+  ];
+  
+  await db.insert(pbcEvidenceRequests).values(pbcRequestRecords);
+  console.log(`Inserted ${pbcRequestRecords.length} PBC request records`);
+
+  console.log("Seeding PBC evidence reports...");
+  const pbcReportRecords = [
+    {
+      requestId: 'PBC-001-A2X',
+      keychainDatabase: 'IAM_CENTRAL_DB',
+      executedQuery: 'SELECT user_id, provision_date, approver, role_assigned FROM user_provisioning WHERE provision_date BETWEEN :start_date AND :end_date ORDER BY provision_date DESC',
+      recordCount: 247,
+    },
+    {
+      requestId: 'PBC-001-A2X',
+      keychainDatabase: 'HR_SYSTEMS_DB',
+      executedQuery: 'SELECT employee_id, hire_date, department, manager_id FROM employees WHERE hire_date BETWEEN :start_date AND :end_date',
+      recordCount: 52,
+    },
+    {
+      requestId: 'PBC-004-D5W',
+      keychainDatabase: 'CRM_ACCESS_DB',
+      executedQuery: 'SELECT access_id, user_id, customer_segment, access_level, granted_date, granted_by FROM customer_data_access WHERE granted_date BETWEEN :start_date AND :end_date',
+      recordCount: 189,
+    },
+    {
+      requestId: 'PBC-004-D5W',
+      keychainDatabase: 'AUDIT_LOG_DB',
+      executedQuery: 'SELECT log_id, user_id, action_type, customer_id, timestamp FROM customer_access_logs WHERE timestamp BETWEEN :start_date AND :end_date',
+      recordCount: 3542,
+    },
+    {
+      requestId: 'PBC-005-E6V',
+      keychainDatabase: 'MFA_CENTRAL_DB',
+      executedQuery: 'SELECT user_id, mfa_method, enrollment_date, last_verified, status FROM mfa_enrollment WHERE enrollment_date BETWEEN :start_date AND :end_date',
+      recordCount: 1523,
+    },
+    {
+      requestId: 'PBC-005-E6V',
+      keychainDatabase: 'AUTH_SYSTEMS_DB',
+      executedQuery: 'SELECT auth_id, user_id, auth_method, success, timestamp FROM authentication_logs WHERE auth_method IN (\'MFA_PUSH\', \'MFA_SMS\', \'MFA_TOTP\') AND timestamp BETWEEN :start_date AND :end_date',
+      recordCount: 45672,
+    },
+  ];
+  
+  await db.insert(pbcEvidenceReports).values(pbcReportRecords);
+  console.log(`Inserted ${pbcReportRecords.length} PBC report records`);
 
   console.log("Database seeding complete!");
   process.exit(0);
