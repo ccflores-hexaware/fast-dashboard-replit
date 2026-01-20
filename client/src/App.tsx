@@ -11,13 +11,17 @@ import TPIPage from "@/pages/TPIPage";
 import BTOPage from "@/pages/BTOPage";
 import CMDBPage from "@/pages/CMDBPage";
 import ReconPage from "@/pages/ReconPage";
+import PBCAutomationPage from "@/pages/PBCAutomationPage";
 import { UserProvider } from "@/lib/userContext";
 
 function Router() {
   return (
     <Switch>
       <Route path="/">
-         <Redirect to="/fast" />
+         <Redirect to="/pbc" />
+      </Route>
+      <Route path="/pbc">
+        <PBCAutomationPage />
       </Route>
       <Route path="/sub-assets">
         <SubAssetsPage />
