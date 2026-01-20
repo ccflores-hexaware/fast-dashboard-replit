@@ -34,6 +34,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { toast } from 'sonner';
 import { 
   CalendarIcon, 
   Download, 
@@ -191,12 +192,21 @@ export default function PBCAutomationPage() {
       setSelectedReport(report);
       setSelectedReportRequest(request);
       setShowReportDialog(true);
+    } else {
+      toast.error('Report not available', {
+        description: `The evidence report for ${request.requestId} is not yet available. Please try again later.`,
+      });
     }
   };
 
   const handleDownloadReport = (request: EvidenceRequest) => {
     const report = SAMPLE_EVIDENCE_REPORTS[request.requestId];
-    if (!report) return;
+    if (!report) {
+      toast.error('Download failed', {
+        description: `The evidence report for ${request.requestId} is not yet available for download.`,
+      });
+      return;
+    }
 
     const worksheetData = report.map(r => ({
       'Keychain Database Name': r.keychainDatabase,
@@ -380,15 +390,20 @@ export default function PBCAutomationPage() {
                         </div>
                       </div>
 
-                      {dateErrors.length > 0 && (
-                        <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3" role="alert">
+                      <div 
+                        role="alert" 
+                        aria-live="polite" 
+                        aria-atomic="true"
+                        className={dateErrors.length > 0 ? "bg-destructive/10 border border-destructive/20 rounded-md p-3" : "sr-only"}
+                      >
+                        {dateErrors.length > 0 && (
                           <ul className="text-sm text-destructive list-disc list-inside">
                             {dateErrors.map((error, idx) => (
                               <li key={idx}>{error}</li>
                             ))}
                           </ul>
-                        </div>
-                      )}
+                        )}
+                      </div>
 
                       <Button
                         onClick={handleGenerateClick}
