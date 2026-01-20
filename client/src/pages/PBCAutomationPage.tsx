@@ -60,16 +60,16 @@ import {
 type RequestStatus = 'In Progress' | 'Completed' | 'Failed';
 
 function StatusBadge({ status }: { status: RequestStatus }) {
-  const variants: Record<RequestStatus, { variant: 'default' | 'secondary' | 'destructive'; icon: React.ReactNode }> = {
+  const variants: Record<RequestStatus, { className?: string; variant: 'default' | 'secondary' | 'destructive'; icon: React.ReactNode }> = {
     'In Progress': { variant: 'secondary', icon: <Clock className="h-3 w-3 mr-1" /> },
-    'Completed': { variant: 'default', icon: <CheckCircle2 className="h-3 w-3 mr-1" /> },
+    'Completed': { variant: 'default', className: 'bg-green-500 hover:bg-green-600 text-white', icon: <CheckCircle2 className="h-3 w-3 mr-1" /> },
     'Failed': { variant: 'destructive', icon: <AlertCircle className="h-3 w-3 mr-1" /> },
   };
 
-  const { variant, icon } = variants[status];
+  const { variant, icon, className } = variants[status];
 
   return (
-    <Badge variant={variant} className="flex items-center w-fit">
+    <Badge variant={variant} className={cn("flex items-center w-fit", className)}>
       {icon}
       {status}
     </Badge>
