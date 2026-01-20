@@ -561,7 +561,7 @@ export default function PBCAutomationPage() {
                             className="bg-slate-100 hover:bg-slate-100 cursor-pointer border-t"
                             onClick={() => toggleGroupExpansion(controlId)}
                           >
-                            <TableCell colSpan={4} className="py-2.5 px-4">
+                            <TableCell colSpan={5} className="py-2.5 px-4">
                               <div className="flex items-center gap-3">
                                 <button
                                   onClick={(e) => { e.stopPropagation(); toggleGroupExpansion(controlId); }}
@@ -585,7 +585,8 @@ export default function PBCAutomationPage() {
                             <>
                               <TableRow className="bg-slate-50 hover:bg-slate-50 border-b border-slate-200">
                                 <TableCell className="py-2 px-4 pl-14 text-xs font-semibold text-slate-500 uppercase tracking-wider">Request ID</TableCell>
-                                <TableCell className="py-2 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Date Range</TableCell>
+                                <TableCell className="py-2 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Date From</TableCell>
+                                <TableCell className="py-2 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Date To</TableCell>
                                 <TableCell className="py-2 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</TableCell>
                                 <TableCell className="py-2 px-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider w-24">Actions</TableCell>
                               </TableRow>
@@ -602,7 +603,12 @@ export default function PBCAutomationPage() {
                                   </TableCell>
                                   <TableCell className="py-3 px-4">
                                     <span className="text-sm text-slate-600">
-                                      {format(new Date(request.dateFrom), 'MMM d, yyyy')} — {format(new Date(request.dateTo), 'MMM d, yyyy')}
+                                      {format(new Date(request.dateFrom), 'MMM d, yyyy')}
+                                    </span>
+                                  </TableCell>
+                                  <TableCell className="py-3 px-4">
+                                    <span className="text-sm text-slate-600">
+                                      {format(new Date(request.dateTo), 'MMM d, yyyy')}
                                     </span>
                                   </TableCell>
                                   <TableCell className="py-3 px-4">
