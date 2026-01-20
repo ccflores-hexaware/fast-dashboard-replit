@@ -262,20 +262,22 @@ export default function PBCAutomationPage() {
                           className="w-full justify-between"
                         >
                           {selectedControl ? (
-                            <span className="flex items-center gap-2">
-                              <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">
-                                {selectedControl}
-                              </span>
-                              {selectedControlData?.isAutomated ? (
-                                <Badge className="bg-accent text-accent-foreground text-xs">Automated</Badge>
-                              ) : (
-                                <Badge variant="secondary" className="text-xs">Manual</Badge>
-                              )}
+                            <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">
+                              {selectedControl}
                             </span>
                           ) : (
                             "Select an IAM control..."
                           )}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          <div className="flex items-center gap-2">
+                            {selectedControl && (
+                              selectedControlData?.isAutomated ? (
+                                <Badge className="bg-accent text-accent-foreground text-xs">Automated</Badge>
+                              ) : (
+                                <Badge variant="secondary" className="text-xs">Manual</Badge>
+                              )
+                            )}
+                            <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+                          </div>
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="p-0" align="start" style={{ width: 'var(--radix-popover-trigger-width)' }}>
