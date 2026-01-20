@@ -520,7 +520,6 @@ export default function PBCAutomationPage() {
                                     <ChevronRight className="h-4 w-4 text-slate-600" />
                                   )}
                                 </button>
-                                <span className="text-xs font-medium text-slate-500 uppercase">Control ID:</span>
                                 <span className="font-semibold text-slate-800">{controlId}</span>
                                 <span className="text-sm text-slate-500">
                                   ({controlRequests.length} {controlRequests.length === 1 ? 'request' : 'requests'})
