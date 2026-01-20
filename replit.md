@@ -1,7 +1,26 @@
-# FAST Dashboard
+# Freddie Mac Enterprise IT Management Suite
 
 ## Overview
-The FAST Dashboard is an enterprise IT asset management prototype developed for Freddie Mac. It offers a unified platform for managing technology portfolios across various data domains, including Assets, TPI (Technology Portfolio Insight), BTO (Business Technology Office), and CMDB (Configuration Management Database). The application supports two user roles: Admins with full CRUD capabilities and Viewers with read-only access. The business vision is to streamline IT asset visibility and management within the organization.
+This is an enterprise IT management suite developed for Freddie Mac containing two main applications:
+
+### Application Structure
+The suite uses a **super application** pattern with a landing page at the root that allows users to navigate between:
+
+1. **FAST Dashboard** (`/fast`) - Freddie Mac Asset & System Tracking
+   - Manages technology portfolios across Assets, TPI, BTO, CMDB, and Recon modules
+   - Full CRUD capabilities for Admins, read-only for Viewers
+
+2. **PBC Automation System** (`/pbc`) - Self-Service Control Evidence System
+   - Request control execution evidence for auditors
+   - Supports 43 IAM controls (9 automated, 34 manual)
+   - Date range selection with validation
+   - Request history tracking with View/Download functionality
+   - Excel export of evidence reports
+
+### Navigation Flow
+- **Landing Page** (`/`): Choose between FAST or PBC applications
+- **FAST Dashboard**: Has its own layout with tabs (FAST, Sub-assets, TPI, BTO, CMDB, Recon) + Home button
+- **PBC System**: Has its own layout with "Back to Home" navigation
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -53,6 +72,12 @@ All major pages follow a consistent modular architecture pattern with feature-sp
 - **CMDB** (`client/src/features/CMDB/`): components/, hooks/, types/, constants/, utils/
 - **Recon** (`client/src/features/Recon/`): components/, hooks/, types/, constants/
 - **BTO** (`client/src/pages/BTOPage.tsx`): Uses unique expandable table structure, kept as single file
+- **PBC** (`client/src/pages/PBCAutomationPage.tsx`): Self-service PBC automation with mock data in `client/src/lib/pbcMockData.ts`
+
+### Layout Components
+- **DashboardLayout** (`client/src/components/DashboardLayout.tsx`): Shared layout for FAST modules
+- **PBCLayout** (`client/src/components/PBCLayout.tsx`): Separate layout for PBC system
+- **LandingPage** (`client/src/pages/LandingPage.tsx`): Application selector/launcher
 
 Each feature module contains:
 - **types/**: TypeScript interfaces for assets, columns, and state
