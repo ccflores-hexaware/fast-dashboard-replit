@@ -341,7 +341,7 @@ export default function PBCAutomationPage() {
                         ? 'This control supports automated evidence generation'
                         : selectedControl 
                           ? 'This control requires manual processing. Please submit your request through the SharePoint intake form.'
-                          : 'Choose from 43 available IAM controls'}
+                          : 'Choose from 43 available controls'}
                     </p>
                   </div>
 
