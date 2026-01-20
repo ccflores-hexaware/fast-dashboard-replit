@@ -62,7 +62,7 @@ type RequestStatus = 'In Progress' | 'Completed' | 'Failed';
 function StatusBadge({ status }: { status: RequestStatus }) {
   const variants: Record<RequestStatus, { className?: string; variant: 'default' | 'secondary' | 'destructive'; icon: React.ReactNode }> = {
     'In Progress': { variant: 'secondary', icon: <Clock className="h-3 w-3 mr-1" /> },
-    'Completed': { variant: 'default', className: 'bg-green-500 hover:bg-green-600 text-white', icon: <CheckCircle2 className="h-3 w-3 mr-1" /> },
+    'Completed': { variant: 'default', className: 'bg-[#89c24b] hover:bg-[#7ab043] text-white', icon: <CheckCircle2 className="h-3 w-3 mr-1" /> },
     'Failed': { variant: 'destructive', icon: <AlertCircle className="h-3 w-3 mr-1" /> },
   };
 
