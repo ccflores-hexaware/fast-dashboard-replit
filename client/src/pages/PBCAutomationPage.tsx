@@ -6,12 +6,13 @@ import { PageHeader } from '@/components/PageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
@@ -41,7 +42,9 @@ import {
   Download, 
   CheckCircle2, 
   Clock, 
-  AlertCircle
+  AlertCircle,
+  ChevronsUpDown,
+  Check
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -88,6 +91,7 @@ export default function PBCAutomationPage() {
   const [showReportDialog, setShowReportDialog] = useState(false);
   const [selectedReport, setSelectedReport] = useState<EvidenceReport[] | null>(null);
   const [selectedReportRequest, setSelectedReportRequest] = useState<EvidenceRequest | null>(null);
+  const [controlComboboxOpen, setControlComboboxOpen] = useState(false);
 
   const selectedControlData = useMemo(() => 
     ALL_CONTROLS.find(c => c.id === selectedControl),
@@ -132,6 +136,7 @@ export default function PBCAutomationPage() {
 
   const handleControlSelect = (controlId: string) => {
     setSelectedControl(controlId);
+    setControlComboboxOpen(false);
     if (!isAutomatedControl(controlId)) {
       window.open(EXTERNAL_LINKS.sharepointIntakeForm, '_blank', 'noopener,noreferrer');
     }
@@ -246,25 +251,62 @@ export default function PBCAutomationPage() {
             <div className="space-y-6">
                   <div className="space-y-2">
                     <Label htmlFor="control-select">Select Control</Label>
-                    <Select value={selectedControl} onValueChange={handleControlSelect}>
-                      <SelectTrigger id="control-select" className="w-full" aria-describedby="control-help">
-                        <SelectValue placeholder="Select an IAM control..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {ALL_CONTROLS.map(control => (
-                          <SelectItem key={control.id} value={control.id}>
+                    <Popover open={controlComboboxOpen} onOpenChange={setControlComboboxOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          id="control-select"
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={controlComboboxOpen}
+                          aria-describedby="control-help"
+                          className="w-full justify-between"
+                        >
+                          {selectedControl ? (
                             <span className="flex items-center gap-2">
                               <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">
-                                {control.id}
+                                {selectedControl}
                               </span>
-                              {control.isAutomated && (
+                              {selectedControlData?.isAutomated && (
                                 <Badge variant="secondary" className="text-xs">Automated</Badge>
                               )}
                             </span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                          ) : (
+                            "Select an IAM control..."
+                          )}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[400px] p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Search controls..." />
+                          <CommandList>
+                            <CommandEmpty>No control found.</CommandEmpty>
+                            <CommandGroup>
+                              {ALL_CONTROLS.map(control => (
+                                <CommandItem
+                                  key={control.id}
+                                  value={control.id}
+                                  onSelect={handleControlSelect}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      selectedControl === control.id ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">
+                                    {control.id}
+                                  </span>
+                                  {control.isAutomated && (
+                                    <Badge variant="secondary" className="text-xs ml-2">Automated</Badge>
+                                  )}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                     <p id="control-help" className="text-sm text-muted-foreground">
                       {isAutomated 
                         ? 'This control supports automated evidence generation'
