@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'wouter';
-import { UserCircle, LogOut, Check } from 'lucide-react';
+import { UserCircle, LogOut, Check, Home } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -30,7 +30,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { name: 'BTO', path: '/bto' },
     { name: 'CMDB', path: '/cmdb' },
     { name: 'Recon', path: '/recon' },
-    { name: 'PBC', path: '/pbc' },
   ];
 
   const isActive = (path: string) => location === path || (path === '/fast' && location === '/');
@@ -106,6 +105,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <nav className="bg-primary text-primary-foreground shadow-md z-10">
         <div className="w-full px-6">
           <div className="flex h-14 space-x-1">
+            <Link 
+              href="/"
+              className="px-4 h-full flex items-center text-sm font-semibold transition-colors border-b-4 whitespace-nowrap text-primary-foreground/90 hover:bg-primary-foreground/10 hover:text-white border-transparent gap-2"
+            >
+              <Home className="h-4 w-4" />
+              Home
+            </Link>
+            <div className="h-8 w-px bg-primary-foreground/20 self-center mx-2" />
             {tabs.map((tab) => (
               <Link 
                 key={tab.path} 

@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { format, subMonths, startOfMonth, endOfMonth, isAfter, isBefore, differenceInMonths } from 'date-fns';
 import * as XLSX from 'xlsx';
-import { DashboardLayout } from '@/components/DashboardLayout';
+import { PBCLayout } from '@/components/PBCLayout';
 import { PageHeader } from '@/components/PageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -244,11 +244,11 @@ export default function PBCAutomationPage() {
   );
 
   return (
-    <DashboardLayout>
+    <PBCLayout>
       <div className="space-y-6">
         <PageHeader 
-          title="Self-Service PBC Automation" 
-          description="Request control execution evidence from auditors"
+          title="Control Execution Evidence" 
+          description="Request and manage evidence for IAM controls"
         />
         <Card className="mb-8">
           <CardHeader>
@@ -610,6 +610,6 @@ export default function PBCAutomationPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </DashboardLayout>
+    </PBCLayout>
   );
 }

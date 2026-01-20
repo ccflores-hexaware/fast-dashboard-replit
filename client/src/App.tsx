@@ -1,4 +1,4 @@
-import { Switch, Route, Redirect } from "wouter";
+import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -6,6 +6,7 @@ import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import NotFound from "@/pages/not-found";
+import LandingPage from "@/pages/LandingPage";
 import FASTPage from "@/pages/FASTPage";
 import SubAssetsPage from "@/pages/SubAssetsPage";
 import TPIPage from "@/pages/TPIPage";
@@ -19,10 +20,10 @@ function Router() {
   return (
     <Switch>
       <Route path="/">
-         <Redirect to="/pbc" />
+        <LandingPage />
       </Route>
-      <Route path="/pbc">
-        <PBCAutomationPage />
+      <Route path="/fast">
+        <FASTPage />
       </Route>
       <Route path="/sub-assets">
         <SubAssetsPage />
@@ -39,8 +40,8 @@ function Router() {
       <Route path="/recon">
         <ReconPage />
       </Route>
-      <Route path="/fast">
-        <FASTPage />
+      <Route path="/pbc">
+        <PBCAutomationPage />
       </Route>
       <Route component={NotFound} />
     </Switch>
