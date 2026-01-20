@@ -15,6 +15,7 @@ The suite uses a **super application** pattern with a landing page at the root t
    - Supports 43 IAM controls (9 automated, 34 manual)
    - Date range selection with validation
    - Request history tracking with View/Download functionality
+   - Request history search functionality (filter by Control ID, Request ID, status, or date range)
    - Excel export of evidence reports
 
 ### Navigation Flow

@@ -46,8 +46,11 @@ import {
   ChevronsUpDown,
   Check,
   ChevronRight,
-  ChevronDown
+  ChevronDown,
+  Search,
+  X
 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import {
   ALL_CONTROLS,
@@ -95,6 +98,7 @@ export default function PBCAutomationPage() {
   const [selectedReportRequest, setSelectedReportRequest] = useState<EvidenceRequest | null>(null);
   const [controlComboboxOpen, setControlComboboxOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const [historySearch, setHistorySearch] = useState('');
 
   const toggleGroupExpansion = useCallback((controlId: string) => {
     setExpandedGroups(prev => {
@@ -251,16 +255,30 @@ export default function PBCAutomationPage() {
     [requests]
   );
 
+  const filteredRequests = useMemo(() => {
+    if (!historySearch.trim()) return userRequests;
+    const searchLower = historySearch.toLowerCase().trim();
+    return userRequests.filter(request => 
+      request.controlId.toLowerCase().includes(searchLower) ||
+      request.requestId.toLowerCase().includes(searchLower) ||
+      request.status.toLowerCase().includes(searchLower) ||
+      request.dateFrom.includes(searchLower) ||
+      request.dateTo.includes(searchLower) ||
+      format(new Date(request.dateFrom), 'MMM d, yyyy').toLowerCase().includes(searchLower) ||
+      format(new Date(request.dateTo), 'MMM d, yyyy').toLowerCase().includes(searchLower)
+    );
+  }, [userRequests, historySearch]);
+
   const groupedRequests = useMemo(() => {
     const grouped: Record<string, EvidenceRequest[]> = {};
-    userRequests.forEach(request => {
+    filteredRequests.forEach(request => {
       if (!grouped[request.controlId]) {
         grouped[request.controlId] = [];
       }
       grouped[request.controlId].push(request);
     });
     return Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b));
-  }, [userRequests]);
+  }, [filteredRequests]);
 
   return (
     <PBCLayout>
@@ -486,14 +504,50 @@ export default function PBCAutomationPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Request History</CardTitle>
-            <CardDescription>View your previous evidence requests and their status</CardDescription>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <CardTitle>Request History</CardTitle>
+                <CardDescription>View your previous evidence requests and their status</CardDescription>
+              </div>
+              {userRequests.length > 0 && (
+                <div className="relative w-full sm:w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search requests..."
+                    value={historySearch}
+                    onChange={(e) => setHistorySearch(e.target.value)}
+                    className="pl-9 pr-8"
+                  />
+                  {historySearch && (
+                    <button
+                      onClick={() => setHistorySearch('')}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-muted rounded"
+                      aria-label="Clear search"
+                    >
+                      <X className="h-3 w-3 text-muted-foreground" />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             {userRequests.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Clock className="h-12 w-12 mx-auto mb-3 opacity-50" />
                 <p>No requests found. Submit your first evidence request above.</p>
+              </div>
+            ) : groupedRequests.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Search className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                <p>No requests match "{historySearch}"</p>
+                <Button 
+                  variant="link" 
+                  className="mt-2 text-sm"
+                  onClick={() => setHistorySearch('')}
+                >
+                  Clear search
+                </Button>
               </div>
             ) : (
               <div className="rounded-lg border bg-card overflow-hidden">
