@@ -1,6 +1,8 @@
 import { useState, useMemo, useCallback } from 'react';
 import { format, subMonths, startOfMonth, endOfMonth, isAfter, isBefore, differenceInMonths } from 'date-fns';
 import * as XLSX from 'xlsx';
+import { DashboardLayout } from '@/components/DashboardLayout';
+import { PageHeader } from '@/components/PageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -43,9 +45,7 @@ import {
   FileText, 
   CheckCircle2, 
   Clock, 
-  AlertCircle,
-  User,
-  LogOut
+  AlertCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -244,26 +244,12 @@ export default function PBCAutomationPage() {
   );
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Self-Service PBC Automation</h1>
-            <p className="text-muted-foreground text-sm">Request control execution evidence</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <User className="h-4 w-4" />
-              <span>{MOCK_USER.name}</span>
-            </div>
-            <Button variant="ghost" size="sm" aria-label="Log out">
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8">
+    <DashboardLayout>
+      <div className="space-y-6">
+        <PageHeader 
+          title="Self-Service PBC Automation" 
+          description="Request control execution evidence from auditors"
+        />
         <Card className="mb-8">
           <CardHeader>
             <CardTitle>Request Type</CardTitle>
@@ -528,7 +514,7 @@ export default function PBCAutomationPage() {
             )}
           </CardContent>
         </Card>
-      </main>
+      </div>
 
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>
@@ -624,6 +610,6 @@ export default function PBCAutomationPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </DashboardLayout>
   );
 }

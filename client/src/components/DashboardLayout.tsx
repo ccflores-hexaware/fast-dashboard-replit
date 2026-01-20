@@ -30,6 +30,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { name: 'BTO', path: '/bto' },
     { name: 'CMDB', path: '/cmdb' },
     { name: 'Recon', path: '/recon' },
+    { name: 'PBC', path: '/pbc' },
   ];
 
   const isActive = (path: string) => location === path || (path === '/fast' && location === '/');
