@@ -80,9 +80,7 @@ export default function LandingPage() {
         </div>
       </main>
       <footer className="border-t bg-white dark:bg-slate-950 py-4">
-        <div className="container mx-auto px-6 text-center text-sm text-muted-foreground">
-          Freddie Mac Enterprise IT Management Suite
-        </div>
+        <div className="container mx-auto px-6 text-center text-sm text-muted-foreground">Freddie Mac Enterprise IAM Suite</div>
       </footer>
     </div>
   );
