@@ -267,7 +267,7 @@ export default function PBCAutomationPage() {
                               {selectedControl}
                             </span>
                           ) : (
-                            "Select an IAM control..."
+                            "Select control..."
                           )}
                           <div className="flex items-center gap-2">
                             {selectedControl && (
