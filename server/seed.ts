@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { fastAssets, tpiAssets, btoAssets, cmdbAssets, pbcControls, pbcEvidenceRequests, pbcEvidenceReports } from "@shared/schema";
+import { fastAssets, tpiAssets, btoMapping, cmdbAssets, pbcControls, pbcEvidenceRequests, pbcEvidenceReports } from "@shared/schema";
 
 const pick = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 const randomDate = (startYear: number, endYear: number): string => {
@@ -218,7 +218,7 @@ async function seed() {
     });
   }
   
-  await db.insert(btoAssets).values(btoRecords);
+  await db.insert(btoMapping).values(btoRecords);
   console.log(`Inserted ${btoRecords.length} BTO records`);
 
   console.log("Seeding CMDB assets...");
@@ -341,6 +341,141 @@ async function seed() {
       status: 'Completed',
       userId: 'user-001',
     },
+    {
+      requestId: 'PBC-006-F7U',
+      controlId: 'C.IT.IACTM.002',
+      controlName: 'User Access Modification',
+      dateFrom: '2024-09-01',
+      dateTo: '2024-09-30',
+      status: 'Completed',
+      userId: 'user-001',
+    },
+    {
+      requestId: 'PBC-007-G8T',
+      controlId: 'C.IT.IACTM.003',
+      controlName: 'Periodic Access Review',
+      dateFrom: '2024-08-01',
+      dateTo: '2024-08-31',
+      status: 'Completed',
+      userId: 'user-001',
+    },
+    {
+      requestId: 'PBC-008-H9S',
+      controlId: 'C.IT.IACTM.005',
+      controlName: 'Emergency Access Procedures',
+      dateFrom: '2024-11-15',
+      dateTo: '2024-12-15',
+      status: 'In Progress',
+      userId: 'user-001',
+    },
+    {
+      requestId: 'PBC-009-J1R',
+      controlId: 'C.IT.IACTM.007',
+      controlName: 'Password Management',
+      dateFrom: '2024-07-01',
+      dateTo: '2024-09-30',
+      status: 'Completed',
+      userId: 'user-001',
+    },
+    {
+      requestId: 'PBC-010-K2Q',
+      controlId: 'C.IT.IACTM.008',
+      controlName: 'Session Management',
+      dateFrom: '2024-06-01',
+      dateTo: '2024-06-30',
+      status: 'Completed',
+      userId: 'user-001',
+    },
+    {
+      requestId: 'PBC-011-L3P',
+      controlId: 'C.IT.IACTM.009',
+      controlName: 'Access Logging',
+      dateFrom: '2024-10-01',
+      dateTo: '2024-10-31',
+      status: 'Completed',
+      userId: 'user-001',
+    },
+    {
+      requestId: 'PBC-012-M4N',
+      controlId: 'C.IT.IACTM.011',
+      controlName: 'Service Account Management',
+      dateFrom: '2024-05-01',
+      dateTo: '2024-07-31',
+      status: 'Completed',
+      userId: 'user-001',
+    },
+    {
+      requestId: 'PBC-013-N5M',
+      controlId: 'C.IT.IACTM.012',
+      controlName: 'Role-Based Access Control',
+      dateFrom: '2024-04-01',
+      dateTo: '2024-04-30',
+      status: 'Failed',
+      userId: 'user-001',
+    },
+    {
+      requestId: 'PBC-014-P6L',
+      controlId: 'C.IT.IACTM.013',
+      controlName: 'Segregation of Duties',
+      dateFrom: '2024-03-01',
+      dateTo: '2024-03-31',
+      status: 'Completed',
+      userId: 'user-001',
+    },
+    {
+      requestId: 'PBC-015-Q7K',
+      controlId: 'C.IT.IACTM.001',
+      controlName: 'User Access Provisioning',
+      dateFrom: '2024-02-01',
+      dateTo: '2024-02-29',
+      status: 'Completed',
+      userId: 'user-001',
+    },
+    {
+      requestId: 'PBC-016-R8J',
+      controlId: 'C.IT.IACTM.031',
+      controlName: 'Dormant Account Management',
+      dateFrom: '2024-12-01',
+      dateTo: '2024-12-31',
+      status: 'In Progress',
+      userId: 'user-001',
+    },
+    {
+      requestId: 'PBC-017-S9H',
+      controlId: 'C.IT.IACTM.014',
+      controlName: 'Access Request Approval',
+      dateFrom: '2024-01-01',
+      dateTo: '2024-01-31',
+      status: 'Completed',
+      userId: 'user-001',
+    },
+    {
+      requestId: 'PBC-018-T1G',
+      controlId: 'C.IT.IACTM.015',
+      controlName: 'Access Certification',
+      dateFrom: '2024-11-01',
+      dateTo: '2024-11-30',
+      status: 'Completed',
+      userId: 'user-001',
+    },
+    {
+      requestId: 'PBC-019-U2F',
+      controlId: 'C.IT.IACTM.016',
+      controlName: 'Identity Lifecycle Management',
+      dateFrom: '2024-10-15',
+      dateTo: '2024-11-15',
+      status: 'In Progress',
+      userId: 'user-001',
+    },
+    {
+      requestId: 'PBC-020-V3E',
+      controlId: 'C.IT.IACTM.017',
+      controlName: 'Third-Party Access Control',
+      dateFrom: '2024-09-01',
+      dateTo: '2024-11-30',
+      status: 'Completed',
+      userId: 'user-001',
+    },
   ];
   
   await db.insert(pbcEvidenceRequests).values(pbcRequestRecords);
@@ -383,6 +518,90 @@ async function seed() {
       keychainDatabase: 'AUTH_SYSTEMS_DB',
       executedQuery: 'SELECT auth_id, user_id, auth_method, success, timestamp FROM authentication_logs WHERE auth_method IN (\'MFA_PUSH\', \'MFA_SMS\', \'MFA_TOTP\') AND timestamp BETWEEN :start_date AND :end_date',
       recordCount: 45672,
+    },
+    {
+      requestId: 'PBC-006-F7U',
+      keychainDatabase: 'IAM_CENTRAL_DB',
+      executedQuery: 'SELECT modification_id, user_id, old_role, new_role, modified_by, modification_date FROM access_modifications WHERE modification_date BETWEEN :start_date AND :end_date',
+      recordCount: 312,
+    },
+    {
+      requestId: 'PBC-007-G8T',
+      keychainDatabase: 'ACCESS_REVIEW_DB',
+      executedQuery: 'SELECT review_id, reviewer_id, user_reviewed, access_confirmed, review_date FROM periodic_access_reviews WHERE review_date BETWEEN :start_date AND :end_date',
+      recordCount: 1847,
+    },
+    {
+      requestId: 'PBC-007-G8T',
+      keychainDatabase: 'AUDIT_LOG_DB',
+      executedQuery: 'SELECT log_id, action, reviewer_id, timestamp FROM review_audit_logs WHERE timestamp BETWEEN :start_date AND :end_date',
+      recordCount: 2156,
+    },
+    {
+      requestId: 'PBC-009-J1R',
+      keychainDatabase: 'PASSWORD_MGMT_DB',
+      executedQuery: 'SELECT user_id, password_changed_date, complexity_met, expiry_date FROM password_history WHERE password_changed_date BETWEEN :start_date AND :end_date',
+      recordCount: 4521,
+    },
+    {
+      requestId: 'PBC-010-K2Q',
+      keychainDatabase: 'SESSION_MGMT_DB',
+      executedQuery: 'SELECT session_id, user_id, login_time, logout_time, timeout_applied FROM user_sessions WHERE login_time BETWEEN :start_date AND :end_date',
+      recordCount: 28934,
+    },
+    {
+      requestId: 'PBC-011-L3P',
+      keychainDatabase: 'ACCESS_LOG_DB',
+      executedQuery: 'SELECT log_id, user_id, resource_accessed, access_type, timestamp, ip_address FROM access_logs WHERE timestamp BETWEEN :start_date AND :end_date',
+      recordCount: 156782,
+    },
+    {
+      requestId: 'PBC-012-M4N',
+      keychainDatabase: 'SERVICE_ACCOUNT_DB',
+      executedQuery: 'SELECT account_id, account_name, owner, purpose, last_password_rotation, status FROM service_accounts WHERE created_date <= :end_date',
+      recordCount: 892,
+    },
+    {
+      requestId: 'PBC-012-M4N',
+      keychainDatabase: 'AUDIT_LOG_DB',
+      executedQuery: 'SELECT log_id, service_account_id, action, timestamp FROM service_account_audit WHERE timestamp BETWEEN :start_date AND :end_date',
+      recordCount: 12456,
+    },
+    {
+      requestId: 'PBC-014-P6L',
+      keychainDatabase: 'SOD_CENTRAL_DB',
+      executedQuery: 'SELECT user_id, role_combination, conflict_detected, exception_approved, review_date FROM sod_analysis WHERE review_date BETWEEN :start_date AND :end_date',
+      recordCount: 567,
+    },
+    {
+      requestId: 'PBC-015-Q7K',
+      keychainDatabase: 'IAM_CENTRAL_DB',
+      executedQuery: 'SELECT user_id, provision_date, approver, role_assigned FROM user_provisioning WHERE provision_date BETWEEN :start_date AND :end_date ORDER BY provision_date DESC',
+      recordCount: 198,
+    },
+    {
+      requestId: 'PBC-017-S9H',
+      keychainDatabase: 'APPROVAL_WORKFLOW_DB',
+      executedQuery: 'SELECT request_id, requestor_id, approver_id, approval_date, request_type FROM access_approvals WHERE approval_date BETWEEN :start_date AND :end_date',
+      recordCount: 1234,
+    },
+    {
+      requestId: 'PBC-018-T1G',
+      keychainDatabase: 'CERTIFICATION_DB',
+      executedQuery: 'SELECT cert_id, certifier_id, user_certified, certification_result, cert_date FROM access_certifications WHERE cert_date BETWEEN :start_date AND :end_date',
+      recordCount: 3421,
+    },
+    {
+      requestId: 'PBC-020-V3E',
+      keychainDatabase: 'VENDOR_ACCESS_DB',
+      executedQuery: 'SELECT vendor_id, vendor_name, access_granted_date, access_level, sponsor_id, review_date FROM third_party_access WHERE access_granted_date BETWEEN :start_date AND :end_date',
+      recordCount: 156,
+    },
+    {
+      requestId: 'PBC-020-V3E',
+      keychainDatabase: 'CONTRACTOR_DB',
+      executedQuery: 'SELECT contractor_id, contractor_name, company, access_start, access_end, sponsor_id FROM contractor_access WHERE access_start BETWEEN :start_date AND :end_date',
+      recordCount: 89,
     },
   ];
   
