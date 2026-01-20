@@ -498,14 +498,6 @@ export default function PBCAutomationPage() {
             ) : (
               <div className="rounded-lg border bg-card overflow-hidden">
                 <Table>
-                  <TableHeader>
-                    <TableRow className="bg-slate-50 hover:bg-slate-50">
-                      <TableHead className="h-11 px-4 text-left font-semibold text-slate-700 text-xs uppercase tracking-wider">Request ID</TableHead>
-                      <TableHead className="h-11 px-4 text-left font-semibold text-slate-700 text-xs uppercase tracking-wider">Date Range</TableHead>
-                      <TableHead className="h-11 px-4 text-left font-semibold text-slate-700 text-xs uppercase tracking-wider">Status</TableHead>
-                      <TableHead className="h-11 px-4 text-right font-semibold text-slate-700 text-xs uppercase tracking-wider w-24">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
                   <TableBody>
                     {groupedRequests.map(([controlId, controlRequests]) => {
                       const isExpanded = expandedGroups.has(controlId);
@@ -536,39 +528,49 @@ export default function PBCAutomationPage() {
                               </div>
                             </TableCell>
                           </TableRow>
-                          {isExpanded && controlRequests.map((request, idx) => (
-                            <TableRow 
-                              key={request.id}
-                              className={cn(
-                                "hover:bg-slate-50 transition-colors",
-                                idx === controlRequests.length - 1 ? "" : "border-b border-slate-100"
-                              )}
-                            >
-                              <TableCell className="py-3 px-4 pl-14">
-                                <span className="font-mono text-sm text-slate-700">{request.requestId}</span>
-                              </TableCell>
-                              <TableCell className="py-3 px-4">
-                                <span className="text-sm text-slate-600">
-                                  {format(new Date(request.dateFrom), 'MMM d, yyyy')} — {format(new Date(request.dateTo), 'MMM d, yyyy')}
-                                </span>
-                              </TableCell>
-                              <TableCell className="py-3 px-4">
-                                <StatusBadge status={request.status} />
-                              </TableCell>
-                              <TableCell className="py-3 px-4 text-right">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0"
-                                  onClick={(e) => { e.stopPropagation(); handleDownloadReport(request); }}
-                                  disabled={request.status !== 'Completed'}
-                                  aria-label={`Download report for ${request.requestId}`}
+                          {isExpanded && (
+                            <>
+                              <TableRow className="bg-slate-50 hover:bg-slate-50 border-b border-slate-200">
+                                <TableCell className="py-2 px-4 pl-14 text-xs font-semibold text-slate-500 uppercase tracking-wider">Request ID</TableCell>
+                                <TableCell className="py-2 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Date Range</TableCell>
+                                <TableCell className="py-2 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</TableCell>
+                                <TableCell className="py-2 px-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider w-24">Actions</TableCell>
+                              </TableRow>
+                              {controlRequests.map((request, idx) => (
+                                <TableRow 
+                                  key={request.id}
+                                  className={cn(
+                                    "hover:bg-slate-50 transition-colors",
+                                    idx === controlRequests.length - 1 ? "" : "border-b border-slate-100"
+                                  )}
                                 >
-                                  <Download className="h-4 w-4" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
+                                  <TableCell className="py-3 px-4 pl-14">
+                                    <span className="font-mono text-sm text-slate-700">{request.requestId}</span>
+                                  </TableCell>
+                                  <TableCell className="py-3 px-4">
+                                    <span className="text-sm text-slate-600">
+                                      {format(new Date(request.dateFrom), 'MMM d, yyyy')} — {format(new Date(request.dateTo), 'MMM d, yyyy')}
+                                    </span>
+                                  </TableCell>
+                                  <TableCell className="py-3 px-4">
+                                    <StatusBadge status={request.status} />
+                                  </TableCell>
+                                  <TableCell className="py-3 px-4 text-right">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-8 w-8 p-0"
+                                      onClick={(e) => { e.stopPropagation(); handleDownloadReport(request); }}
+                                      disabled={request.status !== 'Completed'}
+                                      aria-label={`Download report for ${request.requestId}`}
+                                    >
+                                      <Download className="h-4 w-4" />
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </>
+                          )}
                         </Fragment>
                       );
                     })}
