@@ -281,8 +281,8 @@ export default function PBCAutomationPage() {
                           <CommandInput placeholder="Search controls..." />
                           <CommandList>
                             <CommandEmpty>No control found.</CommandEmpty>
-                            <CommandGroup>
-                              {ALL_CONTROLS.map(control => (
+                            <CommandGroup heading="Automated">
+                              {ALL_CONTROLS.filter(c => c.isAutomated).map(control => (
                                 <CommandItem
                                   key={control.id}
                                   value={control.id}
@@ -297,9 +297,25 @@ export default function PBCAutomationPage() {
                                   <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">
                                     {control.id}
                                   </span>
-                                  {control.isAutomated && (
-                                    <Badge variant="secondary" className="text-xs ml-2">Automated</Badge>
-                                  )}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                            <CommandGroup heading="Manual">
+                              {ALL_CONTROLS.filter(c => !c.isAutomated).map(control => (
+                                <CommandItem
+                                  key={control.id}
+                                  value={control.id}
+                                  onSelect={handleControlSelect}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      selectedControl === control.id ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">
+                                    {control.id}
+                                  </span>
                                 </CommandItem>
                               ))}
                             </CommandGroup>
