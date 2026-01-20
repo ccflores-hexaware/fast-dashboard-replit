@@ -258,7 +258,6 @@ export default function PBCAutomationPage() {
                               <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">
                                 {control.id}
                               </span>
-                              <span>{control.name}</span>
                               {control.isAutomated && (
                                 <Badge variant="secondary" className="text-xs">Automated</Badge>
                               )}
@@ -400,7 +399,7 @@ export default function PBCAutomationPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Request ID</TableHead>
-                      <TableHead>Control Name</TableHead>
+                      <TableHead>Control ID</TableHead>
                       <TableHead>Date From</TableHead>
                       <TableHead>Date To</TableHead>
                       <TableHead>Status</TableHead>
@@ -412,13 +411,9 @@ export default function PBCAutomationPage() {
                       <TableRow key={request.id}>
                         <TableCell className="font-mono text-sm">{request.requestId}</TableCell>
                         <TableCell>
-                          <div>
-                            <span className="font-mono text-xs text-muted-foreground">
-                              {request.controlId}
-                            </span>
-                            <br />
-                            {request.controlName}
-                          </div>
+                          <span className="font-mono text-sm">
+                            {request.controlId}
+                          </span>
                         </TableCell>
                         <TableCell>{format(new Date(request.dateFrom), 'MMM d, yyyy')}</TableCell>
                         <TableCell>{format(new Date(request.dateTo), 'MMM d, yyyy')}</TableCell>
@@ -464,7 +459,7 @@ export default function PBCAutomationPage() {
             <AlertDialogDescription className="space-y-2">
               <p>You are about to submit an evidence generation request with the following details:</p>
               <div className="bg-muted p-3 rounded-md text-sm space-y-1 mt-2">
-                <p><strong>Control:</strong> {selectedControlData?.id} - {selectedControlData?.name}</p>
+                <p><strong>Control:</strong> {selectedControlData?.id}</p>
                 <p><strong>Date Range:</strong> {dateFrom ? format(dateFrom, 'MMM d, yyyy') : ''} to {dateTo ? format(dateTo, 'MMM d, yyyy') : ''}</p>
               </div>
               <p className="mt-2">Do you want to proceed?</p>
