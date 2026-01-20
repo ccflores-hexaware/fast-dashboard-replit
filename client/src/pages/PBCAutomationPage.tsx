@@ -496,16 +496,14 @@ export default function PBCAutomationPage() {
                 <p>No requests found. Submit your first evidence request above.</p>
               </div>
             ) : (
-              <div className="rounded-md border border-border bg-card shadow-sm overflow-x-auto">
+              <div className="rounded-lg border bg-card overflow-hidden">
                 <Table>
-                  <TableHeader className="bg-muted/50">
-                    <TableRow className="border-b border-border">
-                      <TableHead className="text-sm border-r border-border px-4 py-3 whitespace-nowrap font-medium text-muted-foreground">Control ID</TableHead>
-                      <TableHead className="text-sm border-r border-border px-4 py-3 whitespace-nowrap font-medium text-muted-foreground">Request ID</TableHead>
-                      <TableHead className="text-sm border-r border-border px-4 py-3 whitespace-nowrap font-medium text-muted-foreground">Date From</TableHead>
-                      <TableHead className="text-sm border-r border-border px-4 py-3 whitespace-nowrap font-medium text-muted-foreground">Date To</TableHead>
-                      <TableHead className="text-sm border-r border-border px-4 py-3 whitespace-nowrap font-medium text-muted-foreground">Status</TableHead>
-                      <TableHead className="text-sm px-4 py-3 whitespace-nowrap font-medium text-muted-foreground text-right">Actions</TableHead>
+                  <TableHeader>
+                    <TableRow className="bg-slate-50 hover:bg-slate-50">
+                      <TableHead className="h-11 px-4 text-left font-semibold text-slate-700 text-xs uppercase tracking-wider">Request ID</TableHead>
+                      <TableHead className="h-11 px-4 text-left font-semibold text-slate-700 text-xs uppercase tracking-wider">Date Range</TableHead>
+                      <TableHead className="h-11 px-4 text-left font-semibold text-slate-700 text-xs uppercase tracking-wider">Status</TableHead>
+                      <TableHead className="h-11 px-4 text-right font-semibold text-slate-700 text-xs uppercase tracking-wider w-24">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -514,64 +512,54 @@ export default function PBCAutomationPage() {
                       return (
                         <Fragment key={controlId}>
                           <TableRow 
-                            className={cn(
-                              "hover:bg-muted/30 transition-colors border-b border-border cursor-pointer font-medium",
-                              isExpanded && "bg-muted/20"
-                            )}
+                            className="bg-slate-100 hover:bg-slate-100 cursor-pointer border-t"
                             onClick={() => toggleGroupExpansion(controlId)}
                           >
-                            <TableCell className="text-sm border-r border-border px-4 py-3 whitespace-nowrap">
-                              <div className="flex items-center gap-2">
+                            <TableCell colSpan={4} className="py-2.5 px-4">
+                              <div className="flex items-center gap-3">
                                 <button
                                   onClick={(e) => { e.stopPropagation(); toggleGroupExpansion(controlId); }}
-                                  className="p-0.5 hover:bg-muted rounded transition-colors"
-                                  aria-label={isExpanded ? "Collapse requests" : "Expand requests"}
+                                  className="flex items-center justify-center w-6 h-6 rounded hover:bg-slate-200 transition-colors"
+                                  aria-label={isExpanded ? "Collapse" : "Expand"}
                                 >
                                   {isExpanded ? (
-                                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                    <ChevronDown className="h-4 w-4 text-slate-600" />
                                   ) : (
-                                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                    <ChevronRight className="h-4 w-4 text-slate-600" />
                                   )}
                                 </button>
-                                <span className="font-mono text-sm font-semibold text-primary">{controlId}</span>
-                                <Badge variant="outline" className="ml-1 text-xs px-1.5 py-0 h-5 font-normal">
-                                  {controlRequests.length} {controlRequests.length === 1 ? 'request' : 'requests'}
-                                </Badge>
+                                <span className="font-semibold text-slate-800">{controlId}</span>
+                                <span className="text-sm text-slate-500">
+                                  ({controlRequests.length} {controlRequests.length === 1 ? 'request' : 'requests'})
+                                </span>
                               </div>
                             </TableCell>
-                            <TableCell className="text-sm border-r border-border px-4 py-3 whitespace-nowrap text-muted-foreground">—</TableCell>
-                            <TableCell className="text-sm border-r border-border px-4 py-3 whitespace-nowrap text-muted-foreground">—</TableCell>
-                            <TableCell className="text-sm border-r border-border px-4 py-3 whitespace-nowrap text-muted-foreground">—</TableCell>
-                            <TableCell className="text-sm border-r border-border px-4 py-3 whitespace-nowrap text-muted-foreground">—</TableCell>
-                            <TableCell className="text-sm px-4 py-3 whitespace-nowrap text-right">—</TableCell>
                           </TableRow>
-                          {isExpanded && controlRequests.map(request => (
+                          {isExpanded && controlRequests.map((request, idx) => (
                             <TableRow 
                               key={request.id}
-                              className="hover:bg-muted/30 transition-colors border-b border-border bg-muted/10"
+                              className={cn(
+                                "hover:bg-slate-50 transition-colors",
+                                idx === controlRequests.length - 1 ? "" : "border-b border-slate-100"
+                              )}
                             >
-                              <TableCell className="text-sm border-r border-border px-4 py-3 whitespace-nowrap text-muted-foreground">
-                                <div className="flex items-center gap-2 pl-7">
-                                  <span className="text-xs text-muted-foreground">└</span>
-                                </div>
+                              <TableCell className="py-3 px-4 pl-14">
+                                <span className="font-mono text-sm text-slate-700">{request.requestId}</span>
                               </TableCell>
-                              <TableCell className="text-sm border-r border-border px-4 py-3 whitespace-nowrap">
-                                <span className="font-mono text-sm">{request.requestId}</span>
+                              <TableCell className="py-3 px-4">
+                                <span className="text-sm text-slate-600">
+                                  {format(new Date(request.dateFrom), 'MMM d, yyyy')} — {format(new Date(request.dateTo), 'MMM d, yyyy')}
+                                </span>
                               </TableCell>
-                              <TableCell className="text-sm border-r border-border px-4 py-3 whitespace-nowrap">
-                                {format(new Date(request.dateFrom), 'MMM d, yyyy')}
-                              </TableCell>
-                              <TableCell className="text-sm border-r border-border px-4 py-3 whitespace-nowrap">
-                                {format(new Date(request.dateTo), 'MMM d, yyyy')}
-                              </TableCell>
-                              <TableCell className="text-sm border-r border-border px-4 py-3 whitespace-nowrap">
+                              <TableCell className="py-3 px-4">
                                 <StatusBadge status={request.status} />
                               </TableCell>
-                              <TableCell className="text-sm px-4 py-3 whitespace-nowrap text-right">
+                              <TableCell className="py-3 px-4 text-right">
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => handleDownloadReport(request)}
+                                  className="h-8 w-8 p-0"
+                                  onClick={(e) => { e.stopPropagation(); handleDownloadReport(request); }}
                                   disabled={request.status !== 'Completed'}
                                   aria-label={`Download report for ${request.requestId}`}
                                 >
