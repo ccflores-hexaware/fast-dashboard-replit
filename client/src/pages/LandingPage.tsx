@@ -18,9 +18,7 @@ export default function LandingPage() {
               className="h-8"
             />
             <div className="h-6 w-px bg-border" />
-            <span className="text-xl font-semibold text-slate-800 dark:text-slate-200">
-              Enterprise IT Management
-            </span>
+            <span className="text-xl font-semibold text-slate-800 dark:text-slate-200">Enterprise IAM Suite</span>
           </div>
         </div>
       </header>
