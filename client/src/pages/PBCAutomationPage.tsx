@@ -340,7 +340,7 @@ export default function PBCAutomationPage() {
                       {isAutomated 
                         ? 'This control supports automated evidence generation'
                         : selectedControl 
-                          ? 'This control requires manual processing via SharePoint'
+                          ? 'This control requires manual processing. Please submit your request through the SharePoint intake form.'
                           : 'Choose from 43 available IAM controls'}
                     </p>
                   </div>
@@ -450,14 +450,9 @@ export default function PBCAutomationPage() {
                   )}
 
                   {selectedControl && !isAutomated && (
-                    <div className="bg-muted/50 border rounded-lg p-4 space-y-3">
-                      <p className="text-sm text-muted-foreground">
-                        This control requires manual processing. Please submit your request through the SharePoint intake form.
-                      </p>
-                      <Button onClick={handleOpenManualForm} className="w-full md:w-auto">
-                        Open SharePoint Intake Form
-                      </Button>
-                    </div>
+                    <Button onClick={handleOpenManualForm} className="w-full md:w-auto">
+                      Open SharePoint Intake Form
+                    </Button>
                   )}
             </div>
           </CardContent>
