@@ -48,10 +48,7 @@ export default function LandingPage() {
                 <CardDescription className="text-base">Full Asset Status Tracker</CardDescription>
               </CardHeader>
               <CardContent className="text-center">
-                <p className="text-sm text-muted-foreground mb-4">
-                  Manage technology portfolios across Assets, TPI, BTO, CMDB, and Recon modules. 
-                  Full CRUD capabilities for administrators.
-                </p>
+                <p className="text-sm text-muted-foreground mb-4">Manage technology portfolios across Assets, TPI, BTO, and CMDB modules. Full CRUD capabilities for administrators.</p>
                 <Button className="w-full" variant="outline">
                   Open FAST Dashboard
                 </Button>
