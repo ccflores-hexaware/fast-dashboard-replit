@@ -52,7 +52,8 @@ import {
   X,
   ArrowUp,
   ArrowDown,
-  ChevronLeft
+  ChevronLeft,
+  ExternalLink
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -713,6 +714,7 @@ export default function PBCAutomationPage() {
                   {selectedControl && !isAutomated && (
                     <Button onClick={handleOpenManualForm} className="w-full md:w-auto">
                       Open SharePoint Intake Form
+                      <ExternalLink className="ml-2 h-4 w-4" />
                     </Button>
                   )}
             </div>
