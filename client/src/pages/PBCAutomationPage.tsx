@@ -833,7 +833,7 @@ export default function PBCAutomationPage() {
             <AlertDialogDescription className="space-y-2">
               <p>You are about to submit an evidence generation request with the following details:</p>
               <div className="bg-muted p-3 rounded-md text-sm space-y-1 mt-2">
-                <p><strong>Control:</strong> {selectedControlData?.id}</p>
+                <p><strong>Control:</strong> {selectedControlData?.controlId}</p>
                 <p><strong>Date Range:</strong> {dateFrom ? format(dateFrom, 'MMM d, yyyy') : ''} to {dateTo ? format(dateTo, 'MMM d, yyyy') : ''}</p>
               </div>
               <p className="mt-2">Do you want to proceed?</p>
