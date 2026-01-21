@@ -369,15 +369,6 @@ async function seed() {
       userId: 'user-001',
     },
     {
-      requestId: 'PBC-009-J1R',
-      controlId: 'C.IT.IACTM.001',
-      controlName: 'User Access Provisioning',
-      dateFrom: '2024-05-01',
-      dateTo: '2024-05-31',
-      status: 'Failed',
-      userId: 'user-001',
-    },
-    {
       requestId: 'PBC-010-K2Q',
       controlId: 'C.IT.IACTM.001',
       controlName: 'User Access Provisioning',
@@ -456,15 +447,6 @@ async function seed() {
       dateFrom: '2025-01-01',
       dateTo: '2025-01-20',
       status: 'In Progress',
-      userId: 'user-001',
-    },
-    {
-      requestId: 'PBC-019-U2F',
-      controlId: 'C.IT.IACTM.010',
-      controlName: 'Privileged User Monitoring',
-      dateFrom: '2024-12-01',
-      dateTo: '2024-12-31',
-      status: 'Failed',
       userId: 'user-001',
     },
     {
