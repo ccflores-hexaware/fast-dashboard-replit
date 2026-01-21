@@ -43,7 +43,6 @@ import {
   Download, 
   CheckCircle2, 
   Clock, 
-  AlertCircle,
   ChevronsUpDown,
   Check,
   ChevronRight,
@@ -77,7 +76,7 @@ interface EvidenceRequest {
   controlName: string;
   dateFrom: string;
   dateTo: string;
-  status: 'In Progress' | 'Completed' | 'Failed';
+  status: 'In Progress' | 'Completed';
   userId: string;
   createdAt: string | null;
 }
@@ -88,7 +87,12 @@ const MOCK_USER = {
   email: 'auditor@company.com',
 };
 
-type RequestStatus = 'In Progress' | 'Completed' | 'Failed';
+type RequestStatus = 'In Progress' | 'Completed';
+const STATUS_OPTIONS: Array<{ value: RequestStatus | 'all'; label: string }> = [
+  { value: 'all', label: 'All Statuses' },
+  { value: 'In Progress', label: 'In Progress' },
+  { value: 'Completed', label: 'Completed' },
+];
 type SortColumn = 'requestId' | 'dateFrom' | 'dateTo' | 'status';
 type SortDirection = 'asc' | 'desc';
 
@@ -149,7 +153,6 @@ function StatusBadge({ status }: { status: RequestStatus }) {
   const variants: Record<RequestStatus, { className?: string; variant: 'default' | 'secondary' | 'destructive'; icon: React.ReactNode }> = {
     'In Progress': { variant: 'secondary', icon: <Clock className="h-3 w-3 mr-1" /> },
     'Completed': { variant: 'default', className: 'bg-accent hover:bg-accent/90 text-accent-foreground', icon: <CheckCircle2 className="h-3 w-3 mr-1" /> },
-    'Failed': { variant: 'destructive', icon: <AlertCircle className="h-3 w-3 mr-1" /> },
   };
 
   const { variant, icon, className } = variants[status];
@@ -211,6 +214,7 @@ export default function PBCAutomationPage() {
   const [controlComboboxOpen, setControlComboboxOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [historySearch, setHistorySearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<RequestStatus | 'all'>('all');
   const [sortColumn, setSortColumn] = useState<SortColumn>('requestId');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [controlPages, setControlPages] = useState<Record<string, number>>({});
@@ -434,18 +438,27 @@ export default function PBCAutomationPage() {
   );
 
   const filteredRequests = useMemo(() => {
-    if (!historySearch.trim()) return userRequests;
-    const searchLower = historySearch.toLowerCase().trim();
-    return userRequests.filter(request => 
-      request.controlId.toLowerCase().includes(searchLower) ||
-      request.requestId.toLowerCase().includes(searchLower) ||
-      request.status.toLowerCase().includes(searchLower) ||
-      request.dateFrom.includes(searchLower) ||
-      request.dateTo.includes(searchLower) ||
-      format(new Date(request.dateFrom), 'MMM d, yyyy').toLowerCase().includes(searchLower) ||
-      format(new Date(request.dateTo), 'MMM d, yyyy').toLowerCase().includes(searchLower)
-    );
-  }, [userRequests, historySearch]);
+    let filtered = userRequests;
+    
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(request => request.status === statusFilter);
+    }
+    
+    if (historySearch.trim()) {
+      const searchLower = historySearch.toLowerCase().trim();
+      filtered = filtered.filter(request => 
+        request.controlId.toLowerCase().includes(searchLower) ||
+        request.requestId.toLowerCase().includes(searchLower) ||
+        request.status.toLowerCase().includes(searchLower) ||
+        request.dateFrom.includes(searchLower) ||
+        request.dateTo.includes(searchLower) ||
+        format(new Date(request.dateFrom), 'MMM d, yyyy').toLowerCase().includes(searchLower) ||
+        format(new Date(request.dateTo), 'MMM d, yyyy').toLowerCase().includes(searchLower)
+      );
+    }
+    
+    return filtered;
+  }, [userRequests, historySearch, statusFilter]);
 
   const sortRequests = useCallback((requests: EvidenceRequest[]) => {
     return [...requests].sort((a, b) => {
@@ -729,23 +742,34 @@ export default function PBCAutomationPage() {
                 <CardDescription>View your previous evidence requests and their status</CardDescription>
               </div>
               {userRequests.length > 0 && (
-                <div className="relative w-full sm:w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search requests..."
-                    value={historySearch}
-                    onChange={(e) => setHistorySearch(e.target.value)}
-                    className="pl-9 pr-8"
-                  />
-                  {historySearch && (
-                    <button
-                      onClick={() => setHistorySearch('')}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-muted rounded"
-                      aria-label="Clear search"
-                    >
-                      <X className="h-3 w-3 text-muted-foreground" />
-                    </button>
-                  )}
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value as RequestStatus | 'all')}
+                    className="h-10 px-3 text-sm border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    {STATUS_OPTIONS.map(option => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                  <div className="relative w-full sm:w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search requests..."
+                      value={historySearch}
+                      onChange={(e) => setHistorySearch(e.target.value)}
+                      className="pl-9 pr-8"
+                    />
+                    {historySearch && (
+                      <button
+                        onClick={() => setHistorySearch('')}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-muted rounded"
+                        aria-label="Clear search"
+                      >
+                        <X className="h-3 w-3 text-muted-foreground" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -764,13 +788,13 @@ export default function PBCAutomationPage() {
             ) : groupedRequests.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Search className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                <p>No requests match "{historySearch}"</p>
+                <p>No requests match your filters{historySearch ? ` for "${historySearch}"` : ''}</p>
                 <Button 
                   variant="link" 
                   className="mt-2 text-sm"
-                  onClick={() => setHistorySearch('')}
+                  onClick={() => { setHistorySearch(''); setStatusFilter('all'); }}
                 >
-                  Clear search
+                  Clear filters
                 </Button>
               </div>
             ) : (
