@@ -51,7 +51,8 @@ import {
   Search,
   X,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  ChevronLeft
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -89,6 +90,8 @@ const MOCK_USER = {
 type RequestStatus = 'In Progress' | 'Completed' | 'Failed';
 type SortColumn = 'requestId' | 'dateFrom' | 'dateTo' | 'status';
 type SortDirection = 'asc' | 'desc';
+
+const ITEMS_PER_PAGE = 5;
 
 function StatusBadge({ status }: { status: RequestStatus }) {
   const variants: Record<RequestStatus, { className?: string; variant: 'default' | 'secondary' | 'destructive'; icon: React.ReactNode }> = {
@@ -158,6 +161,7 @@ export default function PBCAutomationPage() {
   const [historySearch, setHistorySearch] = useState('');
   const [sortColumn, setSortColumn] = useState<SortColumn>('requestId');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [controlPages, setControlPages] = useState<Record<string, number>>({});
 
   const { data: controls = [], isLoading: controlsLoading } = useQuery({
     queryKey: ['pbc-controls'],
@@ -207,6 +211,24 @@ export default function PBCAutomationPage() {
       }
       return next;
     });
+  }, []);
+
+  const getControlPage = useCallback((controlId: string) => {
+    return controlPages[controlId] ?? 1;
+  }, [controlPages]);
+
+  const setControlPage = useCallback((controlId: string, page: number) => {
+    setControlPages(prev => ({ ...prev, [controlId]: page }));
+  }, []);
+
+  const getPaginatedRequests = useCallback((controlId: string, requests: EvidenceRequest[]) => {
+    const currentPage = getControlPage(controlId);
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return requests.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [getControlPage]);
+
+  const getTotalPages = useCallback((requests: EvidenceRequest[]) => {
+    return Math.ceil(requests.length / ITEMS_PER_PAGE);
   }, []);
 
   const selectedControlData = useMemo(() => 
@@ -775,12 +797,12 @@ export default function PBCAutomationPage() {
                                 </TableCell>
                                 <TableCell className="py-3 px-4 text-right text-sm font-medium text-slate-500 w-24">Actions</TableCell>
                               </TableRow>
-                              {controlRequests.map((request, idx) => (
+                              {getPaginatedRequests(controlId, controlRequests).map((request, idx, paginatedArray) => (
                                 <TableRow 
                                   key={request.id}
                                   className={cn(
                                     "hover:bg-slate-50 transition-colors",
-                                    idx === controlRequests.length - 1 ? "" : "border-b border-slate-100"
+                                    idx === paginatedArray.length - 1 ? "" : "border-b border-slate-100"
                                   )}
                                 >
                                   <TableCell className="py-3 px-4 pl-14">
@@ -813,6 +835,48 @@ export default function PBCAutomationPage() {
                                   </TableCell>
                                 </TableRow>
                               ))}
+                              {getTotalPages(controlRequests) > 1 && (
+                                <TableRow className="bg-slate-50 hover:bg-slate-50">
+                                  <TableCell colSpan={5} className="py-2 px-4 pl-14">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-sm text-slate-500">
+                                        Showing {((getControlPage(controlId) - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(getControlPage(controlId) * ITEMS_PER_PAGE, controlRequests.length)} of {controlRequests.length}
+                                      </span>
+                                      <div className="flex items-center gap-1">
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-8 w-8 p-0"
+                                          onClick={(e) => { 
+                                            e.stopPropagation(); 
+                                            setControlPage(controlId, getControlPage(controlId) - 1); 
+                                          }}
+                                          disabled={getControlPage(controlId) === 1}
+                                          aria-label="Previous page"
+                                        >
+                                          <ChevronLeft className="h-4 w-4" />
+                                        </Button>
+                                        <span className="text-sm text-slate-600 px-2">
+                                          Page {getControlPage(controlId)} of {getTotalPages(controlRequests)}
+                                        </span>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-8 w-8 p-0"
+                                          onClick={(e) => { 
+                                            e.stopPropagation(); 
+                                            setControlPage(controlId, getControlPage(controlId) + 1); 
+                                          }}
+                                          disabled={getControlPage(controlId) === getTotalPages(controlRequests)}
+                                          aria-label="Next page"
+                                        >
+                                          <ChevronRight className="h-4 w-4" />
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  </TableCell>
+                                </TableRow>
+                              )}
                             </>
                           )}
                         </Fragment>
