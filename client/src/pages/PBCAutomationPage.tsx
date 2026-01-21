@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, Fragment } from 'react';
+import { useState, useMemo, useCallback, Fragment, useEffect } from 'react';
 import { format, subMonths, startOfMonth, isAfter, isBefore, differenceInMonths } from 'date-fns';
 import * as XLSX from 'xlsx';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -93,6 +93,56 @@ type SortDirection = 'asc' | 'desc';
 
 const DEFAULT_ITEMS_PER_PAGE = 5;
 const ROWS_PER_PAGE_OPTIONS = [5, 10, 15, 20];
+
+function PageInput({ 
+  currentPage, 
+  totalPages, 
+  onPageChange 
+}: { 
+  currentPage: number; 
+  totalPages: number; 
+  onPageChange: (page: number) => void;
+}) {
+  const [inputValue, setInputValue] = useState(currentPage.toString());
+
+  useEffect(() => {
+    setInputValue(currentPage.toString());
+  }, [currentPage]);
+
+  const applyPageChange = () => {
+    const page = parseInt(inputValue) || 1;
+    const validPage = Math.min(Math.max(1, page), totalPages);
+    setInputValue(validPage.toString());
+    onPageChange(validPage);
+  };
+
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      pattern="[0-9]*"
+      value={inputValue}
+      onChange={(e) => {
+        e.stopPropagation();
+        const val = e.target.value.replace(/[^0-9]/g, '');
+        setInputValue(val);
+      }}
+      onBlur={(e) => {
+        e.stopPropagation();
+        applyPageChange();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          applyPageChange();
+          (e.target as HTMLInputElement).blur();
+        }
+      }}
+      onClick={(e) => e.stopPropagation()}
+      className="w-12 h-8 px-2 text-sm text-center border rounded bg-white focus:outline-none focus:ring-2 focus:ring-primary"
+    />
+  );
+}
 
 function StatusBadge({ status }: { status: RequestStatus }) {
   const variants: Record<RequestStatus, { className?: string; variant: 'default' | 'secondary' | 'destructive'; icon: React.ReactNode }> = {
@@ -890,19 +940,10 @@ export default function PBCAutomationPage() {
                                           </Button>
                                           <div className="flex items-center gap-1">
                                             <span className="text-sm text-slate-600">Page</span>
-                                            <input
-                                              type="number"
-                                              min={1}
-                                              max={getTotalPages(controlId, controlRequests)}
-                                              value={getControlPage(controlId)}
-                                              onChange={(e) => {
-                                                e.stopPropagation();
-                                                const page = parseInt(e.target.value) || 1;
-                                                const maxPage = getTotalPages(controlId, controlRequests);
-                                                setControlPage(controlId, Math.min(Math.max(1, page), maxPage));
-                                              }}
-                                              onClick={(e) => e.stopPropagation()}
-                                              className="w-12 h-8 px-2 text-sm text-center border rounded bg-white focus:outline-none focus:ring-2 focus:ring-primary"
+                                            <PageInput
+                                              currentPage={getControlPage(controlId)}
+                                              totalPages={getTotalPages(controlId, controlRequests)}
+                                              onPageChange={(page) => setControlPage(controlId, page)}
                                             />
                                             <span className="text-sm text-slate-600">of {getTotalPages(controlId, controlRequests)}</span>
                                           </div>
