@@ -713,8 +713,8 @@ export default function PBCAutomationPage() {
 
                   {selectedControl && !isAutomated && (
                     <Button onClick={handleOpenManualForm} className="w-full md:w-auto">
+                      <ExternalLink className="mr-2 h-4 w-4" />
                       Open SharePoint Intake Form
-                      <ExternalLink className="ml-2 h-4 w-4" />
                     </Button>
                   )}
             </div>
