@@ -91,7 +91,8 @@ type RequestStatus = 'In Progress' | 'Completed' | 'Failed';
 type SortColumn = 'requestId' | 'dateFrom' | 'dateTo' | 'status';
 type SortDirection = 'asc' | 'desc';
 
-const ITEMS_PER_PAGE = 5;
+const DEFAULT_ITEMS_PER_PAGE = 5;
+const ROWS_PER_PAGE_OPTIONS = [5, 10, 15, 20];
 
 function StatusBadge({ status }: { status: RequestStatus }) {
   const variants: Record<RequestStatus, { className?: string; variant: 'default' | 'secondary' | 'destructive'; icon: React.ReactNode }> = {
@@ -162,6 +163,7 @@ export default function PBCAutomationPage() {
   const [sortColumn, setSortColumn] = useState<SortColumn>('requestId');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [controlPages, setControlPages] = useState<Record<string, number>>({});
+  const [controlRowsPerPage, setControlRowsPerPage] = useState<Record<string, number>>({});
 
   const { data: controls = [], isLoading: controlsLoading } = useQuery({
     queryKey: ['pbc-controls'],
@@ -221,15 +223,26 @@ export default function PBCAutomationPage() {
     setControlPages(prev => ({ ...prev, [controlId]: page }));
   }, []);
 
+  const getRowsPerPage = useCallback((controlId: string) => {
+    return controlRowsPerPage[controlId] ?? DEFAULT_ITEMS_PER_PAGE;
+  }, [controlRowsPerPage]);
+
+  const setRowsPerPage = useCallback((controlId: string, rows: number) => {
+    setControlRowsPerPage(prev => ({ ...prev, [controlId]: rows }));
+    setControlPages(prev => ({ ...prev, [controlId]: 1 }));
+  }, []);
+
   const getPaginatedRequests = useCallback((controlId: string, requests: EvidenceRequest[]) => {
     const currentPage = getControlPage(controlId);
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    return requests.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [getControlPage]);
+    const rowsPerPage = getRowsPerPage(controlId);
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    return requests.slice(startIndex, startIndex + rowsPerPage);
+  }, [getControlPage, getRowsPerPage]);
 
-  const getTotalPages = useCallback((requests: EvidenceRequest[]) => {
-    return Math.ceil(requests.length / ITEMS_PER_PAGE);
-  }, []);
+  const getTotalPages = useCallback((controlId: string, requests: EvidenceRequest[]) => {
+    const rowsPerPage = getRowsPerPage(controlId);
+    return Math.ceil(requests.length / rowsPerPage);
+  }, [getRowsPerPage]);
 
   const selectedControlData = useMemo(() => 
     controls.find(c => c.controlId === selectedControl),
@@ -835,44 +848,79 @@ export default function PBCAutomationPage() {
                                   </TableCell>
                                 </TableRow>
                               ))}
-                              {getTotalPages(controlRequests) > 1 && (
+                              {controlRequests.length > 1 && (
                                 <TableRow className="bg-slate-50 hover:bg-slate-50">
-                                  <TableCell colSpan={5} className="py-2 px-4 pl-14">
-                                    <div className="flex items-center justify-between">
-                                      <span className="text-sm text-slate-500">
-                                        Showing {((getControlPage(controlId) - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(getControlPage(controlId) * ITEMS_PER_PAGE, controlRequests.length)} of {controlRequests.length}
-                                      </span>
-                                      <div className="flex items-center gap-1">
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          className="h-8 w-8 p-0"
-                                          onClick={(e) => { 
-                                            e.stopPropagation(); 
-                                            setControlPage(controlId, getControlPage(controlId) - 1); 
-                                          }}
-                                          disabled={getControlPage(controlId) === 1}
-                                          aria-label="Previous page"
-                                        >
-                                          <ChevronLeft className="h-4 w-4" />
-                                        </Button>
-                                        <span className="text-sm text-slate-600 px-2">
-                                          Page {getControlPage(controlId)} of {getTotalPages(controlRequests)}
+                                  <TableCell colSpan={5} className="py-3 px-4 pl-14">
+                                    <div className="flex items-center justify-between flex-wrap gap-3">
+                                      <div className="flex items-center gap-3">
+                                        <span className="text-sm text-slate-500">
+                                          Showing {((getControlPage(controlId) - 1) * getRowsPerPage(controlId)) + 1}-{Math.min(getControlPage(controlId) * getRowsPerPage(controlId), controlRequests.length)} of {controlRequests.length}
                                         </span>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          className="h-8 w-8 p-0"
-                                          onClick={(e) => { 
-                                            e.stopPropagation(); 
-                                            setControlPage(controlId, getControlPage(controlId) + 1); 
-                                          }}
-                                          disabled={getControlPage(controlId) === getTotalPages(controlRequests)}
-                                          aria-label="Next page"
-                                        >
-                                          <ChevronRight className="h-4 w-4" />
-                                        </Button>
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-sm text-slate-500">Rows:</span>
+                                          <select
+                                            value={getRowsPerPage(controlId)}
+                                            onChange={(e) => {
+                                              e.stopPropagation();
+                                              setRowsPerPage(controlId, parseInt(e.target.value));
+                                            }}
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="h-8 px-2 text-sm border rounded bg-white focus:outline-none focus:ring-2 focus:ring-primary"
+                                          >
+                                            {ROWS_PER_PAGE_OPTIONS.map(option => (
+                                              <option key={option} value={option}>{option}</option>
+                                            ))}
+                                          </select>
+                                        </div>
                                       </div>
+                                      {getTotalPages(controlId, controlRequests) > 1 && (
+                                        <div className="flex items-center gap-2">
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-8 w-8 p-0"
+                                            onClick={(e) => { 
+                                              e.stopPropagation(); 
+                                              setControlPage(controlId, getControlPage(controlId) - 1); 
+                                            }}
+                                            disabled={getControlPage(controlId) === 1}
+                                            aria-label="Previous page"
+                                          >
+                                            <ChevronLeft className="h-4 w-4" />
+                                          </Button>
+                                          <div className="flex items-center gap-1">
+                                            <span className="text-sm text-slate-600">Page</span>
+                                            <input
+                                              type="number"
+                                              min={1}
+                                              max={getTotalPages(controlId, controlRequests)}
+                                              value={getControlPage(controlId)}
+                                              onChange={(e) => {
+                                                e.stopPropagation();
+                                                const page = parseInt(e.target.value) || 1;
+                                                const maxPage = getTotalPages(controlId, controlRequests);
+                                                setControlPage(controlId, Math.min(Math.max(1, page), maxPage));
+                                              }}
+                                              onClick={(e) => e.stopPropagation()}
+                                              className="w-12 h-8 px-2 text-sm text-center border rounded bg-white focus:outline-none focus:ring-2 focus:ring-primary"
+                                            />
+                                            <span className="text-sm text-slate-600">of {getTotalPages(controlId, controlRequests)}</span>
+                                          </div>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-8 w-8 p-0"
+                                            onClick={(e) => { 
+                                              e.stopPropagation(); 
+                                              setControlPage(controlId, getControlPage(controlId) + 1); 
+                                            }}
+                                            disabled={getControlPage(controlId) === getTotalPages(controlId, controlRequests)}
+                                            aria-label="Next page"
+                                          >
+                                            <ChevronRight className="h-4 w-4" />
+                                          </Button>
+                                        </div>
+                                      )}
                                     </div>
                                   </TableCell>
                                 </TableRow>
