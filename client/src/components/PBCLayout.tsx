@@ -113,16 +113,6 @@ export function PBCLayout({ children }: PBCLayoutProps) {
             >
               Documentation
             </Link>
-            <Link 
-              href="/pbc/other"
-              className={`px-6 h-full flex items-center text-sm font-semibold transition-colors border-b-4 whitespace-nowrap ${
-                location === '/pbc/other' 
-                  ? 'bg-secondary text-primary border-accent' 
-                  : 'text-primary-foreground/90 hover:bg-primary-foreground/10 hover:text-white border-transparent'
-              }`}
-            >
-              Other
-            </Link>
           </div>
         </div>
       </nav>
