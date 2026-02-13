@@ -35,9 +35,7 @@ import {
   ChevronsUpDown,
   Check,
   ExternalLink,
-  Download,
-  Database,
-  FileText
+  Download
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -493,26 +491,6 @@ export default function PBCAutomationPage() {
                   <p className="text-sm text-muted-foreground">Request ID</p>
                   <p className="text-xl font-mono font-bold">{lastRequestId}</p>
                 </div>
-                {generatedReports.length > 0 && (
-                  <div className="space-y-3">
-                    <p className="text-sm font-medium text-foreground">Generated Reports:</p>
-                    <div className="space-y-2">
-                      {generatedReports.map((report) => (
-                        <div key={report.id} className="border rounded-md p-3 space-y-1">
-                          <div className="flex items-center gap-2">
-                            <Database className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm font-medium">{report.keychainDatabase}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <FileText className="h-3 w-3" />
-                            <span>{report.recordCount.toLocaleString()} records</span>
-                          </div>
-                          <p className="text-xs font-mono bg-muted p-2 rounded break-all">{report.executedQuery}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
                 <p className="text-sm text-muted-foreground">
                   Your evidence report is ready. Click the button below to download.
                 </p>
