@@ -30,6 +30,7 @@ This is the primary screen where users request and manage evidence for IAM contr
   - Built-in validation:
     - Future dates are not allowed
     - Maximum date range is limited to 1 year
+    - To date cannot exceed 15 months from the current date
   - Clear visual indicators for date selection
 
 - **Submit Request**: After selecting a control and date range

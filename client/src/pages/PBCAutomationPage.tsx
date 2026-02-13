@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
-import { format, startOfMonth, isAfter, isBefore, differenceInMonths } from 'date-fns';
+import { format, startOfMonth, isAfter, isBefore, differenceInMonths, subMonths } from 'date-fns';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { PBCLayout } from '@/components/PBCLayout';
 import { PageHeader } from '@/components/PageHeader';
@@ -166,6 +166,10 @@ export default function PBCAutomationPage() {
     }
     if (from && to && differenceInMonths(to, from) > 12) {
       errors.push('Date range cannot exceed 1 year');
+    }
+    const fifteenMonthsAgo = subMonths(today, 15);
+    if (to && isBefore(to, fifteenMonthsAgo)) {
+      errors.push('To date cannot exceed 15 months from the current date');
     }
 
     return errors;
