@@ -29,7 +29,7 @@ This is the primary screen where users request and manage evidence for IAM contr
   - **From Date** and **To Date** pickers
   - Built-in validation:
     - Future dates are not allowed
-    - Maximum date range is limited to 9 months
+    - Maximum date range is limited to 1 year
   - Clear visual indicators for date selection
 
 - **Submit Request**: After selecting a control and date range

@@ -164,8 +164,8 @@ export default function PBCAutomationPage() {
     if (from && to && isAfter(from, to)) {
       errors.push('From date must be before To date');
     }
-    if (from && to && differenceInMonths(to, from) > 9) {
-      errors.push('Date range cannot exceed 9 months');
+    if (from && to && differenceInMonths(to, from) > 12) {
+      errors.push('Date range cannot exceed 1 year');
     }
 
     return errors;
