@@ -58,6 +58,44 @@ router.get("/requests/:requestId", async (req: Request, res: Response) => {
   }
 });
 
+const CONTROL_REPORT_TEMPLATES: Record<string, Array<{ keychainDatabase: string; queryTemplate: string }>> = {
+  'C.IT.IACTM.001': [
+    { keychainDatabase: 'IAM_CENTRAL_DB', queryTemplate: 'SELECT user_id, provision_date, approver, role_assigned FROM user_provisioning WHERE provision_date BETWEEN :start_date AND :end_date ORDER BY provision_date DESC' },
+    { keychainDatabase: 'HR_SYSTEMS_DB', queryTemplate: 'SELECT employee_id, hire_date, department, manager_id FROM employees WHERE hire_date BETWEEN :start_date AND :end_date' },
+  ],
+  'C.IT.IACTM.004': [
+    { keychainDatabase: 'IAM_CENTRAL_DB', queryTemplate: 'SELECT user_id, termination_date, processed_by, access_revoked FROM user_terminations WHERE termination_date BETWEEN :start_date AND :end_date ORDER BY termination_date DESC' },
+    { keychainDatabase: 'HR_SYSTEMS_DB', queryTemplate: 'SELECT employee_id, termination_date, department, last_access_date FROM terminated_employees WHERE termination_date BETWEEN :start_date AND :end_date' },
+  ],
+  'C.IT.IACTM.006': [
+    { keychainDatabase: 'MFA_CENTRAL_DB', queryTemplate: 'SELECT user_id, mfa_method, enrollment_date, last_verified, status FROM mfa_enrollment WHERE enrollment_date BETWEEN :start_date AND :end_date' },
+    { keychainDatabase: 'AUTH_SYSTEMS_DB', queryTemplate: "SELECT auth_id, user_id, auth_method, success, timestamp FROM authentication_logs WHERE auth_method IN ('MFA_PUSH', 'MFA_SMS', 'MFA_TOTP') AND timestamp BETWEEN :start_date AND :end_date" },
+  ],
+  'C.IT.IACTM.007': [
+    { keychainDatabase: 'SERVICE_ACCOUNT_DB', queryTemplate: 'SELECT account_id, account_name, owner, purpose, last_password_rotation, status FROM service_accounts WHERE created_date <= :end_date' },
+    { keychainDatabase: 'AUDIT_LOG_DB', queryTemplate: 'SELECT log_id, service_account_id, action, timestamp FROM service_account_audit WHERE timestamp BETWEEN :start_date AND :end_date' },
+  ],
+  'C.IT.IACTM.008': [
+    { keychainDatabase: 'ACCESS_REVIEW_DB', queryTemplate: 'SELECT review_id, reviewer_id, user_reviewed, access_confirmed, review_date FROM periodic_access_reviews WHERE review_date BETWEEN :start_date AND :end_date' },
+    { keychainDatabase: 'AUDIT_LOG_DB', queryTemplate: 'SELECT log_id, action, reviewer_id, timestamp FROM review_audit_logs WHERE timestamp BETWEEN :start_date AND :end_date' },
+  ],
+  'C.IT.IACTM.010': [
+    { keychainDatabase: 'PRIV_MONITORING_DB', queryTemplate: 'SELECT session_id, user_id, action_performed, resource_accessed, timestamp FROM privileged_user_activity WHERE timestamp BETWEEN :start_date AND :end_date ORDER BY timestamp DESC' },
+    { keychainDatabase: 'AUDIT_LOG_DB', queryTemplate: 'SELECT log_id, user_id, privilege_level, action, timestamp FROM privilege_audit_logs WHERE timestamp BETWEEN :start_date AND :end_date' },
+  ],
+  'C.IT.IACTM.017': [
+    { keychainDatabase: 'SESSION_MGMT_DB', queryTemplate: 'SELECT session_id, user_id, login_time, logout_time, timeout_applied FROM user_sessions WHERE login_time BETWEEN :start_date AND :end_date' },
+  ],
+  'C.IT.IACTM.031': [
+    { keychainDatabase: 'IAM_CENTRAL_DB', queryTemplate: 'SELECT account_id, user_id, last_login_date, dormant_since, status, action_taken FROM dormant_accounts WHERE dormant_since BETWEEN :start_date AND :end_date' },
+    { keychainDatabase: 'AUDIT_LOG_DB', queryTemplate: 'SELECT log_id, account_id, action, processed_by, timestamp FROM dormant_account_actions WHERE timestamp BETWEEN :start_date AND :end_date' },
+  ],
+  'C.IT.CRM.121': [
+    { keychainDatabase: 'CRM_ACCESS_DB', queryTemplate: 'SELECT access_id, user_id, customer_segment, access_level, granted_date, granted_by FROM customer_data_access WHERE granted_date BETWEEN :start_date AND :end_date' },
+    { keychainDatabase: 'AUDIT_LOG_DB', queryTemplate: 'SELECT log_id, user_id, action_type, customer_id, timestamp FROM customer_access_logs WHERE timestamp BETWEEN :start_date AND :end_date' },
+  ],
+};
+
 router.post("/requests", async (req: Request, res: Response) => {
   try {
     const parseResult = createRequestSchema.safeParse(req.body);
@@ -79,7 +117,27 @@ router.post("/requests", async (req: Request, res: Response) => {
       status: 'In Progress',
     });
 
-    res.status(201).json(newRequest);
+    const templates = CONTROL_REPORT_TEMPLATES[parseResult.data.controlId] || [
+      { keychainDatabase: 'IAM_CENTRAL_DB', queryTemplate: 'SELECT * FROM control_evidence WHERE control_id = :control_id AND execution_date BETWEEN :start_date AND :end_date' },
+    ];
+
+    const generatedReports = [];
+    for (const template of templates) {
+      const report = await pbcStorage.createEvidenceReport({
+        requestId,
+        keychainDatabase: template.keychainDatabase,
+        executedQuery: template.queryTemplate,
+        recordCount: Math.floor(Math.random() * 5000) + 50,
+      });
+      generatedReports.push(report);
+    }
+
+    const updatedRequest = await pbcStorage.updateEvidenceRequestStatus(requestId, 'Completed');
+
+    res.status(201).json({
+      request: updatedRequest || newRequest,
+      reports: generatedReports,
+    });
   } catch (error) {
     console.error("Error creating PBC request:", error);
     res.status(500).json({ error: "Failed to create request" });

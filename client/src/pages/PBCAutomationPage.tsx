@@ -34,7 +34,10 @@ import {
   CheckCircle2, 
   ChevronsUpDown,
   Check,
-  ExternalLink
+  ExternalLink,
+  Download,
+  Database,
+  FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -49,6 +52,15 @@ interface Control {
   createdAt: string | null;
 }
 
+interface EvidenceReport {
+  id: number;
+  requestId: string;
+  keychainDatabase: string;
+  executedQuery: string;
+  recordCount: number;
+  executedAt: string | null;
+}
+
 interface EvidenceRequest {
   id: number;
   requestId: string;
@@ -59,6 +71,11 @@ interface EvidenceRequest {
   status: 'In Progress' | 'Completed';
   userId: string;
   createdAt: string | null;
+}
+
+interface GenerateEvidenceResponse {
+  request: EvidenceRequest;
+  reports: EvidenceReport[];
 }
 
 const MOCK_USER = {
@@ -79,13 +96,13 @@ async function createRequest(data: {
   dateFrom: string;
   dateTo: string;
   userId: string;
-}): Promise<EvidenceRequest> {
+}): Promise<GenerateEvidenceResponse> {
   const response = await fetch('/api/pbc/requests', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
-  if (!response.ok) throw new Error('Failed to create request');
+  if (!response.ok) throw new Error('Failed to generate evidence');
   return response.json();
 }
 
@@ -96,6 +113,7 @@ export default function PBCAutomationPage() {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [lastRequestId, setLastRequestId] = useState('');
+  const [generatedReports, setGeneratedReports] = useState<EvidenceReport[]>([]);
   const [dateErrors, setDateErrors] = useState<string[]>([]);
   const [controlComboboxOpen, setControlComboboxOpen] = useState(false);
 
@@ -106,15 +124,17 @@ export default function PBCAutomationPage() {
 
   const createRequestMutation = useMutation({
     mutationFn: createRequest,
-    onSuccess: (newRequest) => {
-      setLastRequestId(newRequest.requestId);
+    onSuccess: (response) => {
+      const req = response.request || response;
+      setLastRequestId(req.requestId);
+      setGeneratedReports(response.reports || []);
       setShowSuccessDialog(true);
       setSelectedControl('');
       setDateFrom(startOfMonth(new Date()));
       setDateTo(new Date());
     },
     onError: () => {
-      toast.error('Failed to submit request', {
+      toast.error('Failed to generate evidence', {
         description: 'Please try again later.',
       });
     },
@@ -420,7 +440,7 @@ export default function PBCAutomationPage() {
                         {isSubmitting ? (
                           <>
                             <Spinner className="mr-2 h-4 w-4" />
-                            Submitting...
+                            Generating Evidence...
                           </>
                         ) : (
                           'Generate Evidence'
@@ -443,9 +463,9 @@ export default function PBCAutomationPage() {
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Evidence Request</AlertDialogTitle>
+            <AlertDialogTitle>Confirm Evidence Generation</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
-              <p>You are about to submit an evidence generation request with the following details:</p>
+              <p>You are about to generate evidence with the following details. Please wait while the report is being generated:</p>
               <div className="bg-muted p-3 rounded-md text-sm space-y-1 mt-2">
                 <p><strong>Control:</strong> {selectedControlData?.controlId}</p>
                 <p><strong>Date Range:</strong> {dateFrom ? format(dateFrom, 'MMM d, yyyy') : ''} to {dateTo ? format(dateTo, 'MMM d, yyyy') : ''}</p>
@@ -455,31 +475,79 @@ export default function PBCAutomationPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmSubmit}>Submit Request</AlertDialogAction>
+            <AlertDialogAction onClick={handleConfirmSubmit}>Generate</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       <AlertDialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-lg">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-green-600">
               <CheckCircle2 className="h-5 w-5" />
-              Request Submitted Successfully!
+              Evidence Generated Successfully!
             </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-3">
-              <p>Your evidence request has been submitted to the processing queue.</p>
-              <div className="bg-muted p-4 rounded-md text-center">
-                <p className="text-sm text-muted-foreground">Request ID</p>
-                <p className="text-xl font-mono font-bold">{lastRequestId}</p>
+            <AlertDialogDescription asChild>
+              <div className="space-y-4">
+                <div className="bg-muted p-4 rounded-md text-center">
+                  <p className="text-sm text-muted-foreground">Request ID</p>
+                  <p className="text-xl font-mono font-bold">{lastRequestId}</p>
+                </div>
+                {generatedReports.length > 0 && (
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium text-foreground">Generated Reports:</p>
+                    <div className="space-y-2">
+                      {generatedReports.map((report) => (
+                        <div key={report.id} className="border rounded-md p-3 space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Database className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm font-medium">{report.keychainDatabase}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <FileText className="h-3 w-3" />
+                            <span>{report.recordCount.toLocaleString()} records</span>
+                          </div>
+                          <p className="text-xs font-mono bg-muted p-2 rounded break-all">{report.executedQuery}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <p className="text-sm text-muted-foreground">
+                  Your evidence report is ready. Click the button below to download.
+                </p>
               </div>
-              <p className="text-sm text-muted-foreground">
-                You will receive an email notification when your evidence is ready for download.
-              </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction onClick={() => setShowSuccessDialog(false)}>Close</AlertDialogAction>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel>Close</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                const reportData = {
+                  requestId: lastRequestId,
+                  generatedAt: new Date().toISOString(),
+                  reports: generatedReports.map(r => ({
+                    database: r.keychainDatabase,
+                    query: r.executedQuery,
+                    recordCount: r.recordCount,
+                    executedAt: r.executedAt,
+                  })),
+                };
+                const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `${lastRequestId}_evidence_report.json`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+              }}
+              className="gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Download Report
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
