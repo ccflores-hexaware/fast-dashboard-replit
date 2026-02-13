@@ -14,7 +14,7 @@ export default function PBCOtherPage() {
     <PBCLayout>
       <div className="space-y-6">
         <PageHeader 
-          title="Other Requests" 
+          title="Other" 
           description="Submit additional PBC requests via SharePoint"
         />
         <Card>
