@@ -207,13 +207,16 @@ export default function PBCAutomationPage() {
   };
 
   const handleConfirmSubmit = async () => {
-    setShowConfirmDialog(false);
     createRequestMutation.mutate({
       controlId: selectedControl,
       controlName: selectedControlData?.name || '',
       dateFrom: format(dateFrom!, 'yyyy-MM-dd'),
       dateTo: format(dateTo!, 'yyyy-MM-dd'),
       userId: MOCK_USER.id,
+    }, {
+      onSettled: () => {
+        setShowConfirmDialog(false);
+      },
     });
   };
 
@@ -458,23 +461,34 @@ export default function PBCAutomationPage() {
         </Card>
       </div>
 
-      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+      <AlertDialog open={showConfirmDialog} onOpenChange={(open) => { if (!isSubmitting) setShowConfirmDialog(open); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Evidence Generation</AlertDialogTitle>
+            <AlertDialogTitle>{isSubmitting ? 'Generating Evidence...' : 'Confirm Evidence Generation'}</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
-              <p>You are about to generate evidence with the following details. Please wait while the report is being generated:</p>
-              <div className="bg-muted p-3 rounded-md text-sm space-y-1 mt-2">
-                <p><strong>Control:</strong> {selectedControlData?.controlId}</p>
-                <p><strong>Date Range:</strong> {dateFrom ? format(dateFrom, 'MMM d, yyyy') : ''} to {dateTo ? format(dateTo, 'MMM d, yyyy') : ''}</p>
-              </div>
-              <p className="mt-2">Do you want to proceed?</p>
+              {isSubmitting ? (
+                <div className="flex flex-col items-center gap-4 py-4">
+                  <Spinner className="h-8 w-8" />
+                  <p>Please wait while the evidence report is being generated. This may take a moment.</p>
+                </div>
+              ) : (
+                <>
+                  <p>You are about to generate evidence with the following details:</p>
+                  <div className="bg-muted p-3 rounded-md text-sm space-y-1 mt-2">
+                    <p><strong>Control:</strong> {selectedControlData?.controlId}</p>
+                    <p><strong>Date Range:</strong> {dateFrom ? format(dateFrom, 'MMM d, yyyy') : ''} to {dateTo ? format(dateTo, 'MMM d, yyyy') : ''}</p>
+                  </div>
+                  <p className="mt-2">Do you want to proceed?</p>
+                </>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmSubmit}>Generate</AlertDialogAction>
-          </AlertDialogFooter>
+          {!isSubmitting && (
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirmSubmit}>Generate</AlertDialogAction>
+            </AlertDialogFooter>
+          )}
         </AlertDialogContent>
       </AlertDialog>
 
