@@ -106,6 +106,8 @@ router.post("/requests", async (req: Request, res: Response) => {
       });
     }
 
+    await new Promise(resolve => setTimeout(resolve, 3000));
+
     const requestId = generateRequestId();
     const newRequest = await pbcStorage.createEvidenceRequest({
       requestId,
