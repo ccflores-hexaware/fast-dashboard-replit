@@ -87,4 +87,5 @@ export interface UseFASTPageReturn {
   view: FASTViewState;
   subAssetCounts: Record<string, number>;
   refreshData: () => Promise<void>;
+  exportToExcel: () => void;
 }

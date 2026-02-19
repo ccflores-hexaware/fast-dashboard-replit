@@ -20,12 +20,13 @@ export default function FASTPage() {
     table,
     pagination,
     subAssetCounts,
+    exportToExcel,
   } = useFASTPage();
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <FASTHeader />
+        <FASTHeader onExport={exportToExcel} />
 
         <FASTToolbar
           searchQuery={search.searchQuery}
