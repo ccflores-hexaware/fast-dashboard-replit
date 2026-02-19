@@ -29,9 +29,9 @@ export function PageHeader({
           <Button 
             onClick={onExport} 
             className="gap-2 text-white" 
-            style={{ backgroundColor: '#89c24b' }} 
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#7ab043'} 
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#89c24b'}
+            style={{ backgroundColor: '#3b82f6' }} 
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2563eb'} 
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3b82f6'}
           >
             <Download className="h-4 w-4" />
             {exportLabel}
