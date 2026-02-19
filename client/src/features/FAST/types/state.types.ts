@@ -1,4 +1,4 @@
-import type { FASTAsset, FASTActivity } from './asset.types';
+import type { FASTAsset } from './asset.types';
 import type { ColumnDefinition, CardFieldDefinition, ColumnVisibility, SortConfig } from './column.types';
 
 export type { SortConfig };
@@ -56,19 +56,11 @@ export interface FASTDialogsState {
   editFormData: Partial<FASTAsset>;
   originalItem: FASTAsset | null;
   isSaving: boolean;
-  comment: string;
   assetIdError: string | null;
   assetIdAvailable: boolean;
   dateFieldErrors: Record<string, string | null>;
-  activeTab: 'details' | 'activity';
-  activities: FASTActivity[];
-  isLoadingActivities: boolean;
-  activityDisplayLimit: number;
   isDuplicateConfirmOpen: boolean;
   isCreatingSubAsset: boolean;
-  setComment: (comment: string) => void;
-  setActiveTab: (tab: 'details' | 'activity') => void;
-  setActivityDisplayLimit: (limit: number | ((prev: number) => number)) => void;
   setEditFormData: React.Dispatch<React.SetStateAction<Partial<FASTAsset>>>;
   setDateFieldErrors: React.Dispatch<React.SetStateAction<Record<string, string | null>>>;
   setIsDuplicateConfirmOpen: (open: boolean) => void;
@@ -93,7 +85,6 @@ export interface UseFASTPageReturn {
   table: FASTTableState;
   pagination: FASTPaginationState;
   view: FASTViewState;
-  exportToExcel: () => void;
   subAssetCounts: Record<string, number>;
   refreshData: () => Promise<void>;
 }

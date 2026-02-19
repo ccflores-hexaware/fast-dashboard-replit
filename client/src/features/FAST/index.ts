@@ -8,7 +8,6 @@ export * from './hooks/useFASTColumnVisibility';
 export * from './hooks/useFASTDialogs';
 export * from './components/FASTHeader';
 export * from './components/FASTToolbar';
-export * from './components/FASTCardGrid';
 export * from './components/FASTDetailsDialog';
 export * from './components/FASTSubAssetDialog';
 export * from './components/table/FASTTable';

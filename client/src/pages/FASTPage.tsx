@@ -6,7 +6,6 @@ import { useFASTPage } from '@/features/FAST/hooks/useFASTPage';
 import { FASTHeader } from '@/features/FAST/components/FASTHeader';
 import { FASTToolbar } from '@/features/FAST/components/FASTToolbar';
 import { FASTTable } from '@/features/FAST/components/table/FASTTable';
-import { FASTCardGrid } from '@/features/FAST/components/FASTCardGrid';
 import { FASTDetailsDialog } from '@/features/FAST/components/FASTDetailsDialog';
 import { FASTSubAssetDialog } from '@/features/FAST/components/FASTSubAssetDialog';
 import { useUser } from '@/lib/userContext';
@@ -21,14 +20,13 @@ export default function FASTPage() {
     table,
     pagination,
     view,
-    exportToExcel,
     subAssetCounts,
   } = useFASTPage();
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <FASTHeader onExport={exportToExcel} />
+        <FASTHeader />
 
         <FASTToolbar
           searchQuery={search.searchQuery}
@@ -50,7 +48,7 @@ export default function FASTPage() {
 
         {data.isLoading ? (
           <LoadingState />
-        ) : view.view === 'table' ? (
+        ) : (
           <FASTTable
             data={pagination.paginatedData}
             visibleColumns={columns.visibleColumns}
@@ -62,12 +60,6 @@ export default function FASTPage() {
             onRowClick={dialogs.openDetailsDialog}
             isAdmin={isAdmin}
             onEditClick={dialogs.openEditDialog}
-          />
-        ) : (
-          <FASTCardGrid
-            data={pagination.paginatedData}
-            visibleCardFields={columns.visibleCardFields}
-            onItemClick={dialogs.openDetailsDialog}
           />
         )}
 
@@ -88,23 +80,15 @@ export default function FASTPage() {
           isEditing={dialogs.isEditing}
           editFormData={dialogs.editFormData}
           isSaving={dialogs.isSaving}
-          comment={dialogs.comment}
           assetIdError={dialogs.assetIdError}
           assetIdAvailable={dialogs.assetIdAvailable}
           dateFieldErrors={dialogs.dateFieldErrors}
-          activeTab={dialogs.activeTab}
-          activities={dialogs.activities}
-          isLoadingActivities={dialogs.isLoadingActivities}
-          activityDisplayLimit={dialogs.activityDisplayLimit}
           columns={columns.allColumns}
           isAdmin={isAdmin}
           subAssetCount={dialogs.selectedItem ? (subAssetCounts[dialogs.selectedItem.id] || 0) : 0}
           onEdit={() => dialogs.openEditDialog()}
           onSave={dialogs.handleSave}
           onCancel={dialogs.closeDialog}
-          onCommentChange={dialogs.setComment}
-          onTabChange={dialogs.setActiveTab}
-          onActivityDisplayLimitChange={dialogs.setActivityDisplayLimit}
           onEditFormDataChange={(data) => dialogs.setEditFormData(data)}
           onDateFieldErrorsChange={dialogs.setDateFieldErrors}
           onCreateSubAsset={() => dialogs.setIsDuplicateConfirmOpen(true)}

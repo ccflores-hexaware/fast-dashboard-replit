@@ -1,18 +1,14 @@
 import { useMemo, useCallback, useState } from 'react';
-import { format } from 'date-fns';
-import * as XLSX from 'xlsx';
 import { useFASTData } from './useFASTData';
 import { useFASTColumnVisibility } from './useFASTColumnVisibility';
 import { useFASTDialogs } from './useFASTDialogs';
 import { useViewToggle, usePagination, useSorting, useColumnFilters } from '@/hooks';
-import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/lib/userContext';
 import type { FASTAsset } from '../types/asset.types';
 import { DEFAULT_TABLE_PAGE_SIZE, DEFAULT_CARD_PAGE_SIZE } from '@/components/Pagination';
 import type { UseFASTPageReturn } from '../types/state.types';
 
 export function useFASTPage(): UseFASTPageReturn {
-  const { toast } = useToast();
   const { isAdmin } = useUser();
   const columns = useFASTColumnVisibility();
   const dataHook = useFASTData();
@@ -73,27 +69,6 @@ export function useFASTPage(): UseFASTPageReturn {
     return dialogs.validateAssetId(id, dataHook.data);
   }, [dialogs, dataHook.data]);
 
-  const exportToExcel = useCallback(() => {
-    try {
-      const exportData = sortedData.map((item: FASTAsset) => {
-        const row: Record<string, any> = {};
-        columns.visibleColumns.forEach(col => {
-          row[col.header] = (item as any)[col.accessorKey] ?? '';
-        });
-        return row;
-      });
-      
-      const ws = XLSX.utils.json_to_sheet(exportData);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'FAST');
-      XLSX.writeFile(wb, `FAST_Export_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
-      toast({ title: "Export Complete", description: `Exported ${exportData.length} records.`, variant: "success" });
-    } catch (error) {
-      console.error('Export error:', error);
-      toast({ title: "Export Failed", description: "Failed to export data to Excel. Please try again.", variant: "destructive" });
-    }
-  }, [sortedData, columns.visibleColumns, toast]);
-
   return {
     data: {
       data: dataHook.data,
@@ -146,7 +121,6 @@ export function useFASTPage(): UseFASTPageReturn {
       view,
       setView: handleViewChange,
     },
-    exportToExcel,
     subAssetCounts: dataHook.subAssetCounts,
     refreshData: dataHook.refetch,
   };
