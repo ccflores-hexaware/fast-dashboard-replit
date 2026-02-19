@@ -26,8 +26,8 @@ interface DataToolbarProps {
   totalColumnCount: number;
   presets: ColumnPreset[];
   onApplyPreset: (preset: ColumnPreset) => void;
-  view: 'table' | 'card';
-  onViewChange: (view: 'table' | 'card') => void;
+  view?: 'table' | 'card';
+  onViewChange?: (view: 'table' | 'card') => void;
   searchPlaceholder?: string;
 }
 
@@ -138,7 +138,7 @@ export function DataToolbar({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <ViewToggle view={view} setView={onViewChange} />
+        {view && onViewChange && <ViewToggle view={view} setView={onViewChange} />}
       </div>
     </div>
   );

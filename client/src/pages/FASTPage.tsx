@@ -19,7 +19,6 @@ export default function FASTPage() {
     dialogs,
     table,
     pagination,
-    view,
     subAssetCounts,
   } = useFASTPage();
 
@@ -42,8 +41,6 @@ export default function FASTPage() {
           onColumnSearchQueryChange={columns.setColumnSearchQuery}
           visibleColumnCount={columns.visibleColumnCount}
           onApplyPreset={columns.applyPreset}
-          view={view.view}
-          onViewChange={view.setView}
         />
 
         {data.isLoading ? (
@@ -70,7 +67,6 @@ export default function FASTPage() {
           pageSize={pagination.pageSize}
           onPageChange={pagination.setCurrentPage}
           onPageSizeChange={pagination.setPageSize}
-          view={view.view}
         />
 
         <FASTDetailsDialog

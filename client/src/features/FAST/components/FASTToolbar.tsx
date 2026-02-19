@@ -17,8 +17,6 @@ interface FASTToolbarProps {
   onColumnSearchQueryChange: (query: string) => void;
   visibleColumnCount: number;
   onApplyPreset: (preset: ColumnPreset) => void;
-  view: 'table' | 'card';
-  onViewChange: (view: 'table' | 'card') => void;
 }
 
 export function FASTToolbar({
@@ -35,8 +33,6 @@ export function FASTToolbar({
   onColumnSearchQueryChange,
   visibleColumnCount,
   onApplyPreset,
-  view,
-  onViewChange,
 }: FASTToolbarProps) {
   return (
     <DataToolbar
@@ -55,8 +51,6 @@ export function FASTToolbar({
       totalColumnCount={ALL_COLUMN_KEYS.length}
       presets={COLUMN_PRESETS as ColumnPreset[]}
       onApplyPreset={onApplyPreset}
-      view={view}
-      onViewChange={onViewChange}
     />
   );
 }
